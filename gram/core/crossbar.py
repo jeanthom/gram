@@ -19,7 +19,7 @@ import gram.stream as stream
 
 # LiteDRAMCrossbar ---------------------------------------------------------------------------------
 
-class LiteDRAMCrossbar(Module):
+class gramCrossbar(Module):
     """Multiplexes LiteDRAMController (slave) between ports (masters)
 
     To get a port to LiteDRAM, use the `get_port` method. It handles data width

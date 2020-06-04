@@ -15,7 +15,7 @@
 from math import ceil
 from collections import namedtuple
 
-from nmigen import *
+from nmigen.utils import log2_int
 
 from gram.common import Settings, GeomSettings, TimingSettings
 

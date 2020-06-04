@@ -43,7 +43,7 @@ class ControllerSettings(Settings):
 
 # Controller ---------------------------------------------------------------------------------------
 
-class LiteDRAMController(Module):
+class gramController(Elaboratable):
     def __init__(self, phy_settings, geom_settings, timing_settings, clk_freq,
         controller_settings=ControllerSettings()):
         address_align = log2_int(burst_lengths[phy_settings.memtype])
@@ -68,10 +68,11 @@ class LiteDRAMController(Module):
             databits    = phy_settings.dfi_databits,
             nphases     = phy_settings.nphases)
 
-        # # #
+    def elaborate(self, platform):
+        m = Module()
 
         # Refresher --------------------------------------------------------------------------------
-        self.submodules.refresher = self.settings.refresh_cls(self.settings,
+        m.submodules.refresher = self.settings.refresh_cls(self.settings,
             clk_freq   = clk_freq,
             zqcs_freq  = self.settings.refresh_zqcs_freq,
             postponing = self.settings.refresh_postponing)
@@ -85,16 +86,18 @@ class LiteDRAMController(Module):
                 nranks        = nranks,
                 settings      = self.settings)
             bank_machines.append(bank_machine)
-            self.submodules += bank_machine
-            self.comb += getattr(interface, "bank"+str(n)).connect(bank_machine.req)
+            m.submodules += bank_machine
+            m.d.comb += getattr(interface, "bank"+str(n)).connect(bank_machine.req)
 
         # Multiplexer ------------------------------------------------------------------------------
-        self.submodules.multiplexer = Multiplexer(
+        m.submodules.multiplexer = Multiplexer(
             settings      = self.settings,
             bank_machines = bank_machines,
             refresher     = self.refresher,
             dfi           = self.dfi,
             interface     = interface)
+
+        return m
 
     def get_csrs(self):
         return self.multiplexer.get_csrs()

@@ -1,29 +1,40 @@
-from migen import *
+from nmigen import *
 
-from litex.soc.interconnect.csr import AutoCSR
+from lambdasoc.periph import Peripheral
 
-from litedram.dfii import DFIInjector
-from litedram.core.controller import ControllerSettings, LiteDRAMController
-from litedram.core.crossbar import LiteDRAMCrossbar
+from gram.dfii import DFIInjector
+from gram.core.controller import ControllerSettings, gramController
+from gram.core.crossbar import gramCrossbar
 
 # Core ---------------------------------------------------------------------------------------------
 
-class LiteDRAMCore(Module, AutoCSR):
+class gramCore(Peripheral, Elaboratable):
     def __init__(self, phy, geom_settings, timing_settings, clk_freq, **kwargs):
-        self.submodules.dfii = DFIInjector(
-            addressbits = geom_settings.addressbits,
-            bankbits    = geom_settings.bankbits,
-            nranks      = phy.settings.nranks,
-            databits    = phy.settings.dfi_databits,
-            nphases     = phy.settings.nphases)
-        self.comb += self.dfii.master.connect(phy.dfi)
+        self._phy = phy
+        self._geom_settings = geom_settings
+        self._timing_settings = timing_settings
+        self._clk_freq = clk_freq
+        self._kwargs = kwargs
 
-        self.submodules.controller = controller = LiteDRAMController(
-            phy_settings    = phy.settings,
-            geom_settings   = geom_settings,
-            timing_settings = timing_settings,
-            clk_freq        = clk_freq,
-            **kwargs)
-        self.comb += controller.dfi.connect(self.dfii.slave)
+    def elaborate(self, platform):
+        m = Module()
 
-        self.submodules.crossbar = LiteDRAMCrossbar(controller.interface)
+        m.submodules.dfii = DFIInjector(
+            addressbits = self._geom_settings.addressbits,
+            bankbits    = self._geom_settings.bankbits,
+            nranks      = self._phy.settings.nranks,
+            databits    = self._phy.settings.dfi_databits,
+            nphases     = self._phy.settings.nphases)
+        m.d.comb += self.dfii.master.connect(self._phy.dfi)
+
+        m.submodules.controller = controller = gramController(
+            phy_settings    = self._phy.settings,
+            geom_settings   = self._geom_settings,
+            timing_settings = self._timing_settings,
+            clk_freq        = self._clk_freq,
+            **self._kwargs)
+        m.d.comb += controller.dfi.connect(self.dfii.slave)
+
+        m.submodules.crossbar = LiteDRAMCrossbar(controller.interface)
+
+        return m

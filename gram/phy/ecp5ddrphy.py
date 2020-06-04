@@ -54,7 +54,7 @@ class ECP5DDRPHYInit(Elaboratable):
         lock_d = Signal()
         m.submodules += FFSynchronizer(_lock, lock)
         m.d.sync += lock_d.eq(lock)
-        m.d.syn += new_lock.eq(lock & ~lock_d)
+        m.d.sync += new_lock.eq(lock & ~lock_d)
 
         # DDRDLLA/DDQBUFM/ECLK initialization sequence ---------------------------------------------
         t = 8 # in cycles
@@ -95,7 +95,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self._sys_clk_freq = sys_clk_freq
 
         databits = len(self.pads.dq.o)
-        print("databits = ", databits)
         assert databits%8 == 0
 
         # CSR
