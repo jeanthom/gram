@@ -165,6 +165,7 @@ class DDR3SoC(CPUSoC, Elaboratable):
 		m.submodules.timer   = self.timer
 		m.submodules.intc    = self.intc
 		m.submodules.ddrphy  = self.ddrphy
+		m.submodules.dramcore = self.dramcore
 
 		m.submodules.sysclk = SysClocker()
 
