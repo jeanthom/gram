@@ -3,7 +3,7 @@ from nmigen.hdl.rec import *
 from nmigen.lib import fifo
 
 
-__all__ = ["Endpoint", "SyncFIFO", "AsyncFIFO"]
+__all__ = ["Endpoint", "SyncFIFO", "AsyncFIFO", "Buffer"]
 
 
 def _make_fanout(layout):
@@ -93,9 +93,12 @@ class _FIFOWrapper:
 
 
 class SyncFIFO(Elaboratable, _FIFOWrapper):
-    def __init__(self, layout, depth, fwft=True):
+    def __init__(self, layout, depth, fwft=True, buffered=False):
         super().__init__(layout)
-        self.fifo = fifo.SyncFIFO(width=len(Record(self.layout)), depth=depth, fwft=fwft)
+        if buffered:
+            self.fifo = fifo.SyncFIFOBuffered(width=len(Record(self.layout)), depth=depth, fwft=fwft)
+        else:
+            self.fifo = fifo.SyncFIFO(width=len(Record(self.layout)), depth=depth, fwft=fwft)
         self.depth = self.fifo.depth
         self.level = self.fifo.level
 
@@ -106,3 +109,27 @@ class AsyncFIFO(Elaboratable, _FIFOWrapper):
         self.fifo = fifo.AsyncFIFO(width=len(Record(self.layout)), depth=depth,
                                    r_domain=r_domain, w_domain=w_domain)
         self.depth = self.fifo.depth
+
+class PipeValid(Elaboratable):
+    """Pipe valid/payload to cut timing path"""
+    def __init__(self, layout):
+        self.sink = Endpoint(layout)
+        self.source = Endpoint(layout)
+
+    def elaborate(self, platform):
+        m = Module()
+
+        # Pipe when source is not valid or is ready.
+        with m.If(~self.source.valid | self.source.ready):
+            m.d.sync += [
+                self.source.valid.eq(self.sink.valid),
+                self.source.first.eq(self.sink.first),
+                self.source.last.eq(self.sink.last),
+                self.source.payload.eq(self.sink.payload),
+                self.source.param.eq(self.sink.param),
+            ]
+        m.d.comb += self.sink.ready.eq(~self.source.valid | self.source.ready)
+
+        return m
+
+class Buffer(PipeValid): pass # FIXME: Replace Buffer with PipeValid in codebase?

@@ -69,11 +69,11 @@ class _CommandChooser(Elaboratable):
             command = request.is_cmd & self.want_cmds & (~is_act_cmd | self.want_activates)
             read = request.is_read == self.want_reads
             write = request.is_write == self.want_writes
-            self.comb += valids[i].eq(request.valid & (command | (read & write)))
+            m.d.comb += valids[i].eq(request.valid & (command | (read & write)))
 
 
-        arbiter = RoundRobin(n, SP_CE)
-        self.submodules += arbiter
+        arbiter = RoundRobin(n)
+        m.submodules += arbiter
         choices = Array(valids[i] for i in range(n))
         m.d.comb += [
             arbiter.request.eq(valids),
@@ -82,13 +82,13 @@ class _CommandChooser(Elaboratable):
 
         for name in ["a", "ba", "is_read", "is_write", "is_cmd"]:
             choices = Array(getattr(req, name) for req in self._requests)
-            self.comb += getattr(self.cmd, name).eq(choices[arbiter.grant])
+            m.d.comb += getattr(self.cmd, name).eq(choices[arbiter.grant])
 
         for name in ["cas", "ras", "we"]:
             # we should only assert those signals when valid is 1
             choices = Array(getattr(req, name) for req in self._requests)
             with m.If(self.cmd.valid):
-                m.d.comb += getattr(cmd, name).eq(choices[arbiter.grant])
+                m.d.comb += getattr(self.cmd, name).eq(choices[arbiter.grant])
 
         for i, request in enumerate(self._requests):
             with m.If(self.cmd.valid & self.cmd.ready & (arbiter.grant == i)):
@@ -96,7 +96,7 @@ class _CommandChooser(Elaboratable):
 
         # Arbitrate if a command is being accepted or if the command is not valid to ensure a valid
         # command is selected when cmd.ready goes high.
-        m.d.comb += arbiter.ce.eq(self.cmd.ready | ~self.cmd.valid)
+        m.d.comb += arbiter.stb.eq(self.cmd.ready | ~self.cmd.valid)
 
         return m
 
@@ -164,14 +164,14 @@ class _Steerer(Elaboratable):
             nranks   = len(phase.cs_n)
             rankbits = log2_int(nranks)
             if hasattr(phase, "reset_n"):
-                self.comb += phase.reset_n.eq(1)
-            m.d.comb += phase.cke.eq(Replicate(Signal(reset=1), nranks))
+                m.d.comb += phase.reset_n.eq(1)
+            m.d.comb += phase.cke.eq(Repl(Signal(reset=1), nranks))
             if hasattr(phase, "odt"):
                 # FIXME: add dynamic drive for multi-rank (will be needed for high frequencies)
-                m.d.comb += phase.odt.eq(Replicate(Signal(reset=1), nranks))
+                m.d.comb += phase.odt.eq(Repl(Signal(reset=1), nranks))
             if rankbits:
                 rank_decoder = Decoder(nranks)
-                self.submodules += rank_decoder
+                m.submodules += rank_decoder
                 m.d.comb += rank_decoder.i.eq((Array(cmd.ba[-rankbits:] for cmd in commands)[sel]))
                 if i == 0: # Select all ranks on refresh.
                     with m.If(sel == STEER_REFRESH):
@@ -233,6 +233,20 @@ class Multiplexer(Peripheral, Elaboratable):
             dfi,
             interface):
         assert(settings.phy.nphases == len(dfi.phases))
+        self._settings = settings
+        self._bank_machines = bank_machines
+        self._refresher = refresher
+        self._dfi = dfi
+        self._interface = interface
+
+    def elaborate(self, platform):
+        m = Module()
+
+        settings = self._settings
+        bank_machines = self._bank_machines
+        refresher = self._refresher
+        dfi = self._dfi
+        interface = self._interface
 
         ras_allowed = Signal(reset=1)
         cas_allowed = Signal(reset=1)
@@ -300,11 +314,10 @@ class Multiplexer(Peripheral, Elaboratable):
                 t = timeout - 1
                 time = Signal(range(t+1))
                 m.d.comb += max_time.eq(time == 0)
-                m.d.sync += If(~en,
-                        time.eq(t)
-                    ).Elif(~max_time,
-                        time.eq(time - 1)
-                    )
+                with m.If(~en):
+                    m.d.sync += time.eq(t)
+                with m.Elif(~max_time):
+                    m.d.sync += time.eq(time - 1)
             else:
                 m.d.comb += max_time.eq(0)
             return en, max_time
@@ -409,8 +422,10 @@ class Multiplexer(Peripheral, Elaboratable):
                     m.next = "Read"
             
             # TODO: reduce this, actual limit is around (cl+1)/nphases
-            delayed_enter(m, "RTW", "WRITE", settings.phy.read_latency-1)
+            delayed_enter(m, "RTW", "Write", settings.phy.read_latency-1)
 
         if settings.with_bandwidth:
             data_width = settings.phy.dfi_databits*settings.phy.nphases
-            self.submodules.bandwidth = Bandwidth(self.choose_req.cmd, data_width)
+            m.submodules.bandwidth = Bandwidth(self.choose_req.cmd, data_width)
+
+        return m

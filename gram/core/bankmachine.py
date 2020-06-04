@@ -32,7 +32,7 @@ class _AddressSlicer:
 
     def col(self, address):
         split = self.colbits - self.address_align
-        return Cat(Replicate(0, self.address_align), address[:split])
+        return Cat(Repl(0, self.address_align), address[:split])
 
 # BankMachine --------------------------------------------------------------------------------------
 
@@ -85,6 +85,7 @@ class BankMachine(Elaboratable):
         Stream of commands to the Multiplexer
     """
     def __init__(self, n, address_width, address_align, nranks, settings):
+        self.settings = settings
         self.req = req = Record(cmd_layout(address_width))
         self.refresh_req = refresh_req = Signal()
         self.refresh_gnt = refresh_gnt = Signal()
@@ -99,23 +100,23 @@ class BankMachine(Elaboratable):
         auto_precharge = Signal()
 
         # Command buffer ---------------------------------------------------------------------------
-        cmd_buffer_layout    = [("we", 1), ("addr", len(req.addr))]
+        cmd_buffer_layout    = [("we", 1), ("addr", len(self.req.addr))]
         cmd_buffer_lookahead = stream.SyncFIFO(
-            cmd_buffer_layout, settings.cmd_buffer_depth,
-            buffered=settings.cmd_buffer_buffered)
+            cmd_buffer_layout, self.settings.cmd_buffer_depth,
+            buffered=self.settings.cmd_buffer_buffered)
         cmd_buffer = stream.Buffer(cmd_buffer_layout) # 1 depth buffer to detect row change
         m.submodules += cmd_buffer_lookahead, cmd_buffer
         m.d.comb += [
-            req.connect(cmd_buffer_lookahead.sink, keep={"valid", "ready", "we", "addr"}),
+            self.req.connect(cmd_buffer_lookahead.sink, include={"valid", "ready", "we", "addr"}),
             cmd_buffer_lookahead.source.connect(cmd_buffer.sink),
-            cmd_buffer.source.ready.eq(req.wdata_ready | req.rdata_valid),
-            req.lock.eq(cmd_buffer_lookahead.source.valid | cmd_buffer.source.valid),
+            cmd_buffer.source.ready.eq(self.req.wdata_ready | self.req.rdata_valid),
+            self.req.lock.eq(cmd_buffer_lookahead.source.valid | cmd_buffer.source.valid),
         ]
 
-        slicer = _AddressSlicer(settings.geom.colbits, address_align)
+        slicer = _AddressSlicer(self.settings.geom.colbits, address_align)
 
         # Row tracking -----------------------------------------------------------------------------
-        row        = Signal(settings.geom.rowbits)
+        row        = Signal(self.settings.geom.rowbits)
         row_opened = Signal()
         row_hit    = Signal()
         row_open   = Signal()
@@ -138,17 +139,17 @@ class BankMachine(Elaboratable):
             m.d.comb += cmd.a.eq((auto_precharge << 10) | slicer.col(cmd_buffer.source.addr))
 
         # tWTP (write-to-precharge) controller -----------------------------------------------------
-        write_latency = math.ceil(settings.phy.cwl / settings.phy.nphases)
-        precharge_time = write_latency + settings.timing.tWR + settings.timing.tCCD # AL=0
+        write_latency = math.ceil(self.settings.phy.cwl / self.settings.phy.nphases)
+        precharge_time = write_latency + self.settings.timing.tWR + self.settings.timing.tCCD # AL=0
         m.submodules.twtpcon = twtpcon = tXXDController(precharge_time)
         m.d.comb += twtpcon.valid.eq(cmd.valid & cmd.ready & cmd.is_write)
 
         # tRC (activate-activate) controller -------------------------------------------------------
-        m.submodules.trccon = trccon = tXXDController(settings.timing.tRC)
+        m.submodules.trccon = trccon = tXXDController(self.settings.timing.tRC)
         m.d.comb += trccon.valid.eq(cmd.valid & cmd.ready & row_open)
 
         # tRAS (activate-precharge) controller -----------------------------------------------------
-        m.submodules.trascon = trascon = tXXDController(settings.timing.tRAS)
+        m.submodules.trascon = trascon = tXXDController(self.settings.timing.tRAS)
         m.d.comb += trascon.valid.eq(cmd.valid & cmd.ready & row_open)
 
         # Auto Precharge generation ----------------------------------------------------------------
@@ -173,13 +174,13 @@ class BankMachine(Elaboratable):
                             ]
                             with m.If(cmd_buffer.source.we):
                                 m.d.comb += [
-                                    req.wdata_ready.eq(cmd.ready),
+                                    self.req.wdata_ready.eq(cmd.ready),
                                     cmd.is_write.eq(1),
                                     cmd.we.eq(1),
                                 ]
                             with m.Else():
                                 m.d.comb += [
-                                    req.rdata_valid.eq(cmd.ready),
+                                    self.req.rdata_valid.eq(cmd.ready),
                                     cmd.is_read.eq(1),
                                 ]
                             with m.If(cmd.ready & auto_precharge):
@@ -232,7 +233,7 @@ class BankMachine(Elaboratable):
                 with m.If(~refresh_req):
                     m.next = "Regular"
 
-            delayed_enter(m, "TRP", "ACTIVATE", settings.timing.tRP - 1)
-            delayed_enter(m, "TRCD", "REGULAR", settings.timing.tRCD - 1)
+            delayed_enter(m, "tRP", "Activate", self.settings.timing.tRP - 1)
+            delayed_enter(m, "tRCD", "Regular", self.settings.timing.tRCD - 1)
 
         return m

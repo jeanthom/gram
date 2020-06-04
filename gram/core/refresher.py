@@ -6,11 +6,11 @@
 """LiteDRAM Refresher."""
 
 from nmigen import *
-
-from litex.soc.interconnect import stream
+from nmigen.utils import bits_for, log2_int
 
 from gram.core.multiplexer import *
 from gram.compat import Timeline
+import gram.stream as stream
 
 # RefreshExecuter ----------------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ class RefreshExecuter(Elaboratable):
         trp = self._trp
         trfc = self._trfc
 
-        self.sync += [
+        m.d.sync += [
             self._cmd.a.eq(  0),
             self._cmd.ba.eq( 0),
             self._cmd.cas.eq(0),
@@ -87,20 +87,19 @@ class RefreshSequencer(Elaboratable):
     def __init__(self, cmd, trp, trfc, postponing=1):
         self.start = Signal()
         self.done  = Signal()
+
         self._trp = trp
         self._trfc = trfc
         self._postponing = postponing
+        self._cmd = cmd
 
     def elaborate(self, platform):
         m = Module()
 
-        trp = self._trp
-        trfc = self._trfc
+        executer = RefreshExecuter(self._cmd, self._trp, self._trfc)
+        m.submodules += executer
 
-        executer = RefreshExecuter(cmd, trp, trfc)
-        self.submodules += executer
-
-        count = Signal(bits_for(postponing), reset=postponing-1)
+        count = Signal(bits_for(self._postponing), reset=self._postponing-1)
         with m.If(self.start):
             m.d.sync += count.eq(count.reset)
         with m.Elif(executer.done):
@@ -161,6 +160,7 @@ class RefreshPostponer(Elaboratable):
         self._postponing = postponing
 
     def elaborate(self, platform):
+        m = Module()
 
         count = Signal(bits_for(self._postponing), reset=self._postponing-1)
 
@@ -257,6 +257,9 @@ class Refresher(Elaboratable):
         babits = settings.geom.bankbits + log2_int(settings.phy.nranks)
         self.cmd = cmd = stream.Endpoint(cmd_request_rw_layout(a=abits, ba=babits))
         self._postponing = postponing
+        self._settings = settings
+        self._clk_freq = clk_freq
+        self._zqcs_freq = zqcs_freq
 
     def elaborate(self, platform):
         m = Module()
@@ -264,32 +267,34 @@ class Refresher(Elaboratable):
         wants_refresh = Signal()
         wants_zqcs    = Signal()
 
+        settings = self._settings
+
         # Refresh Timer ----------------------------------------------------------------------------
         timer = RefreshTimer(settings.timing.tREFI)
-        self.submodules.timer = timer
+        m.submodules.timer = timer
         m.d.comb += timer.wait.eq(~timer.done)
 
         # Refresh Postponer ------------------------------------------------------------------------
         postponer = RefreshPostponer(self._postponing)
-        self.submodules.postponer = postponer
+        m.submodules.postponer = postponer
         m.d.comb += [
-            postponer.req_i.eq(self.timer.done),
+            postponer.req_i.eq(timer.done),
             wants_refresh.eq(postponer.req_o),
         ]
 
         # Refresh Sequencer ------------------------------------------------------------------------
-        sequencer = RefreshSequencer(cmd, settings.timing.tRP, settings.timing.tRFC, self._postponing)
-        self.submodules.sequencer = sequencer
+        sequencer = RefreshSequencer(self.cmd, settings.timing.tRP, settings.timing.tRFC, self._postponing)
+        m.submodules.sequencer = sequencer
 
         if settings.timing.tZQCS is not None:
             # ZQCS Timer ---------------------------------------------------------------------------
-            zqcs_timer = RefreshTimer(int(clk_freq/zqcs_freq))
-            self.submodules.zqcs_timer = zqcs_timer
+            zqcs_timer = RefreshTimer(int(self._clk_freq/self._zqcs_freq))
+            m.submodules.zqcs_timer = zqcs_timer
             m.d.comb += wants_zqcs.eq(zqcs_timer.done)
 
             # ZQCS Executer ------------------------------------------------------------------------
-            zqcs_executer = ZQCSExecuter(cmd, settings.timing.tRP, settings.timing.tZQCS)
-            self.submodules.zqs_executer = zqcs_executer
+            zqcs_executer = ZQCSExecuter(self.cmd, settings.timing.tRP, settings.timing.tZQCS)
+            m.submodules.zqs_executer = zqcs_executer
             m.d.comb += zqcs_timer.wait.eq(~zqcs_executer.done)
 
         # Refresh FSM ------------------------------------------------------------------------------
@@ -299,40 +304,40 @@ class Refresher(Elaboratable):
                     m.next = "Wait-Bank-Machines"
 
             with m.State("Wait-Bank-Machines"):
-                m.d.comb += cmd.valid.eq(1)
-                with m.If(cmd.ready):
+                m.d.comb += self.cmd.valid.eq(1)
+                with m.If(self.cmd.ready):
                     m.d.comb += sequencer.start.eq(1)
                     m.next = "Do-Refresh"
 
             if settings.timing.tZQCS is None:
                 with m.State("Do-Refresh"):
-                    m.d.comb += cmd.valid.eq(1)
+                    m.d.comb += self.cmd.valid.eq(1)
                     with m.If(sequencer.done):
                         m.d.comb += [
-                            cmd.valid.eq(0),
-                            cmd.last.eq(1),
+                            self.cmd.valid.eq(0),
+                            self.cmd.last.eq(1),
                         ]
                         m.next = "Idle"
             else:
                 with m.State("Do-Refresh"):
-                    m.d.comb += cmd.valid.eq(1)
+                    m.d.comb += self.cmd.valid.eq(1)
                     with m.If(sequencer.done):
                         with m.If(wants_zqcs):
                             m.d.comb += zqcs_executer.start.eq(1)
                             m.next = "Do-Zqcs"
                         with m.Else():
                             m.d.comb += [
-                                cmd.valid.eq(0),
-                                cmd.last.eq(1),
+                                self.cmd.valid.eq(0),
+                                self.cmd.last.eq(1),
                             ]
                             m.next = "Idle"
 
                 with m.State("Do-Zqcs"):
-                    m.d.comb += cmd.valid.eq(1)
+                    m.d.comb += self.cmd.valid.eq(1)
                     with m.If(zqcs_executer.done):
                         m.d.comb += [
-                            cmd.valid.eq(0),
-                            cmd.last.eq(1),
+                            self.cmd.valid.eq(0),
+                            self.cmd.last.eq(1),
                         ]
                         m.next = "Idle"
 

@@ -19,13 +19,13 @@ class gramCore(Peripheral, Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        m.submodules.dfii = DFIInjector(
+        m.submodules.dfii = dfii = DFIInjector(
             addressbits = self._geom_settings.addressbits,
             bankbits    = self._geom_settings.bankbits,
             nranks      = self._phy.settings.nranks,
             databits    = self._phy.settings.dfi_databits,
             nphases     = self._phy.settings.nphases)
-        m.d.comb += self.dfii.master.connect(self._phy.dfi)
+        m.d.comb += dfii.master.connect(self._phy.dfi)
 
         m.submodules.controller = controller = gramController(
             phy_settings    = self._phy.settings,
@@ -33,8 +33,8 @@ class gramCore(Peripheral, Elaboratable):
             timing_settings = self._timing_settings,
             clk_freq        = self._clk_freq,
             **self._kwargs)
-        m.d.comb += controller.dfi.connect(self.dfii.slave)
+        m.d.comb += controller.dfi.connect(dfii.slave)
 
-        m.submodules.crossbar = LiteDRAMCrossbar(controller.interface)
+        m.submodules.crossbar = gramCrossbar(controller.interface)
 
         return m

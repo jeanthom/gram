@@ -1,4 +1,5 @@
 from nmigen import *
+from nmigen.compat import Case
 
 __ALL__ = ["delayed_enter", "RoundRobin", "Timeline"]
 
@@ -19,47 +20,41 @@ def delayed_enter(m, src, dst, delay):
         with m.State(statename):
             m.next = deststate
 
-(SP_WITHDRAW, SP_CE) = range(2)
-
+# Original nMigen implementation by HarryHo90sHK
 class RoundRobin(Elaboratable):
-    def __init__(self, n, switch_policy=SP_WITHDRAW):
+    """A round-robin scheduler.
+    Parameters
+    ----------
+    n : int
+        Maximum number of requests to handle.
+    Attributes
+    ----------
+    request : Signal(n)
+        Signal where a '1' on the i-th bit represents an incoming request from the i-th device.
+    grant : Signal(range(n))
+        Signal that equals to the index of the device which is currently granted access.
+    stb : Signal()
+        Strobe signal to enable granting access to the next device requesting. Externally driven.
+    """
+    def __init__(self, n):
+        self.n = n
         self.request = Signal(n)
-        self.grant = Signal(max=max(2, n))
-        self.switch_policy = switch_policy
-        if self.switch_policy == SP_CE:
-            self.ce = Signal()
+        self.grant = Signal(range(n))
+        self.stb = Signal()
 
     def elaborate(self, platform):
         m = Module()
 
-        # TODO: fix
-
-        if n > 1:
-            cases = {}
-            for i in range(n):
-                switch = []
-                for j in reversed(range(i+1, i+n)):
-                    t = j % n
-                    switch = [
-                        If(self.request[t],
-                            self.grant.eq(t)
-                        ).Else(
-                            *switch
-                        )
-                    ]
-                if self.switch_policy == SP_WITHDRAW:
-                    case = [If(~self.request[i], *switch)]
-                else:
-                    case = switch
-                cases[i] = case
-            statement = Case(self.grant, cases)
-            if self.switch_policy == SP_CE:
-                with m.If(self.ce):
-                    m.d.sync += statement
-            else:
-                m.d.sync += statement
-        else:
-            m.d.comb += self.grant.eq(0)
+        with m.If(self.stb):
+            with m.Switch(self.grant):
+                for i in range(self.n):
+                    with m.Case(i):
+                        for j in reversed(range(i+1, i+self.n)):
+                            # If i+1 <= j < n, then t == j;     (after i)
+                            # If n <= j < i+n, then t == j - n  (before i)
+                            t = j % self.n
+                            with m.If(self.request[t]):
+                                m.d.sync += self.grant.eq(t)
 
         return m
 

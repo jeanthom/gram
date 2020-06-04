@@ -6,6 +6,7 @@
 """LiteDRAM Controller."""
 
 from nmigen import *
+from nmigen.utils import log2_int
 
 from gram.common import *
 from gram.phy import dfi
@@ -46,7 +47,7 @@ class ControllerSettings(Settings):
 class gramController(Elaboratable):
     def __init__(self, phy_settings, geom_settings, timing_settings, clk_freq,
         controller_settings=ControllerSettings()):
-        address_align = log2_int(burst_lengths[phy_settings.memtype])
+        self._address_align = log2_int(burst_lengths[phy_settings.memtype])
 
         # Settings ---------------------------------------------------------------------------------
         self.settings        = controller_settings
@@ -54,11 +55,8 @@ class gramController(Elaboratable):
         self.settings.geom   = geom_settings
         self.settings.timing = timing_settings
 
-        nranks = phy_settings.nranks
-        nbanks = 2**geom_settings.bankbits
-
         # LiteDRAM Interface (User) ----------------------------------------------------------------
-        self.interface = interface = LiteDRAMInterface(address_align, self.settings)
+        self.interface = interface = gramInterface(self._address_align, self.settings)
 
         # DFI Interface (Memory) -------------------------------------------------------------------
         self.dfi = dfi.Interface(
@@ -68,12 +66,17 @@ class gramController(Elaboratable):
             databits    = phy_settings.dfi_databits,
             nphases     = phy_settings.nphases)
 
+        self._clk_freq = clk_freq
+
     def elaborate(self, platform):
         m = Module()
 
+        nranks = self.settings.phy.nranks
+        nbanks = 2**self.settings.geom.bankbits
+
         # Refresher --------------------------------------------------------------------------------
         m.submodules.refresher = self.settings.refresh_cls(self.settings,
-            clk_freq   = clk_freq,
+            clk_freq   = self._clk_freq,
             zqcs_freq  = self.settings.refresh_zqcs_freq,
             postponing = self.settings.refresh_postponing)
 
@@ -81,21 +84,21 @@ class gramController(Elaboratable):
         bank_machines = []
         for n in range(nranks*nbanks):
             bank_machine = BankMachine(n,
-                address_width = interface.address_width,
-                address_align = address_align,
+                address_width = self.interface.address_width,
+                address_align = self._address_align,
                 nranks        = nranks,
                 settings      = self.settings)
             bank_machines.append(bank_machine)
             m.submodules += bank_machine
-            m.d.comb += getattr(interface, "bank"+str(n)).connect(bank_machine.req)
+            m.d.comb += getattr(self.interface, "bank"+str(n)).connect(bank_machine.req)
 
         # Multiplexer ------------------------------------------------------------------------------
         m.submodules.multiplexer = Multiplexer(
             settings      = self.settings,
             bank_machines = bank_machines,
-            refresher     = self.refresher,
+            refresher     = m.submodules.refresher,
             dfi           = self.dfi,
-            interface     = interface)
+            interface     = self.interface)
 
         return m
 

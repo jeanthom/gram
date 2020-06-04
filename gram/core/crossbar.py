@@ -19,7 +19,7 @@ import gram.stream as stream
 
 # LiteDRAMCrossbar ---------------------------------------------------------------------------------
 
-class gramCrossbar(Module):
+class gramCrossbar(Elaboratable):
     """Multiplexes LiteDRAMController (slave) between ports (masters)
 
     To get a port to LiteDRAM, use the `get_port` method. It handles data width
@@ -119,7 +119,9 @@ class gramCrossbar(Module):
 
         return port
 
-    def do_finalize(self):
+    def elaborate(self, platform):
+        m = Module()
+
         controller = self.controller
         nmasters   = len(self.masters)
 
@@ -133,8 +135,8 @@ class gramCrossbar(Module):
         master_wdata_readys = [0]*nmasters
         master_rdata_valids = [0]*nmasters
 
-        arbiters = [roundrobin.RoundRobin(nmasters, roundrobin.SP_CE) for n in range(self.nbanks)]
-        self.submodules += arbiters
+        arbiters = [RoundRobin(nmasters) for n in range(self.nbanks)]
+        m.submodules += arbiters
 
         for nb, arbiter in enumerate(arbiters):
             bank = getattr(controller, "bank"+str(nb))
@@ -152,13 +154,13 @@ class gramCrossbar(Module):
             # Arbitrate ----------------------------------------------------------------------------
             bank_selected  = [(ba == nb) & ~locked for ba, locked in zip(m_ba, master_locked)]
             bank_requested = [bs & master.cmd.valid for bs, master in zip(bank_selected, self.masters)]
-            self.comb += [
+            m.d.comb += [
                 arbiter.request.eq(Cat(*bank_requested)),
-                arbiter.ce.eq(~bank.valid & ~bank.lock)
+                arbiter.stb.eq(~bank.valid & ~bank.lock)
             ]
 
             # Route requests -----------------------------------------------------------------------
-            self.comb += [
+            m.d.comb += [
                 bank.addr.eq(Array(m_rca)[arbiter.grant]),
                 bank.we.eq(Array(self.masters)[arbiter.grant].cmd.we),
                 bank.valid.eq(Array(bank_requested)[arbiter.grant])
@@ -174,23 +176,23 @@ class gramCrossbar(Module):
         for nm, master_wdata_ready in enumerate(master_wdata_readys):
             for i in range(self.write_latency):
                 new_master_wdata_ready = Signal()
-                self.sync += new_master_wdata_ready.eq(master_wdata_ready)
+                m.d.sync += new_master_wdata_ready.eq(master_wdata_ready)
                 master_wdata_ready = new_master_wdata_ready
             master_wdata_readys[nm] = master_wdata_ready
 
         for nm, master_rdata_valid in enumerate(master_rdata_valids):
             for i in range(self.read_latency):
                 new_master_rdata_valid = Signal()
-                self.sync += new_master_rdata_valid.eq(master_rdata_valid)
+                m.d.sync += new_master_rdata_valid.eq(master_rdata_valid)
                 master_rdata_valid = new_master_rdata_valid
             master_rdata_valids[nm] = master_rdata_valid
 
         for master, master_ready in zip(self.masters, master_readys):
-            self.comb += master.cmd.ready.eq(master_ready)
+            m.d.comb += master.cmd.ready.eq(master_ready)
         for master, master_wdata_ready in zip(self.masters, master_wdata_readys):
-            self.comb += master.wdata.ready.eq(master_wdata_ready)
+            m.d.comb += master.wdata.ready.eq(master_wdata_ready)
         for master, master_rdata_valid in zip(self.masters, master_rdata_valids):
-            self.comb += master.rdata.valid.eq(master_rdata_valid)
+            m.d.comb += master.rdata.valid.eq(master_rdata_valid)
 
         # Route data writes ------------------------------------------------------------------------
         wdata_cases = {}
@@ -203,8 +205,10 @@ class gramCrossbar(Module):
             controller.wdata.eq(0),
             controller.wdata_we.eq(0)
         ]
-        self.comb += Case(Cat(*master_wdata_readys), wdata_cases)
+        m.d.comb += Case(Cat(*master_wdata_readys), wdata_cases)
 
         # Route data reads -------------------------------------------------------------------------
         for master in self.masters:
-            self.comb += master.rdata.data.eq(controller.rdata)
+            m.d.comb += master.rdata.data.eq(controller.rdata)
+
+        return m

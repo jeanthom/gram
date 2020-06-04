@@ -18,7 +18,7 @@ from lambdasoc.periph import Peripheral
 import gram.stream as stream
 from gram.common import *
 from gram.phy.dfi import *
-from gram.timeline import Timeline
+from gram.compat import Timeline
 
 # Lattice ECP5 DDR PHY Initialization --------------------------------------------------------------
 
@@ -88,7 +88,7 @@ class ECP5DDRPHYInit(Elaboratable):
 
 class ECP5DDRPHY(Peripheral, Elaboratable):
     def __init__(self, pads, sys_clk_freq=100e6):
-        super().__init__() # Peripheral init
+        super().__init__()
 
         #self.pads = PHYPadsCombiner(pads)
         self.pads = pads

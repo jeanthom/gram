@@ -188,9 +188,9 @@ class LiteDRAMAXI2Native(Module):
         self.submodules.read = LiteDRAMAXI2NativeR(axi, port, r_buffer_depth, base_address)
 
         # Write / Read arbitration -----------------------------------------------------------------
-        arbiter = RoundRobin(2, SP_CE)
+        arbiter = RoundRobin(2)
         self.submodules += arbiter
-        self.comb += arbiter.ce.eq(~port.cmd.valid | port.cmd.ready)
+        self.comb += arbiter.stb.eq(~port.cmd.valid | port.cmd.ready)
         for i, master in enumerate([self.write, self.read]):
             self.comb += arbiter.request[i].eq(master.cmd_request)
             self.comb += master.cmd_grant.eq(arbiter.grant == i)

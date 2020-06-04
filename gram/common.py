@@ -9,6 +9,9 @@ from operator import add
 from collections import OrderedDict
 
 from nmigen import *
+from nmigen.hdl.rec import *
+from nmigen.utils import log2_int
+
 import gram.stream as stream
 
 # Helpers ------------------------------------------------------------------------------------------
@@ -117,7 +120,7 @@ class BitSlip(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        value = Signal(max=self._cycles*dw)
+        value = Signal(range(self._cycles*dw))
         with m.If(self.slp):
             m.d.sync += value.eq(value+1)
         with m.Elif(self.rst):
@@ -260,7 +263,7 @@ def cmd_request_rw_layout(a, ba):
     ]
 
 
-class LiteDRAMInterface(Record):
+class gramInterface(Record):
     def __init__(self, address_align, settings):
         rankbits = log2_int(settings.phy.nranks)
         self.address_align = address_align
@@ -276,7 +279,7 @@ class LiteDRAMInterface(Record):
 
 # Ports --------------------------------------------------------------------------------------------
 
-class LiteDRAMNativePort(Settings):
+class gramNativePort(Settings):
     def __init__(self, mode, address_width, data_width, clock_domain="sys", id=0):
         self.set_attributes(locals())
 
@@ -308,12 +311,12 @@ class LiteDRAMNativePort(Settings):
             return self.cmd.addr[:cba_shift]
 
 
-class LiteDRAMNativeWritePort(LiteDRAMNativePort):
+class gramNativeWritePort(gramNativePort):
     def __init__(self, *args, **kwargs):
         LiteDRAMNativePort.__init__(self, "write", *args, **kwargs)
 
 
-class LiteDRAMNativeReadPort(LiteDRAMNativePort):
+class gramNativeReadPort(gramNativePort):
     def __init__(self, *args, **kwargs):
         LiteDRAMNativePort.__init__(self, "read", *args, **kwargs)
 
@@ -325,16 +328,17 @@ class tXXDController(Elaboratable):
         self.valid = Signal()
         self.ready = ready = Signal(reset=txxd is None)
         #ready.attr.add("no_retiming") TODO
+        self._txxd = txxd
 
     def elaborate(self, platform):
         m = Module()
 
-        if txxd is not None:
-            count = Signal(range(max(txxd, 2)))
+        if self._txxd is not None:
+            count = Signal(range(max(self._txxd, 2)))
             with m.If(self.valid):
                 m.d.sync += [
-                    count.eq(txxd-1),
-                    self.ready.eq((txxd - 1) == 0),
+                    count.eq(self._txxd-1),
+                    self.ready.eq((self._txxd - 1) == 0),
                 ]
             with m.Else():
                 m.d.sync += count.eq(count-1)
@@ -348,15 +352,16 @@ class tFAWController(Elaboratable):
         self.valid = Signal()
         self.ready = Signal(reset=1)
         #ready.attr.add("no_retiming") TODO
+        self._tfaw = tfaw
 
     def elaborate(self, platform):
         m = Module()
 
-        if tfaw is not None:
-            count  = Signal(range(max(tfaw, 2)))
-            window = Signal(tfaw)
+        if self._tfaw is not None:
+            count  = Signal(range(max(self._tfaw, 2)))
+            window = Signal(self._tfaw)
             m.d.sync += window.eq(Cat(self.valid, window))
-            m.d.comb += count.eq(reduce(add, [window[i] for i in range(tfaw)]))
+            m.d.comb += count.eq(reduce(add, [window[i] for i in range(self._tfaw)]))
             with m.If(count < 4):
                 with m.If(count == 3):
                     m.d.sync += self.ready.eq(~self.valid)

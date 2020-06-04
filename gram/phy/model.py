@@ -71,7 +71,7 @@ class BankModel(Module):
                 write_port.adr.eq(wraddr),
                 write_port.dat_w.eq(self.write_data),
                 If(we_granularity,
-                    write_port.we.eq(Replicate(self.write, data_width//8) & ~self.write_mask),
+                    write_port.we.eq(Repl(self.write, data_width//8) & ~self.write_mask),
                 ).Else(
                     write_port.we.eq(self.write),
                 ),
