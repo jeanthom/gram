@@ -126,7 +126,7 @@ class PipeValid(Elaboratable):
                 self.source.first.eq(self.sink.first),
                 self.source.last.eq(self.sink.last),
                 self.source.payload.eq(self.sink.payload),
-                self.source.param.eq(self.sink.param),
+                #self.source.param.eq(self.sink.param), # TODO ensure this can be commented
             ]
         m.d.comb += self.sink.ready.eq(~self.source.valid | self.source.ready)
 

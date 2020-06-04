@@ -82,7 +82,7 @@ class gramCrossbar(Elaboratable):
             data_width = self.controller.data_width
 
         # Crossbar port ----------------------------------------------------------------------------
-        port = LiteDRAMNativePort(
+        port = gramNativePort(
             mode          = mode,
             address_width = self.rca_bits + self.bank_bits - self.rank_bits,
             data_width    = self.controller.data_width,
@@ -92,13 +92,13 @@ class gramCrossbar(Elaboratable):
 
         # Clock domain crossing --------------------------------------------------------------------
         if clock_domain != "sys":
-            new_port = LiteDRAMNativePort(
+            new_port = gramNativePort(
                 mode          = mode,
                 address_width = port.address_width,
                 data_width    = port.data_width,
                 clock_domain  = clock_domain,
                 id            = port.id)
-            self.submodules += LiteDRAMNativePortCDC(new_port, port)
+            self.submodules += gramNativePortCDC(new_port, port)
             port = new_port
 
         # Data width convertion --------------------------------------------------------------------
@@ -107,7 +107,7 @@ class gramCrossbar(Elaboratable):
                 addr_shift = -log2_int(data_width//self.controller.data_width)
             else:
                 addr_shift = log2_int(self.controller.data_width//data_width)
-            new_port = LiteDRAMNativePort(
+            new_port = gramNativePort(
                 mode          = mode,
                 address_width = port.address_width + addr_shift,
                 data_width    = data_width,
@@ -128,8 +128,8 @@ class gramCrossbar(Elaboratable):
         # Address mapping --------------------------------------------------------------------------
         cba_shifts = {"ROW_BANK_COL": controller.settings.geom.colbits - controller.address_align}
         cba_shift = cba_shifts[controller.settings.address_mapping]
-        m_ba      = [m.get_bank_address(self.bank_bits, cba_shift)for m in self.masters]
-        m_rca     = [m.get_row_column_address(self.bank_bits, self.rca_bits, cba_shift) for m in self.masters]
+        m_ba      = [master.get_bank_address(self.bank_bits, cba_shift) for master in self.masters]
+        m_rca     = [master.get_row_column_address(self.bank_bits, self.rca_bits, cba_shift) for master in self.masters]
 
         master_readys       = [0]*nmasters
         master_wdata_readys = [0]*nmasters
@@ -195,17 +195,18 @@ class gramCrossbar(Elaboratable):
             m.d.comb += master.rdata.valid.eq(master_rdata_valid)
 
         # Route data writes ------------------------------------------------------------------------
-        wdata_cases = {}
-        for nm, master in enumerate(self.masters):
-            wdata_cases[2**nm] = [
-                controller.wdata.eq(master.wdata.data),
-                controller.wdata_we.eq(master.wdata.we)
-            ]
-        wdata_cases["default"] = [
-            controller.wdata.eq(0),
-            controller.wdata_we.eq(0)
-        ]
-        m.d.comb += Case(Cat(*master_wdata_readys), wdata_cases)
+        with m.Switch(Cat(*master_wdata_readys)):
+            with m.Case():
+                m.d.comb += [
+                    controller.wdata.eq(0),
+                    controller.wdata_we.eq(0),
+                ]
+            for nm, master in enumerate(self.masters):
+                with m.Case(2**nm):
+                    m.d.comb = [
+                        controller.wdata.eq(master.wdata.data),
+                        controller.wdata_we.eq(master.wdata.we),
+                    ]
 
         # Route data reads -------------------------------------------------------------------------
         for master in self.masters:

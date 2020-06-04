@@ -94,6 +94,9 @@ class BankMachine(Elaboratable):
         ba = settings.geom.bankbits + log2_int(nranks)
         self.cmd = cmd = stream.Endpoint(cmd_request_rw_layout(a, ba))
 
+        self._address_align = address_align
+        self._n = n
+
     def elaborate(self, platform):
         m = Module()
 
@@ -107,13 +110,18 @@ class BankMachine(Elaboratable):
         cmd_buffer = stream.Buffer(cmd_buffer_layout) # 1 depth buffer to detect row change
         m.submodules += cmd_buffer_lookahead, cmd_buffer
         m.d.comb += [
-            self.req.connect(cmd_buffer_lookahead.sink, include={"valid", "ready", "we", "addr"}),
+            #self.req.connect(cmd_buffer_lookahead.sink, include={"valid", "ready", "payload.we", "payload.addr"}),
+            cmd_buffer_lookahead.sink.valid.eq(self.req.valid),
+            cmd_buffer_lookahead.sink.ready.eq(self.req.ready),
+            cmd_buffer_lookahead.sink.payload.we.eq(self.req.we),
+            cmd_buffer_lookahead.sink.payload.addr.eq(self.req.addr),
+
             cmd_buffer_lookahead.source.connect(cmd_buffer.sink),
             cmd_buffer.source.ready.eq(self.req.wdata_ready | self.req.rdata_valid),
             self.req.lock.eq(cmd_buffer_lookahead.source.valid | cmd_buffer.source.valid),
         ]
 
-        slicer = _AddressSlicer(self.settings.geom.colbits, address_align)
+        slicer = _AddressSlicer(self.settings.geom.colbits, self._address_align)
 
         # Row tracking -----------------------------------------------------------------------------
         row        = Signal(self.settings.geom.rowbits)
@@ -132,29 +140,29 @@ class BankMachine(Elaboratable):
 
         # Address generation -----------------------------------------------------------------------
         row_col_n_addr_sel = Signal()
-        m.d.comb += cmd.ba.eq(n)
+        m.d.comb += self.cmd.ba.eq(self._n)
         with m.If(row_col_n_addr_sel):
-            m.d.comb += cmd.a.eq(slicer.row(cmd_buffer.source.addr))
+            m.d.comb += self.cmd.a.eq(slicer.row(cmd_buffer.source.addr))
         with m.Else():
-            m.d.comb += cmd.a.eq((auto_precharge << 10) | slicer.col(cmd_buffer.source.addr))
+            m.d.comb += self.cmd.a.eq((auto_precharge << 10) | slicer.col(cmd_buffer.source.addr))
 
         # tWTP (write-to-precharge) controller -----------------------------------------------------
         write_latency = math.ceil(self.settings.phy.cwl / self.settings.phy.nphases)
         precharge_time = write_latency + self.settings.timing.tWR + self.settings.timing.tCCD # AL=0
         m.submodules.twtpcon = twtpcon = tXXDController(precharge_time)
-        m.d.comb += twtpcon.valid.eq(cmd.valid & cmd.ready & cmd.is_write)
+        m.d.comb += twtpcon.valid.eq(self.cmd.valid & self.cmd.ready & self.cmd.is_write)
 
         # tRC (activate-activate) controller -------------------------------------------------------
         m.submodules.trccon = trccon = tXXDController(self.settings.timing.tRC)
-        m.d.comb += trccon.valid.eq(cmd.valid & cmd.ready & row_open)
+        m.d.comb += trccon.valid.eq(self.cmd.valid & self.cmd.ready & row_open)
 
         # tRAS (activate-precharge) controller -----------------------------------------------------
         m.submodules.trascon = trascon = tXXDController(self.settings.timing.tRAS)
-        m.d.comb += trascon.valid.eq(cmd.valid & cmd.ready & row_open)
+        m.d.comb += trascon.valid.eq(self.cmd.valid & self.cmd.ready & row_open)
 
         # Auto Precharge generation ----------------------------------------------------------------
         # generate auto precharge when current and next cmds are to different rows
-        if settings.with_auto_precharge:
+        if self.settings.with_auto_precharge:
             with m.If(cmd_buffer_lookahead.source.valid & cmd_buffer.source.valid):
                 with m.If(slicer.row(cmd_buffer_lookahead.source.addr) != slicer.row(cmd_buffer.source.addr)):
                     m.d.comb += auto_precharge.eq(row_close == 0)
@@ -163,27 +171,27 @@ class BankMachine(Elaboratable):
         # Note: tRRD, tFAW, tCCD, tWTR timings are enforced by the multiplexer
         with m.FSM():
             with m.State("Regular"):
-                with m.If(refresh_req):
+                with m.If(self.refresh_req):
                     m.next = "Refresh"
                 with m.Elif(cmd_buffer.source.valid):
                     with m.If(row_opened):
                         with m.If(row_hit):
                             m.d.comb += [
-                                cmd.valid.eq(1),
-                                cmd.cas.eq(1),
+                                self.cmd.valid.eq(1),
+                                self.cmd.cas.eq(1),
                             ]
                             with m.If(cmd_buffer.source.we):
                                 m.d.comb += [
-                                    self.req.wdata_ready.eq(cmd.ready),
-                                    cmd.is_write.eq(1),
-                                    cmd.we.eq(1),
+                                    self.req.wdata_ready.eq(self.cmd.ready),
+                                    self.cmd.is_write.eq(1),
+                                    self.cmd.we.eq(1),
                                 ]
                             with m.Else():
                                 m.d.comb += [
-                                    self.req.rdata_valid.eq(cmd.ready),
-                                    cmd.is_read.eq(1),
+                                    self.req.rdata_valid.eq(self.cmd.ready),
+                                    self.cmd.is_read.eq(1),
                                 ]
-                            with m.If(cmd.ready & auto_precharge):
+                            with m.If(self.cmd.ready & auto_precharge):
                                 m.next = "Autoprecharge"
                         with m.Else():
                             m.next = "Precharge"
@@ -195,13 +203,13 @@ class BankMachine(Elaboratable):
 
                 with m.If(twtpcon.ready & trascon.ready):
                     m.d.comb += [
-                        cmd.valid.eq(1),
-                        cmd.ras.eq(1),
-                        cmd.we.eq(1),
-                        cmd.is_cmd.eq(1),
+                        self.cmd.valid.eq(1),
+                        self.cmd.ras.eq(1),
+                        self.cmd.we.eq(1),
+                        self.cmd.is_cmd.eq(1),
                     ]
 
-                    with m.If(cmd.ready):
+                    with m.If(self.cmd.ready):
                         m.next = "tRP"
 
             with m.State("Autoprecharge"):
@@ -215,22 +223,22 @@ class BankMachine(Elaboratable):
                     m.d.comb += [
                         row_col_n_addr_sel.eq(1),
                         row_open.eq(1),
-                        cmd.valid.eq(1),
-                        cmd.is_cmd.eq(1),
-                        cmd.ras.eq(1),
+                        self.cmd.valid.eq(1),
+                        self.cmd.is_cmd.eq(1),
+                        self.cmd.ras.eq(1),
                     ]
-                    with m.If(cmd.ready):
+                    with m.If(self.cmd.ready):
                         m.next = "tRCD"
 
             with m.State("Refresh"):
                 m.d.comb += [
                     row_close.eq(1),
-                    cmd.is_cmd.eq(1),
+                    self.cmd.is_cmd.eq(1),
                 ]
 
                 with m.If(twtpcon.ready):
-                    m.d.comb += refresh_gnt.eq(1)
-                with m.If(~refresh_req):
+                    m.d.comb += self.refresh_gnt.eq(1)
+                with m.If(~self.refresh_req):
                     m.next = "Regular"
 
             delayed_enter(m, "tRP", "Activate", self.settings.timing.tRP - 1)

@@ -6,11 +6,11 @@
 # TODO:
 # - add multirank support.
 
-from migen import *
+from nmigen import *
 
-from litedram.common import burst_lengths
-from litedram.phy.dfi import *
-from litedram.modules import _speedgrade_timings, _technology_timings
+from gram.common import burst_lengths
+from gram.phy.dfi import *
+from gram.modules import _speedgrade_timings, _technology_timings
 
 from functools import reduce
 from operator import or_
