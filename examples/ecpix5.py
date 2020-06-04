@@ -9,7 +9,9 @@ from lambdasoc.periph.timer import TimerPeripheral
 from lambdasoc.periph import Peripheral
 from lambdasoc.soc.cpu import CPUSoC
 
+from gram.core import gramCore
 from gram.phy.ecp5ddrphy import ECP5DDRPHY
+from gram.modules import MT41K256M16
 
 from customecpix5 import ECPIX5Platform
 
@@ -91,7 +93,7 @@ class SysClocker(Elaboratable):
 	def elaborate(self, platform):
 		m = Module()
 
-		m.submodules.pll = pll = PLL(ClockSignal("sync"), CLKI_DIV=1, CLKFB_DIV=2, CLK_DIV=2)
+		m.submodules.pll = pll = PLL(ClockSignal("sync"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=2, CLK2_DIV=16)
 		cd_sys2x = ClockDomain("sys2x", local=False)
 		m.d.comb += cd_sys2x.clk.eq(pll.clkout1)
 		m.domains += cd_sys2x
@@ -108,7 +110,7 @@ class DDR3SoC(CPUSoC, Elaboratable):
 				 ram_addr, ram_size,
 				 uart_addr, uart_divisor, uart_pins,
 				 timer_addr, timer_width,
-				 ddrphy_addr):
+				 ddrphy_addr, dramcore_addr):
 		self._arbiter = wishbone.Arbiter(addr_width=30, data_width=32, granularity=8,
 										 features={"cti", "bte"})
 		self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
@@ -137,6 +139,15 @@ class DDR3SoC(CPUSoC, Elaboratable):
 		self.ddrphy = ECP5DDRPHY(platform.request("ddr3", 0))
 		self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
+		ddrmodule = MT41K256M16(clk_freq, "1:4")
+
+		self.dramcore = gramCore(
+			phy = self.ddrphy,
+            geom_settings   = ddrmodule.geom_settings,
+            timing_settings = ddrmodule.timing_settings,
+            clk_freq = clk_freq)
+		#self._decoder.add(self.dramcore.bus, addr=dramcore_addr)
+
 		self.memory_map = self._decoder.bus.memory_map
 
 		self.clk_freq = clk_freq
@@ -155,7 +166,7 @@ class DDR3SoC(CPUSoC, Elaboratable):
 		m.submodules.intc    = self.intc
 		m.submodules.ddrphy  = self.ddrphy
 
-		m.submodules.sys2x = Sys2X()
+		m.submodules.sysclk = SysClocker()
 
 		m.d.comb += [
 			self._arbiter.bus.connect(self._decoder.bus),
@@ -177,7 +188,7 @@ if __name__ == "__main__":
 		   ram_addr=0x00004000, ram_size=0x1000,
 		  uart_addr=0x00005000, uart_divisor=uart_divisor, uart_pins=uart_pins,
 		 timer_addr=0x00006000, timer_width=32,
-		ddrphy_addr=0x00007000
+		ddrphy_addr=0x00007000, dramcore_addr=0x00008000
 	)
 
 	soc.build(do_build=True, do_init=True)
