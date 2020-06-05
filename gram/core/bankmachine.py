@@ -112,7 +112,7 @@ class BankMachine(Elaboratable):
         m.d.comb += [
             #self.req.connect(cmd_buffer_lookahead.sink, include={"valid", "ready", "payload.we", "payload.addr"}),
             cmd_buffer_lookahead.sink.valid.eq(self.req.valid),
-            cmd_buffer_lookahead.sink.ready.eq(self.req.ready),
+            self.req.ready.eq(cmd_buffer_lookahead.sink.ready),
             cmd_buffer_lookahead.sink.payload.we.eq(self.req.we),
             cmd_buffer_lookahead.sink.payload.addr.eq(self.req.addr),
 
