@@ -23,12 +23,17 @@ class RefreshExecuter(Elaboratable):
     - Send an "Auto Refresh" command
     - Wait tRFC
     """
-    def __init__(self, cmd, trp, trfc):
+    def __init__(self, trp, trfc):
         self.start = Signal()
         self.done  = Signal()
-        self._cmd = cmd
         self._trp = trp
         self._trfc = trfc
+
+        self.a = Signal()
+        self.ba = Signal()
+        self.cas = Signal()
+        self.ras = Signal()
+        self.we = Signal()
 
     def elaborate(self, platform):
         m = Module()
@@ -36,39 +41,30 @@ class RefreshExecuter(Elaboratable):
         trp = self._trp
         trfc = self._trfc
 
-        m.d.sync += [
-            self._cmd.a.eq(  0),
-            self._cmd.ba.eq( 0),
-            self._cmd.cas.eq(0),
-            self._cmd.ras.eq(0),
-            self._cmd.we.eq( 0),
-            self.done.eq(0),
-        ]
-
         tl = Timeline([
             # Precharge All
             (0, [
-                self._cmd.a.eq(2**10),
-                self._cmd.ba.eq( 0),
-                self._cmd.cas.eq(0),
-                self._cmd.ras.eq(1),
-                self._cmd.we.eq( 1)
+                self.a.eq(2**10),
+                self.ba.eq(0),
+                self.cas.eq(0),
+                self.ras.eq(1),
+                self.we.eq(1)
             ]),
             # Auto Refresh after tRP
             (trp, [
-                self._cmd.a.eq(  0),
-                self._cmd.ba.eq( 0),
-                self._cmd.cas.eq(1),
-                self._cmd.ras.eq(1),
-                self._cmd.we.eq( 0),
+                self.a.eq(0),
+                self.ba.eq(0),
+                self.cas.eq(1),
+                self.ras.eq(1),
+                self.we.eq(0),
             ]),
             # Done after tRP + tRFC
             (trp + trfc, [
-                self._cmd.a.eq(  0),
-                self._cmd.ba.eq( 0),
-                self._cmd.cas.eq(0),
-                self._cmd.ras.eq(0),
-                self._cmd.we.eq( 0),
+                self.a.eq(0),
+                self.ba.eq(0),
+                self.cas.eq(0),
+                self.ras.eq(0),
+                self.we.eq(0),
                 self.done.eq(1),
             ]),
         ])
@@ -84,20 +80,32 @@ class RefreshSequencer(Elaboratable):
 
     Sequence N refreshs to the DRAM.
     """
-    def __init__(self, cmd, trp, trfc, postponing=1):
+    def __init__(self, trp, trfc, postponing=1):
         self.start = Signal()
         self.done  = Signal()
 
         self._trp = trp
         self._trfc = trfc
         self._postponing = postponing
-        self._cmd = cmd
+
+        self.a = Signal()
+        self.ba = Signal()
+        self.cas = Signal()
+        self.ras = Signal()
+        self.we = Signal()
 
     def elaborate(self, platform):
         m = Module()
 
-        executer = RefreshExecuter(self._cmd, self._trp, self._trfc)
+        executer = RefreshExecuter(self._trp, self._trfc)
         m.submodules += executer
+        m.d.comb += [
+            self.a.eq(executer.a),
+            self.ba.eq(executer.ba),
+            self.cas.eq(executer.cas),
+            self.ras.eq(executer.ras),
+            self.we.eq(executer.we),
+        ]
 
         count = Signal(bits_for(self._postponing), reset=self._postponing-1)
         with m.If(self.start):
@@ -187,17 +195,21 @@ class ZQCSExecuter(Elaboratable):
     - Send an "ZQ Short Calibration" command
     - Wait tZQCS
     """
-    def __init__(self, cmd, trp, tzqcs):
+    def __init__(self, trp, tzqcs):
         self.start = Signal()
         self.done  = Signal()
-        self._cmd = cmd
         self._trp = trp
         self._tzqcs = tzqcs
+
+        self.a = Signal()
+        self.ba = Signal()
+        self.cas = Signal()
+        self.ras = Signal()
+        self.we = Signal()
 
     def elaborate(self, platform):
         m = Module()
 
-        cmd = self._cmd
         trp = self._trp
         tzqcs = self._tzqcs
 
@@ -206,27 +218,27 @@ class ZQCSExecuter(Elaboratable):
         tl = Timeline([
             # Precharge All
             (0, [
-                cmd.a.eq(  2**10),
-                cmd.ba.eq( 0),
-                cmd.cas.eq(0),
-                cmd.ras.eq(1),
-                cmd.we.eq( 1)
+                self.a.eq(  2**10),
+                self.ba.eq( 0),
+                self.cas.eq(0),
+                self.ras.eq(1),
+                self.we.eq( 1)
             ]),
             # ZQ Short Calibration after tRP
             (trp, [
-                cmd.a.eq(  0),
-                cmd.ba.eq( 0),
-                cmd.cas.eq(0),
-                cmd.ras.eq(0),
-                cmd.we.eq( 1),
+                self.a.eq(  0),
+                self.ba.eq( 0),
+                self.cas.eq(0),
+                self.ras.eq(0),
+                self.we.eq( 1),
             ]),
             # Done after tRP + tZQCS
             (trp + tzqcs, [
-                cmd.a.eq(  0),
-                cmd.ba.eq( 0),
-                cmd.cas.eq(0),
-                cmd.ras.eq(0),
-                cmd.we.eq( 0),
+                self.a.eq(  0),
+                self.ba.eq( 0),
+                self.cas.eq(0),
+                self.ras.eq(0),
+                self.we.eq( 0),
                 self.done.eq(1)
             ]),
         ])
@@ -283,7 +295,7 @@ class Refresher(Elaboratable):
         ]
 
         # Refresh Sequencer ------------------------------------------------------------------------
-        sequencer = RefreshSequencer(self.cmd, settings.timing.tRP, settings.timing.tRFC, self._postponing)
+        sequencer = RefreshSequencer(settings.timing.tRP, settings.timing.tRFC, self._postponing)
         m.submodules.sequencer = sequencer
 
         if settings.timing.tZQCS is not None:
@@ -293,7 +305,7 @@ class Refresher(Elaboratable):
             m.d.comb += wants_zqcs.eq(zqcs_timer.done)
 
             # ZQCS Executer ------------------------------------------------------------------------
-            zqcs_executer = ZQCSExecuter(self.cmd, settings.timing.tRP, settings.timing.tZQCS)
+            zqcs_executer = ZQCSExecuter(settings.timing.tRP, settings.timing.tZQCS)
             m.submodules.zqs_executer = zqcs_executer
             m.d.comb += zqcs_timer.wait.eq(~zqcs_executer.done)
 
@@ -311,7 +323,14 @@ class Refresher(Elaboratable):
 
             if settings.timing.tZQCS is None:
                 with m.State("Do-Refresh"):
-                    m.d.comb += self.cmd.valid.eq(1)
+                    m.d.comb += [
+                        self.cmd.valid.eq(1),
+                        self.cmd.a.eq(sequencer.a),
+                        self.cmd.ba.eq(sequencer.ba),
+                        self.cmd.cas.eq(sequencer.cas),
+                        self.cmd.ras.eq(sequencer.ras),
+                        self.cmd.we.eq(sequencer.we),
+                    ]
                     with m.If(sequencer.done):
                         m.d.comb += [
                             self.cmd.valid.eq(0),
@@ -333,7 +352,14 @@ class Refresher(Elaboratable):
                             m.next = "Idle"
 
                 with m.State("Do-Zqcs"):
-                    m.d.comb += self.cmd.valid.eq(1)
+                    m.d.comb += [
+                        self.cmd.valid.eq(1),
+                        self.cmd.a.eq(zqcs_executer.a),
+                        self.cmd.ba.eq(zqcs_executer.ba),
+                        self.cmd.cas.eq(zqcs_executer.cas),
+                        self.cmd.ras.eq(zqcs_executer.ras),
+                        self.cmd.we.eq(zqcs_executer.we),
+                    ]
                     with m.If(zqcs_executer.done):
                         m.d.comb += [
                             self.cmd.valid.eq(0),
