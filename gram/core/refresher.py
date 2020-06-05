@@ -213,7 +213,7 @@ class ZQCSExecuter(Elaboratable):
         trp = self._trp
         tzqcs = self._tzqcs
 
-        m.d.sync += self.done.eq(0)
+        #m.d.sync += self.done.eq(0)
 
         tl = Timeline([
             # Precharge All
@@ -223,6 +223,7 @@ class ZQCSExecuter(Elaboratable):
                 self.cas.eq(0),
                 self.ras.eq(1),
                 self.we.eq( 1)
+                self.done.eq(0)
             ]),
             # ZQ Short Calibration after tRP
             (trp, [
@@ -231,6 +232,7 @@ class ZQCSExecuter(Elaboratable):
                 self.cas.eq(0),
                 self.ras.eq(0),
                 self.we.eq( 1),
+                self.done.eq(0),
             ]),
             # Done after tRP + tZQCS
             (trp + tzqcs, [
