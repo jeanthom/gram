@@ -26,9 +26,6 @@ class ControllerSettings(Settings):
         read_time           = 32,
         write_time          = 16,
 
-        # Bandwidth
-        with_bandwidth      = False,
-
         # Refresh
         with_refresh        = True,
         refresh_cls         = Refresher,

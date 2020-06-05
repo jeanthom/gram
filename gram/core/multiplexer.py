@@ -15,7 +15,6 @@ from nmigen import *
 from lambdasoc.periph import Peripheral
 
 from gram.common import *
-from gram.core.bandwidth import Bandwidth
 import gram.stream as stream
 from gram.compat import RoundRobin, delayed_enter
 
@@ -423,9 +422,5 @@ class Multiplexer(Peripheral, Elaboratable):
             
             # TODO: reduce this, actual limit is around (cl+1)/nphases
             delayed_enter(m, "RTW", "Write", settings.phy.read_latency-1)
-
-        if settings.with_bandwidth:
-            data_width = settings.phy.dfi_databits*settings.phy.nphases
-            m.submodules.bandwidth = Bandwidth(self.choose_req.cmd, data_width)
 
         return m
