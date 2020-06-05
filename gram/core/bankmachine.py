@@ -92,7 +92,7 @@ class BankMachine(Elaboratable):
 
         a  = settings.geom.addressbits
         ba = settings.geom.bankbits + log2_int(nranks)
-        self.cmd = cmd = stream.Endpoint(cmd_request_rw_layout(a, ba))
+        self.cmd = stream.Endpoint(cmd_request_rw_layout(a, ba))
 
         self._address_align = address_align
         self._n = n
