@@ -222,7 +222,7 @@ class ZQCSExecuter(Elaboratable):
                 self.ba.eq( 0),
                 self.cas.eq(0),
                 self.ras.eq(1),
-                self.we.eq( 1)
+                self.we.eq(1),
                 self.done.eq(0)
             ]),
             # ZQ Short Calibration after tRP
