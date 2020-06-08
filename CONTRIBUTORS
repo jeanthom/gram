@@ -1,11 +1,6 @@
-LiteX ecosystem would not exist without the collaborative work of contributors! Here is below the
-list of all the LiteDRAM contributors.
+gram is based off the LiteDRAM project, a DRAM controller for LiteX SoCs.
 
-In the source code, each file list the main authors/contributors:
-- author(s) that created the initial content.
-- contributor(s) that added essential features/improvements.
-
-If you think you should be in this list and don't find yourself, write to florent@enjoy-digital.fr
+If you think you should be in this list and don't find yourself, please send a pull-request
 and we'll fix it!
 
 Contributors:
@@ -24,3 +19,4 @@ Copyright (c) 2020 Michael Welling <mwelling@ieee.org>
 Copyright (c) 2019 Pierre-Olivier Vauboin <po@lambdaconcept>
 Copyright (c) 2015 Sebastien Bourdeauducq <sb@m-labs.hk>
 Copyright (c) 2016-2016 Tim 'mithro' Ansell <me@mith.ro>
+Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
