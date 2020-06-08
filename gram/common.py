@@ -1,6 +1,7 @@
 # This file is Copyright (c) 2016-2019 Florent Kermarrec <florent@enjoy-digital.fr>
 # This file is Copyright (c) 2018 John Sully <john@csquare.ca>
 # This file is Copyright (c) 2018 bunnie <bunnie@kosagi.com>
+# This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 # License: BSD
 
 import math

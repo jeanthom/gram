@@ -1,3 +1,5 @@
+# This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
+
 from nmigen import *
 from nmigen.hdl.rec import *
 from nmigen.lib import fifo
