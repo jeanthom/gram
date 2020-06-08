@@ -1,13 +1,12 @@
 # This file is Copyright (c) 2019 David Shah <dave@ds0.me>
 # This file is Copyright (c) 2019-2020 Florent Kermarrec <florent@enjoy-digital.fr>
+# This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 # License: BSD
 
 # 1:2 frequency-ratio DDR3 PHY for Lattice's ECP5
 # DDR3: 800 MT/s
 
 import math
-
-# from litex.soc.interconnect.csr import *
 
 from nmigen import *
 from nmigen.lib.cdc import FFSynchronizer
@@ -17,7 +16,7 @@ from lambdasoc.periph import Peripheral
 
 import gram.stream as stream
 from gram.common import *
-from gram.phy.dfi import *
+from gram.phy.dfi import Interface
 from gram.compat import Timeline
 
 # Lattice ECP5 DDR PHY Initialization --------------------------------------------------------------
@@ -116,22 +115,27 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self.bus = self._bridge.bus
         self.irq = self._bridge.irq
 
-    def elaborate(self, platform):
-        m = Module()
-
-        memtype = "DDR3"
-        tck = 2/(2*2*self._sys_clk_freq)
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n)
         databits = len(self.pads.dq.oe)
+        self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
+
+    def elaborate(self, platform):
+        m = Module()
+
+        tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
+        databits = len(self.pads.dq.oe)
+        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n)
+        addressbits = len(self.pads.a.o)
+        bankbits = len(self.pads.ba.o)
 
         # Init -------------------------------------------------------------------------------------
         m.submodules.init = DomainRenamer("init")(ECP5DDRPHYInit("sys2x"))
 
         # Parameters -------------------------------------------------------------------------------
-        cl, cwl         = get_cl_cw(memtype, tck)
+        cl, cwl         = get_cl_cw("DDR3", tck)
         cl_sys_latency  = get_sys_latency(nphases, cl)
         cwl_sys_latency = get_sys_latency(nphases, cwl)
 
@@ -143,7 +147,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         wrcmdphase, wrphase = get_sys_phases(nphases, cwl_sys_latency, cwl)
         self.settings = PhySettings(
             phytype       = "ECP5DDRPHY",
-            memtype       = memtype,
+            memtype       = "DDR3",
             databits      = databits,
             dfi_databits  = 4*databits,
             nranks        = nranks,
@@ -159,7 +163,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         )
 
         # DFI Interface ----------------------------------------------------------------------------
-        self.dfi = dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
+        dfi = self.dfi
 
         # # #
 
