@@ -56,6 +56,7 @@ class _CommandChooser(Elaboratable):
 
         # cas/ras/we are 0 when valid is inactive
         self.cmd = stream.Endpoint(cmd_request_rw_layout(a, ba))
+        self.ready = Signal(len(requests))
 
     def elaborate(self, platform):
         m = Module()
@@ -90,8 +91,9 @@ class _CommandChooser(Elaboratable):
                 m.d.comb += getattr(self.cmd, name).eq(choices[arbiter.grant])
 
         for i, request in enumerate(self._requests):
-            with m.If(self.cmd.valid & self.cmd.ready & (arbiter.grant == i)):
-                m.d.comb += request.ready.eq(1)
+            #with m.If(self.cmd.valid & self.cmd.ready & (arbiter.grant == i)):
+                #m.d.comb += request.ready.eq(1) # TODO: this shouldn't be commented
+            self.ready[i].eq(self.cmd.valid & self.cmd.ready & (arbiter.grant == i))
 
         # Arbitrate if a command is being accepted or if the command is not valid to ensure a valid
         # command is selected when cmd.ready goes high.
@@ -254,6 +256,8 @@ class Multiplexer(Peripheral, Elaboratable):
         requests = [bm.cmd for bm in bank_machines]
         m.submodules.choose_cmd = choose_cmd = _CommandChooser(requests)
         m.submodules.choose_req = choose_req = _CommandChooser(requests)
+        for i, request in enumerate(requests):
+            m.d.comb += request.ready.eq(choose_cmd.ready[i] | choose_req.ready[i])
         if settings.phy.nphases == 1:
             # When only 1 phase, use choose_req for all requests
             choose_cmd = choose_req
