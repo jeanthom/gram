@@ -314,12 +314,12 @@ class gramNativePort(Settings):
 
 class gramNativeWritePort(gramNativePort):
     def __init__(self, *args, **kwargs):
-        LiteDRAMNativePort.__init__(self, "write", *args, **kwargs)
+        gramNativePort.__init__(self, "write", *args, **kwargs)
 
 
 class gramNativeReadPort(gramNativePort):
     def __init__(self, *args, **kwargs):
-        LiteDRAMNativePort.__init__(self, "read", *args, **kwargs)
+        gramNativePort.__init__(self, "read", *args, **kwargs)
 
 
 # Timing Controllers -------------------------------------------------------------------------------
