@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+import csv
+import argparse
+
+def generateHeader(input_file, output_file):
+	constant = output_file.replace('.', '_').upper()
+	header = "#ifndef {}\n#define {}\n".format(constant, constant)
+
+	with open('test.csv', newline='\n') as csvfile:
+		csrreader = csv.reader(filter(lambda row: row[0]!='#', csvfile), delimiter=',')
+		for row in csrreader:
+			header += "volatile uint32_t *{} = {};\n".format(row[0].strip(), row[1].strip())
+
+	header += "#endif /* {} */\n".format(constant)
+
+	return header
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser()
+	parser.add_argument("in_csv", help="input csv file")
+	parser.add_argument("out_h", help="output header file")
+	args = parser.parse_args()
+
+	print(generateHeader(args.in_csv, args.out_h))
