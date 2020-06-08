@@ -152,7 +152,9 @@ class DDR3SoC(CPUSoC, Elaboratable):
 			geom_settings   = ddrmodule.geom_settings,
 			timing_settings = ddrmodule.timing_settings,
 			clk_freq = clk_freq)
-		#self._decoder.add(self.dramcore.bus, addr=dramcore_addr)
+		self._decoder.add(self.dramcore.bus, addr=dramcore_addr)
+
+		self.dramport = self.dramcore.crossbar.get_port()
 
 		self.memory_map = self._decoder.bus.memory_map
 
