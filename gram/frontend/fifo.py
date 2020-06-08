@@ -1,11 +1,12 @@
 # This file is Copyright (c) 2018-2019 Florent Kermarrec <florent@enjoy-digital.fr>
 # License: BSD
 
-from litex.gen import *
+from nmigen import *
+#from litex.gen import *
 
-from litex.soc.interconnect import stream
+#from litex.soc.interconnect import stream
 
-from litedram.frontend import dma
+#from litedram.frontend import dma
 
 
 def _inc(signal, modulo):
@@ -41,29 +42,27 @@ class _LiteDRAMFIFOCtrl(Module):
         # From read buffer
         self.read = Signal()
 
-        # # #
+    def elaborate(self, platform):
+        m = Module()
 
         produce = self.write_address
         consume = self.read_address
 
-        self.sync += [
-            If(self.write,
-                _inc(produce, depth)
-            ),
-            If(self.read,
-                _inc(consume, depth)
-            ),
-            If(self.write & ~self.read,
-                self.level.eq(self.level + 1),
-            ).Elif(self.read & ~self.write,
-                self.level.eq(self.level - 1)
-            )
-        ]
+        with m.If(self.write):
+            m.d.sync += _inc(produce, depth)
+            with m.If(~self.read):
+                m.d.sync += self.level.eq(self.level + 1)
+        with m.If(self.read):
+            m.d.sync += _inc(consume, depth)
+            with m.If(~self.write):
+                m.d.sync += self.level.eq(self.level - 1)
 
-        self.comb += [
+        m.d.comb += [
             self.writable.eq(self.level < write_threshold),
             self.readable.eq(self.level > read_threshold)
         ]
+
+        return m
 
 
 class _LiteDRAMFIFOWriter(Module):
