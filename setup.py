@@ -6,12 +6,11 @@ from setuptools import find_packages
 
 setup(
     name="gram",
-    description="Small footprint and configurable DRAM core",
-    author="Florent Kermarrec",
-    author_email="florent@enjoy-digital.fr",
-    url="http://enjoy-digital.fr",
-    download_url="https://github.com/enjoy-digital/litedram",
-    test_suite="test",
+    description="DRAM core for LambdaSoC",
+    author="LambdaConcept",
+    author_email="contact@lambdaconcept.com",
+    url="https://lambdaconcept.com",
+    download_url="https://github.com/lambdaconcept/gram",
     license="BSD",
     python_requires="~=3.6",
     install_requires=["pyyaml"],
