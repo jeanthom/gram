@@ -6,21 +6,19 @@
 from nmigen import *
 
 from gram.phy import dfi
+from gram.compat import CSRPrefixProxy
 from lambdasoc.periph import Peripheral
 
 # PhaseInjector ------------------------------------------------------------------------------------
 
-class PhaseInjector(Peripheral, Elaboratable):
-    def __init__(self, phase):
-        super().__init__(name = "phaseinjector")
-
-        bank = self.csr_bank()
-        self._command = bank.csr(6, "rw")
-        self._command_issue = bank.csr(1, "rw")
-        self._address = bank.csr(len(phase.address), "rw")
-        self._baddress = bank.csr(len(phase.bank), "rw")
-        self._wrdata = bank.csr(len(phase.wrdata), "rw")
-        self._rddata = bank.csr(len(phase.rddata), "rw")
+class PhaseInjector(Elaboratable):
+    def __init__(self, csr_bank, phase):
+        self._command = csr_bank.csr(6, "rw")
+        self._command_issue = csr_bank.csr(1, "rw")
+        self._address = csr_bank.csr(len(phase.address), "rw")
+        self._baddress = csr_bank.csr(len(phase.bank), "rw")
+        self._wrdata = csr_bank.csr(len(phase.wrdata), "rw")
+        self._rddata = csr_bank.csr(len(phase.rddata), "rw")
 
         self._phase = phase
 
@@ -58,24 +56,24 @@ class PhaseInjector(Peripheral, Elaboratable):
 
 # DFIInjector --------------------------------------------------------------------------------------
 
-class DFIInjector(Peripheral, Elaboratable):
-    def __init__(self, addressbits, bankbits, nranks, databits, nphases=1):
-        super().__init__(name = "dfii")
-
+class DFIInjector(Elaboratable):
+    def __init__(self, csr_bank, addressbits, bankbits, nranks, databits, nphases=1):
         self._nranks = nranks
 
         self._inti  = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
         self.slave  = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
         self.master = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
 
-        bank = self.csr_bank()
-        self._control = bank.csr(4, "rw")  # sel, cke, odt, reset_n
+        self._control = csr_bank.csr(4, "rw")  # sel, cke, odt, reset_n
+
+        self._phases = []
+        for n, phase in enumerate(self._inti.phases):
+            self._phases += [PhaseInjector(CSRPrefixProxy(csr_bank, "p{}".format(n)), phase)]
 
     def elaborate(self, platform):
         m = Module()
 
-        for n, phase in enumerate(self._inti.phases):
-            m.submodules += PhaseInjector(phase)
+        m.submodules += self._phases
 
         with m.If(self._control.r_data[0]):
             m.d.comb += self.slave.connect(self.master)

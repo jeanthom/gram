@@ -3,6 +3,7 @@ from nmigen import *
 from lambdasoc.periph import Peripheral
 
 from gram.dfii import DFIInjector
+from gram.compat import CSRPrefixProxy
 from gram.core.controller import ControllerSettings, gramController
 from gram.core.crossbar import gramCrossbar
 
@@ -10,31 +11,48 @@ from gram.core.crossbar import gramCrossbar
 
 class gramCore(Peripheral, Elaboratable):
     def __init__(self, phy, geom_settings, timing_settings, clk_freq, **kwargs):
+        super().__init__()
+
+        bank = self.csr_bank()
+        
+        self._zero_ev = self.event(mode="rise")
+
         self._phy = phy
         self._geom_settings = geom_settings
         self._timing_settings = timing_settings
         self._clk_freq = clk_freq
         self._kwargs = kwargs
 
-    def elaborate(self, platform):
-        m = Module()
-
-        m.submodules.dfii = dfii = DFIInjector(
+        self.dfii = DFIInjector(
+            csr_bank = CSRPrefixProxy(bank, "dfii"),
             addressbits = self._geom_settings.addressbits,
             bankbits    = self._geom_settings.bankbits,
             nranks      = self._phy.settings.nranks,
             databits    = self._phy.settings.dfi_databits,
             nphases     = self._phy.settings.nphases)
-        m.d.comb += dfii.master.connect(self._phy.dfi)
 
-        m.submodules.controller = controller = gramController(
+        self.controller = gramController(
             phy_settings    = self._phy.settings,
             geom_settings   = self._geom_settings,
             timing_settings = self._timing_settings,
             clk_freq        = self._clk_freq,
             **self._kwargs)
-        m.d.comb += controller.dfi.connect(dfii.slave)
 
-        m.submodules.crossbar = gramCrossbar(controller.interface)
+        self.crossbar = gramCrossbar(self.controller.interface)
+
+        self._bridge  = self.bridge(data_width=32, granularity=8, alignment=2)
+        self.bus = self._bridge.bus
+        self.irq = self._bridge.irq
+
+    def elaborate(self, platform):
+        m = Module()
+
+        m.submodules += self.dfii
+        m.d.comb += self.dfii.master.connect(self._phy.dfi)
+
+        m.submodules.controller = self.controller
+        m.d.comb += self.controller.dfi.connect(self.dfii.slave)
+
+        m.submodules += self.crossbar
 
         return m
