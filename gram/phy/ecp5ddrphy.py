@@ -121,6 +121,35 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         databits = len(self.pads.dq.oe)
         self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
 
+        # PHY settings -----------------------------------------------------------------------------
+        tck = 2/(2*2*self._sys_clk_freq)
+        nphases = 2
+        databits = len(self.pads.dq.oe)
+        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n)
+        addressbits = len(self.pads.a.o)
+        bankbits = len(self.pads.ba.o)
+        cl, cwl         = get_cl_cw("DDR3", tck)
+        cl_sys_latency  = get_sys_latency(nphases, cl)
+        cwl_sys_latency = get_sys_latency(nphases, cwl)
+        rdcmdphase, rdphase = get_sys_phases(nphases, cl_sys_latency, cl)
+        wrcmdphase, wrphase = get_sys_phases(nphases, cwl_sys_latency, cwl)
+        self.settings = PhySettings(
+            phytype       = "ECP5DDRPHY",
+            memtype       = "DDR3",
+            databits      = databits,
+            dfi_databits  = 4*databits,
+            nranks        = nranks,
+            nphases       = nphases,
+            rdphase       = rdphase,
+            wrphase       = wrphase,
+            rdcmdphase    = rdcmdphase,
+            wrcmdphase    = wrcmdphase,
+            cl            = cl,
+            cwl           = cwl,
+            read_latency  = 2 + cl_sys_latency + 2 + log2_int(4//nphases) + 4,
+            write_latency = cwl_sys_latency
+        )
+
     def elaborate(self, platform):
         m = Module()
 
@@ -142,30 +171,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # Observation
         self.datavalid = Signal(databits//8)
 
-        # PHY settings -----------------------------------------------------------------------------
-        rdcmdphase, rdphase = get_sys_phases(nphases, cl_sys_latency, cl)
-        wrcmdphase, wrphase = get_sys_phases(nphases, cwl_sys_latency, cwl)
-        self.settings = PhySettings(
-            phytype       = "ECP5DDRPHY",
-            memtype       = "DDR3",
-            databits      = databits,
-            dfi_databits  = 4*databits,
-            nranks        = nranks,
-            nphases       = nphases,
-            rdphase       = rdphase,
-            wrphase       = wrphase,
-            rdcmdphase    = rdcmdphase,
-            wrcmdphase    = wrcmdphase,
-            cl            = cl,
-            cwl           = cwl,
-            read_latency  = 2 + cl_sys_latency + 2 + log2_int(4//nphases) + 4,
-            write_latency = cwl_sys_latency
-        )
-
         # DFI Interface ----------------------------------------------------------------------------
         dfi = self.dfi
-
-        # # #
 
         bl8_chunk   = Signal()
         rddata_en = Signal(self.settings.read_latency)
