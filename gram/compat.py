@@ -1,9 +1,10 @@
 # This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
 from nmigen import *
+from nmigen import tracer
 from nmigen.compat import Case
 
-__ALL__ = ["delayed_enter", "RoundRobin", "Timeline"]
+__ALL__ = ["delayed_enter", "RoundRobin", "Timeline", "CSRPrefixProxy"]
 
 def delayed_enter(m, src, dst, delay):
     assert delay > 0
@@ -96,3 +97,18 @@ class Timeline(Elaboratable):
                     m.d.sync += e[1]
 
         return m
+
+class CSRPrefixProxy:
+    def __init__(self, bank, prefix):
+        self._bank = bank
+        self._prefix = prefix
+
+    def csr(self, width, access, *, addr=None, alignment=None, name=None,
+            src_loc_at=0):
+        if name is not None and not isinstance(name, str):
+            raise TypeError("Name must be a string, not {!r}".format(name))
+        name = name or tracer.get_var_name(depth=2 + src_loc_at).lstrip("_")
+
+        prefixed_name = "{}_{}".format(self._prefix, name)
+        return self._bank.csr(width=width, access=access, addr=addr,
+            alignment=alignment, name=prefixed_name)
