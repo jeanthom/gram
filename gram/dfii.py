@@ -75,7 +75,7 @@ class DFIInjector(Peripheral, Elaboratable):
         m = Module()
 
         for n, phase in enumerate(self._inti.phases):
-            setattr(m.submodules, "pi" + str(n), PhaseInjector(phase))
+            m.submodules += PhaseInjector(phase)
 
         with m.If(self._control.r_data[0]):
             m.d.comb += self.slave.connect(self.master)
