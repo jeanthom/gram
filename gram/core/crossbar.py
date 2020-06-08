@@ -72,14 +72,13 @@ class gramCrossbar(Elaboratable):
         self.rank_bits = log2_int(self.nranks, False)
 
         self.masters = []
+        self._pending_submodules = []
 
     def get_port(self, mode="both", data_width=None, clock_domain="sys", reverse=False):
-        if self.finalized:
-            raise FinalizeError
-
         if data_width is None:
             # use internal data_width when no width adaptation is requested
             data_width = self.controller.data_width
+            print("data_width=", data_width)
 
         # Crossbar port ----------------------------------------------------------------------------
         port = gramNativePort(
@@ -98,7 +97,7 @@ class gramCrossbar(Elaboratable):
                 data_width    = port.data_width,
                 clock_domain  = clock_domain,
                 id            = port.id)
-            self.submodules += gramNativePortCDC(new_port, port)
+            self._pending_submodules.append(gramNativePortCDC(new_port, port))
             port = new_port
 
         # Data width convertion --------------------------------------------------------------------
@@ -113,14 +112,16 @@ class gramCrossbar(Elaboratable):
                 data_width    = data_width,
                 clock_domain  = clock_domain,
                 id            = port.id)
-            self.submodules += ClockDomainsRenamer(clock_domain)(
-                LiteDRAMNativePortConverter(new_port, port, reverse))
+            self._pending_submodules.append(ClockDomainsRenamer(clock_domain)(
+                gramNativePortConverter(new_port, port, reverse)))
             port = new_port
 
         return port
 
     def elaborate(self, platform):
         m = Module()
+
+        m.submodules += self._pending_submodules
 
         controller = self.controller
         nmasters   = len(self.masters)
@@ -203,7 +204,7 @@ class gramCrossbar(Elaboratable):
                 ]
             for nm, master in enumerate(self.masters):
                 with m.Case(2**nm):
-                    m.d.comb = [
+                    m.d.comb += [
                         controller.wdata.eq(master.wdata.data),
                         controller.wdata_we.eq(master.wdata.we),
                     ]
