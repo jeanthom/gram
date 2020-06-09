@@ -38,6 +38,9 @@ class gramCore(Peripheral, Elaboratable):
             clk_freq        = self._clk_freq,
             **self._kwargs)
 
+        # Size in bytes
+        self.size = 2**geom_settings.bankbits * 2**geom_settings.rowbits * 2**geom_settings.colbits
+
         self.crossbar = gramCrossbar(self.controller.interface)
 
         self._bridge  = self.bridge(data_width=32, granularity=8, alignment=2)
