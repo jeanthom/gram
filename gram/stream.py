@@ -286,7 +286,7 @@ class Converter(Elaboratable):
     def __init__(self, nbits_from, nbits_to, reverse=False,
                  report_valid_token_count=False):
         cls, ratio = _get_converter_ratio(nbits_from, nbits_to)
-        self.specialized = cls(nbits_from, nbits_to, ratio,
+        self.specialized,_ = cls(nbits_from, nbits_to, ratio,
             reverse, report_valid_token_count)
         self.sink = self.specialized.sink
         self.source = self.specialized.source
@@ -304,22 +304,22 @@ class StrideConverter(Elaboratable):
         self.sink = sink = Endpoint(layout_from)
         self.source = source = Endpoint(layout_to)
 
-        nbits_from = len(sink.payload.raw_bits())
-        nbits_to = len(source.payload.raw_bits())
+        nbits_from = len(sink.payload.lower())
+        nbits_to = len(source.payload.lower())
         self.converter = Converter(nbits_from, nbits_to, *args, **kwargs)
 
     def elaborate(self, platform):
         m = Module()
 
-        nbits_from = len(sink.payload.raw_bits())
-        nbits_to = len(source.payload.raw_bits())
+        nbits_from = len(self.sink.payload.lower())
+        nbits_to = len(self.source.payload.lower())
         
         m.d.submodules += self.converter
 
         # cast sink to converter.sink (user fields --> raw bits)
         m.d.comb += [
-            self.converter.sink.stb.eq(sink.stb),
-            self.converter.sink.eop.eq(sink.eop),
+            self.converter.sink.stb.eq(self.sink.stb),
+            self.converter.sink.eop.eq(self.sink.eop),
             sink.ack.eq(self.converter.sink.ack)
         ]
         if isinstance(self.converter.specialized, _DownConverter):
@@ -327,19 +327,19 @@ class StrideConverter(Elaboratable):
             for i in range(ratio):
                 j = 0
                 for name, width in layout_to:
-                    src = getattr(sink, name)[i*width:(i+1)*width]
+                    src = getattr(self.sink, name)[i*width:(i+1)*width]
                     dst = self.converter.sink.data[i*nbits_to+j:i*nbits_to+j+width]
-                    self.comb += dst.eq(src)
+                    m.d.comb += dst.eq(src)
                     j += width
         else:
-            m.d.comb += self.converter.sink.data.eq(sink.payload.raw_bits())
+            m.d.comb += self.converter.sink.data.eq(self.sink.payload.lower())
 
 
         # cast converter.source to source (raw bits --> user fields)
-        m.D.comb += [
-            source.stb.eq(self.converter.source.stb),
-            source.eop.eq(self.converter.source.eop),
-            self.converter.source.ack.eq(source.ack)
+        m.d.comb += [
+            self.source.stb.eq(self.converter.source.stb),
+            self.source.eop.eq(self.converter.source.eop),
+            self.converter.source.ack.eq(self.source.ack)
         ]
         if isinstance(self.converter.specialized, _UpConverter):
             ratio = self.converter.specialized.ratio
@@ -347,10 +347,46 @@ class StrideConverter(Elaboratable):
                 j = 0
                 for name, width in layout_from:
                     src = self.converter.source.data[i*nbits_from+j:i*nbits_from+j+width]
-                    dst = getattr(source, name)[i*width:(i+1)*width]
+                    dst = getattr(self.source, name)[i*width:(i+1)*width]
                     m.d.comb += dst.eq(src)
                     j += width
         else:
-            m.d.comb += source.payload.raw_bits().eq(self.converter.source.data)
+            m.d.comb += self.source.payload.lower().eq(self.converter.source.data)
+
+        return m
+
+class Pipeline(Elaboratable):
+    def __init__(self, *modules):
+        self._modules = modules
+
+        # expose sink of first module
+        # if available
+        if hasattr(modules[0], "sink"):
+            self.sink = modules[0].sink
+
+        # expose source of last module
+        # if available
+        if hasattr(modules[-1], "source"):
+            self.source = modules[-1].source
+
+    def elaborate(self, platform):
+        m = Module()
+
+        n = len(modules)
+        mod = modules[0]
+        
+        for i in range(1, n):
+            mod_n = self._modules[i]
+            if isinstance(mod, Endpoint):
+                source = mod
+            else:
+                source = mod.source
+            if isinstance(m_n, Endpoint):
+                sink = mod_n
+            else:
+                sink = mod_n.sink
+            if mod is not mod_n:
+                m.d.comb += source.connect(sink)
+            mod = mod_n
 
         return m
