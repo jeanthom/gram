@@ -107,7 +107,7 @@ class gramNativePortDownConverter(Elaboratable):
         ratio = port_from.data_width//port_to.data_width
         mode = port_from.mode
 
-        counter = Signal(max=ratio)
+        counter = Signal(range(ratio))
         counter_reset = Signal()
         counter_ce = Signal()
 
@@ -345,7 +345,7 @@ class gramNativeReadPortUpConverter(Elaboratable):
 # LiteDRAMNativePortConverter ----------------------------------------------------------------------
 
 
-class LiteDRAMNativePortConverter(Elaboratable):
+class gramNativePortConverter(Elaboratable):
     def __init__(self, port_from, port_to, reverse=False):
         assert port_from.clock_domain == port_to.clock_domain
         assert port_from.mode == port_to.mode
