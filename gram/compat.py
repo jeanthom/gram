@@ -6,6 +6,7 @@ from nmigen.compat import Case
 
 __ALL__ = ["delayed_enter", "RoundRobin", "Timeline", "CSRPrefixProxy"]
 
+
 def delayed_enter(m, src, dst, delay):
     assert delay > 0
 
@@ -24,6 +25,8 @@ def delayed_enter(m, src, dst, delay):
             m.next = deststate
 
 # Original nMigen implementation by HarryHo90sHK
+
+
 class RoundRobin(Elaboratable):
     """A round-robin scheduler.
     Parameters
@@ -39,6 +42,7 @@ class RoundRobin(Elaboratable):
     stb : Signal()
         Strobe signal to enable granting access to the next device requesting. Externally driven.
     """
+
     def __init__(self, n):
         self.n = n
         self.request = Signal(n)
@@ -60,6 +64,7 @@ class RoundRobin(Elaboratable):
                                 m.d.sync += self.grant.eq(t)
 
         return m
+
 
 class Timeline(Elaboratable):
     def __init__(self, events):
@@ -98,6 +103,7 @@ class Timeline(Elaboratable):
 
         return m
 
+
 class CSRPrefixProxy:
     def __init__(self, bank, prefix):
         self._bank = bank
@@ -111,4 +117,4 @@ class CSRPrefixProxy:
 
         prefixed_name = "{}_{}".format(self._prefix, name)
         return self._bank.csr(width=width, access=access, addr=addr,
-            alignment=alignment, name=prefixed_name)
+                              alignment=alignment, name=prefixed_name)

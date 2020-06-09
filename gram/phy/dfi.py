@@ -6,6 +6,7 @@ from nmigen.hdl.rec import *
 
 __ALL__ = ["Interface"]
 
+
 def phase_description(addressbits, bankbits, nranks, databits):
     return [
         # cmd description
@@ -34,7 +35,8 @@ class Interface:
     def __init__(self, addressbits, bankbits, nranks, databits, nphases=1):
         self.phases = []
         for p in range(nphases):
-            p = Record(phase_description(addressbits, bankbits, nranks, databits))
+            p = Record(phase_description(
+                addressbits, bankbits, nranks, databits))
             self.phases += [p]
             p.cas_n.reset = 1
             p.cs_n.reset = (2**nranks-1)
@@ -45,7 +47,7 @@ class Interface:
     def connect(self, target):
         if not isinstance(target, Interface):
             raise TypeError("Target must be an instance of Interface, not {!r}"
-                .format(target))
+                            .format(target))
 
         ret = []
         for i in range(min(len(self.phases), len(target.phases))):

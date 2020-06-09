@@ -14,6 +14,7 @@ import gram.stream as stream
 
 # RefreshExecuter ----------------------------------------------------------------------------------
 
+
 class RefreshExecuter(Elaboratable):
     """Refresh Executer
 
@@ -23,9 +24,10 @@ class RefreshExecuter(Elaboratable):
     - Send an "Auto Refresh" command
     - Wait tRFC
     """
+
     def __init__(self, trp, trfc):
         self.start = Signal()
-        self.done  = Signal()
+        self.done = Signal()
         self._trp = trp
         self._trfc = trfc
 
@@ -75,14 +77,16 @@ class RefreshExecuter(Elaboratable):
 
 # RefreshSequencer ---------------------------------------------------------------------------------
 
+
 class RefreshSequencer(Elaboratable):
     """Refresh Sequencer
 
     Sequence N refreshs to the DRAM.
     """
+
     def __init__(self, trp, trfc, postponing=1):
         self.start = Signal()
-        self.done  = Signal()
+        self.done = Signal()
 
         self._trp = trp
         self._trfc = trfc
@@ -123,14 +127,16 @@ class RefreshSequencer(Elaboratable):
 
 # RefreshTimer -------------------------------------------------------------------------------------
 
+
 class RefreshTimer(Elaboratable):
     """Refresh Timer
 
     Generate periodic pulses (tREFI period) to trigger DRAM refresh.
     """
+
     def __init__(self, trefi):
-        self.wait  = Signal()
-        self.done  = Signal()
+        self.wait = Signal()
+        self.done = Signal()
         self.count = Signal(bits_for(trefi))
         self._trefi = trefi
 
@@ -139,7 +145,7 @@ class RefreshTimer(Elaboratable):
 
         trefi = self._trefi
 
-        done  = Signal()
+        done = Signal()
         count = Signal(bits_for(trefi), reset=trefi-1)
 
         with m.If(self.wait & ~self.done):
@@ -157,11 +163,13 @@ class RefreshTimer(Elaboratable):
 
 # RefreshPostponer -------------------------------------------------------------------------------
 
+
 class RefreshPostponer(Elaboratable):
     """Refresh Postponer
 
     Postpone N Refresh requests and generate a request when N is reached.
     """
+
     def __init__(self, postponing=1):
         self.req_i = Signal()
         self.req_o = Signal()
@@ -186,6 +194,7 @@ class RefreshPostponer(Elaboratable):
 
 # ZQCSExecuter ----------------------------------------------------------------------------------
 
+
 class ZQCSExecuter(Elaboratable):
     """ZQ Short Calibration Executer
 
@@ -195,9 +204,10 @@ class ZQCSExecuter(Elaboratable):
     - Send an "ZQ Short Calibration" command
     - Wait tZQCS
     """
+
     def __init__(self, trp, tzqcs):
         self.start = Signal()
-        self.done  = Signal()
+        self.done = Signal()
         self._trp = trp
         self._tzqcs = tzqcs
 
@@ -218,8 +228,8 @@ class ZQCSExecuter(Elaboratable):
         tl = Timeline([
             # Precharge All
             (0, [
-                self.a.eq(  2**10),
-                self.ba.eq( 0),
+                self.a.eq(2**10),
+                self.ba.eq(0),
                 self.cas.eq(0),
                 self.ras.eq(1),
                 self.we.eq(1),
@@ -227,20 +237,20 @@ class ZQCSExecuter(Elaboratable):
             ]),
             # ZQ Short Calibration after tRP
             (trp, [
-                self.a.eq(  0),
-                self.ba.eq( 0),
+                self.a.eq(0),
+                self.ba.eq(0),
                 self.cas.eq(0),
                 self.ras.eq(0),
-                self.we.eq( 1),
+                self.we.eq(1),
                 self.done.eq(0),
             ]),
             # Done after tRP + tZQCS
             (trp + tzqcs, [
-                self.a.eq(  0),
-                self.ba.eq( 0),
+                self.a.eq(0),
+                self.ba.eq(0),
                 self.cas.eq(0),
                 self.ras.eq(0),
-                self.we.eq( 0),
+                self.we.eq(0),
                 self.done.eq(1)
             ]),
         ])
@@ -250,6 +260,7 @@ class ZQCSExecuter(Elaboratable):
         return m
 
 # Refresher ----------------------------------------------------------------------------------------
+
 
 class Refresher(Elaboratable):
     """Refresher
@@ -265,11 +276,13 @@ class Refresher(Elaboratable):
     transactions are done, the Refresher can execute the refresh Sequence and release the Controller.
 
     """
+
     def __init__(self, settings, clk_freq, zqcs_freq=1e0, postponing=1):
         assert postponing <= 8
-        abits  = settings.geom.addressbits
+        abits = settings.geom.addressbits
         babits = settings.geom.bankbits + log2_int(settings.phy.nranks)
-        self.cmd = cmd = stream.Endpoint(cmd_request_rw_layout(a=abits, ba=babits))
+        self.cmd = cmd = stream.Endpoint(
+            cmd_request_rw_layout(a=abits, ba=babits))
         self._postponing = postponing
         self._settings = settings
         self._clk_freq = clk_freq
@@ -279,7 +292,7 @@ class Refresher(Elaboratable):
         m = Module()
 
         wants_refresh = Signal()
-        wants_zqcs    = Signal()
+        wants_zqcs = Signal()
 
         settings = self._settings
 
@@ -297,7 +310,8 @@ class Refresher(Elaboratable):
         ]
 
         # Refresh Sequencer ------------------------------------------------------------------------
-        sequencer = RefreshSequencer(settings.timing.tRP, settings.timing.tRFC, self._postponing)
+        sequencer = RefreshSequencer(
+            settings.timing.tRP, settings.timing.tRFC, self._postponing)
         m.submodules.sequencer = sequencer
 
         if settings.timing.tZQCS is not None:
@@ -307,7 +321,8 @@ class Refresher(Elaboratable):
             m.d.comb += wants_zqcs.eq(zqcs_timer.done)
 
             # ZQCS Executer ------------------------------------------------------------------------
-            zqcs_executer = ZQCSExecuter(settings.timing.tRP, settings.timing.tZQCS)
+            zqcs_executer = ZQCSExecuter(
+                settings.timing.tRP, settings.timing.tZQCS)
             m.submodules.zqs_executer = zqcs_executer
             m.d.comb += zqcs_timer.wait.eq(~zqcs_executer.done)
 

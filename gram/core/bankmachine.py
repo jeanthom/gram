@@ -16,14 +16,16 @@ import gram.stream as stream
 
 # AddressSlicer ------------------------------------------------------------------------------------
 
+
 class _AddressSlicer:
     """Helper for extracting row/col from address
 
     Column occupies lower bits of the address, row - higher bits. Address has
     a forced alignment, so column does not contain alignment bits.
     """
+
     def __init__(self, colbits, address_align):
-        self.colbits       = colbits
+        self.colbits = colbits
         self.address_align = address_align
 
     def row(self, address):
@@ -35,6 +37,7 @@ class _AddressSlicer:
         return Cat(Repl(0, self.address_align), address[:split])
 
 # BankMachine --------------------------------------------------------------------------------------
+
 
 class BankMachine(Elaboratable):
     """Converts requests from ports into DRAM commands
@@ -84,13 +87,14 @@ class BankMachine(Elaboratable):
     cmd : Endpoint(cmd_request_rw_layout)
         Stream of commands to the Multiplexer
     """
+
     def __init__(self, n, address_width, address_align, nranks, settings):
         self.settings = settings
         self.req = req = Record(cmd_layout(address_width))
         self.refresh_req = refresh_req = Signal()
         self.refresh_gnt = refresh_gnt = Signal()
 
-        a  = settings.geom.addressbits
+        a = settings.geom.addressbits
         ba = settings.geom.bankbits + log2_int(nranks)
         self.cmd = stream.Endpoint(cmd_request_rw_layout(a, ba))
 
@@ -103,11 +107,12 @@ class BankMachine(Elaboratable):
         auto_precharge = Signal()
 
         # Command buffer ---------------------------------------------------------------------------
-        cmd_buffer_layout    = [("we", 1), ("addr", len(self.req.addr))]
+        cmd_buffer_layout = [("we", 1), ("addr", len(self.req.addr))]
         cmd_buffer_lookahead = stream.SyncFIFO(
             cmd_buffer_layout, self.settings.cmd_buffer_depth,
             buffered=self.settings.cmd_buffer_buffered)
-        cmd_buffer = stream.Buffer(cmd_buffer_layout) # 1 depth buffer to detect row change
+        # 1 depth buffer to detect row change
+        cmd_buffer = stream.Buffer(cmd_buffer_layout)
         m.submodules += cmd_buffer_lookahead, cmd_buffer
         m.d.comb += [
             #self.req.connect(cmd_buffer_lookahead.sink, include={"valid", "ready", "payload.we", "payload.addr"}),
@@ -117,18 +122,21 @@ class BankMachine(Elaboratable):
             cmd_buffer_lookahead.sink.payload.addr.eq(self.req.addr),
 
             cmd_buffer_lookahead.source.connect(cmd_buffer.sink),
-            cmd_buffer.source.ready.eq(self.req.wdata_ready | self.req.rdata_valid),
-            self.req.lock.eq(cmd_buffer_lookahead.source.valid | cmd_buffer.source.valid),
+            cmd_buffer.source.ready.eq(
+                self.req.wdata_ready | self.req.rdata_valid),
+            self.req.lock.eq(cmd_buffer_lookahead.source.valid |
+                             cmd_buffer.source.valid),
         ]
 
-        slicer = _AddressSlicer(self.settings.geom.colbits, self._address_align)
+        slicer = _AddressSlicer(
+            self.settings.geom.colbits, self._address_align)
 
         # Row tracking -----------------------------------------------------------------------------
-        row        = Signal(self.settings.geom.rowbits)
+        row = Signal(self.settings.geom.rowbits)
         row_opened = Signal()
-        row_hit    = Signal()
-        row_open   = Signal()
-        row_close  = Signal()
+        row_hit = Signal()
+        row_open = Signal()
+        row_close = Signal()
         m.d.comb += row_hit.eq(row == slicer.row(cmd_buffer.source.addr))
         with m.If(row_close):
             m.d.sync += row_opened.eq(0)
@@ -144,21 +152,27 @@ class BankMachine(Elaboratable):
         with m.If(row_col_n_addr_sel):
             m.d.comb += self.cmd.a.eq(slicer.row(cmd_buffer.source.addr))
         with m.Else():
-            m.d.comb += self.cmd.a.eq((auto_precharge << 10) | slicer.col(cmd_buffer.source.addr))
+            m.d.comb += self.cmd.a.eq((auto_precharge << 10)
+                                      | slicer.col(cmd_buffer.source.addr))
 
         # tWTP (write-to-precharge) controller -----------------------------------------------------
-        write_latency = math.ceil(self.settings.phy.cwl / self.settings.phy.nphases)
-        precharge_time = write_latency + self.settings.timing.tWR + self.settings.timing.tCCD # AL=0
+        write_latency = math.ceil(
+            self.settings.phy.cwl / self.settings.phy.nphases)
+        precharge_time = write_latency + self.settings.timing.tWR + \
+            self.settings.timing.tCCD  # AL=0
         m.submodules.twtpcon = twtpcon = tXXDController(precharge_time)
-        m.d.comb += twtpcon.valid.eq(self.cmd.valid & self.cmd.ready & self.cmd.is_write)
+        m.d.comb += twtpcon.valid.eq(self.cmd.valid &
+                                     self.cmd.ready & self.cmd.is_write)
 
         # tRC (activate-activate) controller -------------------------------------------------------
         m.submodules.trccon = trccon = tXXDController(self.settings.timing.tRC)
         m.d.comb += trccon.valid.eq(self.cmd.valid & self.cmd.ready & row_open)
 
         # tRAS (activate-precharge) controller -----------------------------------------------------
-        m.submodules.trascon = trascon = tXXDController(self.settings.timing.tRAS)
-        m.d.comb += trascon.valid.eq(self.cmd.valid & self.cmd.ready & row_open)
+        m.submodules.trascon = trascon = tXXDController(
+            self.settings.timing.tRAS)
+        m.d.comb += trascon.valid.eq(self.cmd.valid &
+                                     self.cmd.ready & row_open)
 
         # Auto Precharge generation ----------------------------------------------------------------
         # generate auto precharge when current and next cmds are to different rows

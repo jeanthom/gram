@@ -19,6 +19,7 @@ import gram.stream as stream
 
 # LiteDRAMCrossbar ---------------------------------------------------------------------------------
 
+
 class gramCrossbar(Elaboratable):
     """Multiplexes LiteDRAMController (slave) between ports (masters)
 
@@ -58,15 +59,16 @@ class gramCrossbar(Elaboratable):
     masters : [LiteDRAMNativePort, ...]
         LiteDRAM memory ports
     """
+
     def __init__(self, controller):
         self.controller = controller
 
-        self.rca_bits         = controller.address_width
-        self.nbanks           = controller.nbanks
-        self.nranks           = controller.nranks
+        self.rca_bits = controller.address_width
+        self.nbanks = controller.nbanks
+        self.nranks = controller.nranks
         self.cmd_buffer_depth = controller.settings.cmd_buffer_depth
-        self.read_latency     = controller.settings.phy.read_latency + 1
-        self.write_latency    = controller.settings.phy.write_latency + 1
+        self.read_latency = controller.settings.phy.read_latency + 1
+        self.write_latency = controller.settings.phy.write_latency + 1
 
         self.bank_bits = log2_int(self.nbanks, False)
         self.rank_bits = log2_int(self.nranks, False)
@@ -82,21 +84,21 @@ class gramCrossbar(Elaboratable):
 
         # Crossbar port ----------------------------------------------------------------------------
         port = gramNativePort(
-            mode          = mode,
-            address_width = self.rca_bits + self.bank_bits - self.rank_bits,
-            data_width    = self.controller.data_width,
-            clock_domain  = "sys",
-            id            = len(self.masters))
+            mode=mode,
+            address_width=self.rca_bits + self.bank_bits - self.rank_bits,
+            data_width=self.controller.data_width,
+            clock_domain="sys",
+            id=len(self.masters))
         self.masters.append(port)
 
         # Clock domain crossing --------------------------------------------------------------------
         if clock_domain != "sys":
             new_port = gramNativePort(
-                mode          = mode,
-                address_width = port.address_width,
-                data_width    = port.data_width,
-                clock_domain  = clock_domain,
-                id            = port.id)
+                mode=mode,
+                address_width=port.address_width,
+                data_width=port.data_width,
+                clock_domain=clock_domain,
+                id=port.id)
             self._pending_submodules.append(gramNativePortCDC(new_port, port))
             port = new_port
 
@@ -107,11 +109,11 @@ class gramCrossbar(Elaboratable):
             else:
                 addr_shift = log2_int(self.controller.data_width//data_width)
             new_port = gramNativePort(
-                mode          = mode,
-                address_width = port.address_width + addr_shift,
-                data_width    = data_width,
-                clock_domain  = clock_domain,
-                id            = port.id)
+                mode=mode,
+                address_width=port.address_width + addr_shift,
+                data_width=data_width,
+                clock_domain=clock_domain,
+                id=port.id)
             self._pending_submodules.append(ClockDomainsRenamer(clock_domain)(
                 gramNativePortConverter(new_port, port, reverse)))
             port = new_port
@@ -124,15 +126,18 @@ class gramCrossbar(Elaboratable):
         m.submodules += self._pending_submodules
 
         controller = self.controller
-        nmasters   = len(self.masters)
+        nmasters = len(self.masters)
 
         # Address mapping --------------------------------------------------------------------------
-        cba_shifts = {"ROW_BANK_COL": controller.settings.geom.colbits - controller.address_align}
+        cba_shifts = {
+            "ROW_BANK_COL": controller.settings.geom.colbits - controller.address_align}
         cba_shift = cba_shifts[controller.settings.address_mapping]
-        m_ba      = [master.get_bank_address(self.bank_bits, cba_shift) for master in self.masters]
-        m_rca     = [master.get_row_column_address(self.bank_bits, self.rca_bits, cba_shift) for master in self.masters]
+        m_ba = [master.get_bank_address(
+            self.bank_bits, cba_shift) for master in self.masters]
+        m_rca = [master.get_row_column_address(
+            self.bank_bits, self.rca_bits, cba_shift) for master in self.masters]
 
-        master_readys       = [0]*nmasters
+        master_readys = [0]*nmasters
         master_wdata_readys = [0]*nmasters
         master_rdata_valids = [0]*nmasters
 
@@ -149,12 +154,15 @@ class gramCrossbar(Elaboratable):
                 for other_nb, other_arbiter in enumerate(arbiters):
                     if other_nb != nb:
                         other_bank = getattr(controller, "bank"+str(other_nb))
-                        locked = locked | (other_bank.lock & (other_arbiter.grant == nm))
+                        locked = locked | (other_bank.lock & (
+                            other_arbiter.grant == nm))
                 master_locked.append(locked)
 
             # Arbitrate ----------------------------------------------------------------------------
-            bank_selected  = [(ba == nb) & ~locked for ba, locked in zip(m_ba, master_locked)]
-            bank_requested = [bs & master.cmd.valid for bs, master in zip(bank_selected, self.masters)]
+            bank_selected = [(ba == nb) & ~locked for ba,
+                             locked in zip(m_ba, master_locked)]
+            bank_requested = [bs & master.cmd.valid for bs,
+                              master in zip(bank_selected, self.masters)]
             m.d.comb += [
                 arbiter.request.eq(Cat(*bank_requested)),
                 arbiter.stb.eq(~bank.valid & ~bank.lock)
@@ -167,11 +175,11 @@ class gramCrossbar(Elaboratable):
                 bank.valid.eq(Array(bank_requested)[arbiter.grant])
             ]
             master_readys = [master_ready | ((arbiter.grant == nm) & bank_selected[nm] & bank.ready)
-                for nm, master_ready in enumerate(master_readys)]
+                             for nm, master_ready in enumerate(master_readys)]
             master_wdata_readys = [master_wdata_ready | ((arbiter.grant == nm) & bank.wdata_ready)
-                for nm, master_wdata_ready in enumerate(master_wdata_readys)]
+                                   for nm, master_wdata_ready in enumerate(master_wdata_readys)]
             master_rdata_valids = [master_rdata_valid | ((arbiter.grant == nm) & bank.rdata_valid)
-                for nm, master_rdata_valid in enumerate(master_rdata_valids)]
+                                   for nm, master_rdata_valid in enumerate(master_rdata_valids)]
 
         # Delay write/read signals based on their latency
         for nm, master_wdata_ready in enumerate(master_wdata_readys):

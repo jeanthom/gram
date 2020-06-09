@@ -27,7 +27,8 @@ class EndpointDescription:
         attributed = set()
         for f in self.payload_layout:
             if f[0] in attributed:
-                raise ValueError(f[0] + " already attributed in payload layout")
+                raise ValueError(
+                    f[0] + " already attributed in payload layout")
             if f[0] in reserved:
                 raise ValueError(f[0] + " cannot be used in endpoint layout")
             attributed.add(f[0])
@@ -59,7 +60,7 @@ class Endpoint(Record):
 
 class _FIFOWrapper:
     def __init__(self, payload_layout):
-        self.sink   = Endpoint(payload_layout)
+        self.sink = Endpoint(payload_layout)
         self.source = Endpoint(payload_layout)
 
         self.layout = Layout([
@@ -98,9 +99,11 @@ class SyncFIFO(Elaboratable, _FIFOWrapper):
     def __init__(self, layout, depth, fwft=True, buffered=False):
         super().__init__(layout)
         if buffered:
-            self.fifo = fifo.SyncFIFOBuffered(width=len(Record(self.layout)), depth=depth, fwft=fwft)
+            self.fifo = fifo.SyncFIFOBuffered(
+                width=len(Record(self.layout)), depth=depth, fwft=fwft)
         else:
-            self.fifo = fifo.SyncFIFO(width=len(Record(self.layout)), depth=depth, fwft=fwft)
+            self.fifo = fifo.SyncFIFO(
+                width=len(Record(self.layout)), depth=depth, fwft=fwft)
         self.depth = self.fifo.depth
         self.level = self.fifo.level
 
@@ -112,8 +115,10 @@ class AsyncFIFO(Elaboratable, _FIFOWrapper):
                                    r_domain=r_domain, w_domain=w_domain)
         self.depth = self.fifo.depth
 
+
 class PipeValid(Elaboratable):
     """Pipe valid/payload to cut timing path"""
+
     def __init__(self, layout):
         self.sink = Endpoint(layout)
         self.source = Endpoint(layout)
@@ -128,10 +133,12 @@ class PipeValid(Elaboratable):
                 self.source.first.eq(self.sink.first),
                 self.source.last.eq(self.sink.last),
                 self.source.payload.eq(self.sink.payload),
-                #self.source.param.eq(self.sink.param), # TODO ensure this can be commented
+                # self.source.param.eq(self.sink.param), # TODO ensure this can be commented
             ]
         m.d.comb += self.sink.ready.eq(~self.source.valid | self.source.ready)
 
         return m
 
-class Buffer(PipeValid): pass # FIXME: Replace Buffer with PipeValid in codebase?
+
+class Buffer(PipeValid):
+    pass  # FIXME: Replace Buffer with PipeValid in codebase?

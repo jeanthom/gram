@@ -18,6 +18,7 @@ from litedram.frontend.dma import LiteDRAMDMAWriter, LiteDRAMDMAReader
 
 # LFSR ---------------------------------------------------------------------------------------------
 
+
 class LFSR(Module):
     """Linear-Feedback Shift Register to generate a pseudo-random sequence.
 
@@ -35,12 +36,13 @@ class LFSR(Module):
     o : out
         Output data
     """
+
     def __init__(self, n_out, n_state, taps):
         self.o = Signal(n_out)
 
         # # #
 
-        state  = Signal(n_state)
+        state = Signal(n_state)
         curval = [state[i] for i in range(n_state)]
         curval += [0]*(n_out - n_state)
         for i in range(n_out):
@@ -55,6 +57,7 @@ class LFSR(Module):
 
 # Counter ------------------------------------------------------------------------------------------
 
+
 class Counter(Module):
     """Simple incremental counter.
 
@@ -68,6 +71,7 @@ class Counter(Module):
     o : out
         Output data
     """
+
     def __init__(self, n_out):
         self.o = Signal(n_out)
 
@@ -76,6 +80,7 @@ class Counter(Module):
         self.sync += self.o.eq(self.o + 1)
 
 # Generator ----------------------------------------------------------------------------------------
+
 
 @CEInserter()
 class Generator(Module):
@@ -94,20 +99,21 @@ class Generator(Module):
     o : out
         Output data
     """
+
     def __init__(self, n_out, n_state, taps):
         self.random_enable = Signal()
         self.o = Signal(n_out)
 
         # # #
 
-        lfsr  = LFSR(n_out, n_state, taps)
+        lfsr = LFSR(n_out, n_state, taps)
         count = Counter(n_out)
         self.submodules += lfsr, count
 
         self.comb += \
             If(self.random_enable,
                 self.o.eq(lfsr.o)
-            ).Else(
+               ).Else(
                 self.o.eq(count.o)
             )
 
@@ -125,26 +131,27 @@ def get_ashift_awidth(dram_port):
 
 # _LiteDRAMBISTGenerator ---------------------------------------------------------------------------
 
+
 @ResetInserter()
 class _LiteDRAMBISTGenerator(Module):
     def __init__(self, dram_port):
         ashift, awidth = get_ashift_awidth(dram_port)
-        self.start       = Signal()
-        self.done        = Signal()
-        self.base        = Signal(awidth)
-        self.end         = Signal(awidth)
-        self.length      = Signal(awidth)
+        self.start = Signal()
+        self.done = Signal()
+        self.base = Signal(awidth)
+        self.end = Signal(awidth)
+        self.length = Signal(awidth)
         self.random_data = Signal()
         self.random_addr = Signal()
-        self.ticks       = Signal(32)
+        self.ticks = Signal(32)
 
-        self.run_cascade_in  = Signal(reset=1)
+        self.run_cascade_in = Signal(reset=1)
         self.run_cascade_out = Signal()
 
         # # #
 
         # Data / Address generators ----------------------------------------------------------------
-        data_gen = Generator(31, n_state=31, taps=[27, 30]) # PRBS31
+        data_gen = Generator(31, n_state=31, taps=[27, 30])  # PRBS31
         addr_gen = Generator(31, n_state=31, taps=[27, 30])
         self.submodules += data_gen, addr_gen
         self.comb += data_gen.random_enable.eq(self.random_data)
@@ -164,45 +171,46 @@ class _LiteDRAMBISTGenerator(Module):
         fsm = FSM(reset_state="IDLE")
         self.submodules += fsm
         fsm.act("IDLE",
-            If(self.start,
-                NextValue(cmd_counter, 0),
-                NextState("RUN")
-            ),
-            NextValue(self.ticks, 0)
-        )
-        fsm.act("WAIT",
-            If(self.run_cascade_in,
-                NextState("RUN")
-            )
-        )
-        fsm.act("RUN",
-            dma.sink.valid.eq(1),
-            If(dma.sink.ready,
-                self.run_cascade_out.eq(1),
-                data_gen.ce.eq(1),
-                addr_gen.ce.eq(1),
-                NextValue(cmd_counter, cmd_counter + 1),
-                If(cmd_counter == (self.length[ashift:] - 1),
-                    NextState("DONE")
-                ).Elif(~self.run_cascade_in,
-                    NextState("WAIT")
+                If(self.start,
+                   NextValue(cmd_counter, 0),
+                   NextState("RUN")
+                   ),
+                NextValue(self.ticks, 0)
                 )
-            ),
-            NextValue(self.ticks, self.ticks + 1)
-        )
+        fsm.act("WAIT",
+                If(self.run_cascade_in,
+                   NextState("RUN")
+                   )
+                )
+        fsm.act("RUN",
+                dma.sink.valid.eq(1),
+                If(dma.sink.ready,
+                   self.run_cascade_out.eq(1),
+                   data_gen.ce.eq(1),
+                   addr_gen.ce.eq(1),
+                   NextValue(cmd_counter, cmd_counter + 1),
+                   If(cmd_counter == (self.length[ashift:] - 1),
+                      NextState("DONE")
+                      ).Elif(~self.run_cascade_in,
+                             NextState("WAIT")
+                             )
+                   ),
+                NextValue(self.ticks, self.ticks + 1)
+                )
         fsm.act("DONE",
-            self.run_cascade_out.eq(1),
-            self.done.eq(1)
-        )
+                self.run_cascade_out.eq(1),
+                self.done.eq(1)
+                )
 
-        if isinstance(dram_port, LiteDRAMNativePort): # addressing in dwords
+        if isinstance(dram_port, LiteDRAMNativePort):  # addressing in dwords
             dma_sink_addr = dma.sink.address
         elif isinstance(dram_port, LiteDRAMAXIPort):  # addressing in bytes
             dma_sink_addr = dma.sink.address[ashift:]
         else:
             raise NotImplementedError
 
-        self.comb += dma_sink_addr.eq(self.base[ashift:] + (addr_gen.o & addr_mask))
+        self.comb += dma_sink_addr.eq(self.base[ashift:] +
+                                      (addr_gen.o & addr_mask))
         self.comb += dma.sink.data.eq(data_gen.o)
 
 
@@ -210,19 +218,21 @@ class _LiteDRAMBISTGenerator(Module):
 class _LiteDRAMPatternGenerator(Module):
     def __init__(self, dram_port, init=[]):
         ashift, awidth = get_ashift_awidth(dram_port)
-        self.start  = Signal()
-        self.done   = Signal()
-        self.ticks  = Signal(32)
+        self.start = Signal()
+        self.done = Signal()
+        self.ticks = Signal(32)
 
-        self.run_cascade_in  = Signal(reset=1)
+        self.run_cascade_in = Signal(reset=1)
         self.run_cascade_out = Signal()
 
         # # #
 
         # Data / Address pattern -------------------------------------------------------------------
         addr_init, data_init = zip(*init)
-        addr_mem = Memory(dram_port.address_width, len(addr_init), init=addr_init)
-        data_mem = Memory(dram_port.data_width,    len(data_init), init=data_init)
+        addr_mem = Memory(dram_port.address_width,
+                          len(addr_init), init=addr_init)
+        data_mem = Memory(dram_port.data_width,
+                          len(data_init), init=data_init)
         addr_port = addr_mem.get_port(async_read=True)
         data_port = data_mem.get_port(async_read=True)
         self.specials += addr_mem, data_mem, addr_port, data_port
@@ -237,36 +247,36 @@ class _LiteDRAMPatternGenerator(Module):
         fsm = FSM(reset_state="IDLE")
         self.submodules += fsm
         fsm.act("IDLE",
-            If(self.start,
-                NextValue(cmd_counter, 0),
-                NextState("RUN")
-            ),
-            NextValue(self.ticks, 0)
-        )
-        fsm.act("WAIT",
-            If(self.run_cascade_in,
-                NextState("RUN")
-            )
-        )
-        fsm.act("RUN",
-            dma.sink.valid.eq(1),
-            If(dma.sink.ready,
-                self.run_cascade_out.eq(1),
-                NextValue(cmd_counter, cmd_counter + 1),
-                If(cmd_counter == (len(init) - 1),
-                    NextState("DONE")
-                ).Elif(~self.run_cascade_in,
-                    NextState("WAIT")
+                If(self.start,
+                   NextValue(cmd_counter, 0),
+                   NextState("RUN")
+                   ),
+                NextValue(self.ticks, 0)
                 )
-            ),
-            NextValue(self.ticks, self.ticks + 1)
-        )
+        fsm.act("WAIT",
+                If(self.run_cascade_in,
+                   NextState("RUN")
+                   )
+                )
+        fsm.act("RUN",
+                dma.sink.valid.eq(1),
+                If(dma.sink.ready,
+                   self.run_cascade_out.eq(1),
+                   NextValue(cmd_counter, cmd_counter + 1),
+                   If(cmd_counter == (len(init) - 1),
+                      NextState("DONE")
+                      ).Elif(~self.run_cascade_in,
+                             NextState("WAIT")
+                             )
+                   ),
+                NextValue(self.ticks, self.ticks + 1)
+                )
         fsm.act("DONE",
-            self.run_cascade_out.eq(1),
-            self.done.eq(1)
-        )
+                self.run_cascade_out.eq(1),
+                self.done.eq(1)
+                )
 
-        if isinstance(dram_port, LiteDRAMNativePort): # addressing in dwords
+        if isinstance(dram_port, LiteDRAMNativePort):  # addressing in dwords
             dma_sink_addr = dma.sink.address
         elif isinstance(dram_port, LiteDRAMAXIPort):  # addressing in bytes
             dma_sink_addr = dma.sink.address[ashift:]
@@ -281,6 +291,7 @@ class _LiteDRAMPatternGenerator(Module):
         ]
 
 # LiteDRAMBISTGenerator ----------------------------------------------------------------------------
+
 
 class LiteDRAMBISTGenerator(Module, AutoCSR):
     """DRAM memory pattern generator.
@@ -314,19 +325,20 @@ class LiteDRAMBISTGenerator(Module, AutoCSR):
     ticks : out
         Duration of the generation.
     """
+
     def __init__(self, dram_port):
         ashift, awidth = get_ashift_awidth(dram_port)
-        self.reset       = CSR()
-        self.start       = CSR()
-        self.done        = CSRStatus()
-        self.base        = CSRStorage(awidth)
-        self.end         = CSRStorage(awidth)
-        self.length      = CSRStorage(awidth)
-        self.random      = CSRStorage(fields=[
+        self.reset = CSR()
+        self.start = CSR()
+        self.done = CSRStatus()
+        self.base = CSRStorage(awidth)
+        self.end = CSRStorage(awidth)
+        self.length = CSRStorage(awidth)
+        self.random = CSRStorage(fields=[
             CSRField("data", size=1),
             CSRField("addr", size=1),
         ])
-        self.ticks       = CSRStatus(32)
+        self.ticks = CSRStatus(32)
 
         # # #
 
@@ -351,9 +363,11 @@ class LiteDRAMBISTGenerator(Module, AutoCSR):
                 ("ticks", 32),
             ]
             control_cdc = stream.AsyncFIFO(control_layout)
-            control_cdc = ClockDomainsRenamer({"write" : "sys", "read": clock_domain})(control_cdc)
-            status_cdc  = stream.AsyncFIFO(status_layout)
-            status_cdc  = ClockDomainsRenamer({"write" : clock_domain, "read": "sys"})(status_cdc)
+            control_cdc = ClockDomainsRenamer(
+                {"write": "sys", "read": clock_domain})(control_cdc)
+            status_cdc = stream.AsyncFIFO(status_layout)
+            status_cdc = ClockDomainsRenamer(
+                {"write": clock_domain, "read": "sys"})(status_cdc)
             self.submodules += control_cdc, status_cdc
             # Control CDC In
             self.comb += [
@@ -369,8 +383,10 @@ class LiteDRAMBISTGenerator(Module, AutoCSR):
             # Control CDC Out
             self.comb += [
                 control_cdc.source.ready.eq(1),
-                core.reset.eq(control_cdc.source.valid & control_cdc.source.reset),
-                core.start.eq(control_cdc.source.valid & control_cdc.source.start),
+                core.reset.eq(control_cdc.source.valid &
+                              control_cdc.source.reset),
+                core.start.eq(control_cdc.source.valid &
+                              control_cdc.source.start),
             ]
             self.sync += [
                 If(control_cdc.source.valid,
@@ -379,7 +395,7 @@ class LiteDRAMBISTGenerator(Module, AutoCSR):
                     core.length.eq(control_cdc.source.length),
                     core.random_data.eq(control_cdc.source.random_data),
                     core.random_addr.eq(control_cdc.source.random_addr),
-                )
+                   )
             ]
             # Status CDC In
             self.comb += [
@@ -393,7 +409,7 @@ class LiteDRAMBISTGenerator(Module, AutoCSR):
                 If(status_cdc.source.valid,
                     self.done.status.eq(status_cdc.source.done),
                     self.ticks.status.eq(status_cdc.source.ticks),
-                )
+                   )
             ]
         else:
             self.comb += [
@@ -410,27 +426,28 @@ class LiteDRAMBISTGenerator(Module, AutoCSR):
 
 # _LiteDRAMBISTChecker -----------------------------------------------------------------------------
 
+
 @ResetInserter()
 class _LiteDRAMBISTChecker(Module, AutoCSR):
     def __init__(self, dram_port):
         ashift, awidth = get_ashift_awidth(dram_port)
-        self.start       = Signal()
-        self.done        = Signal()
-        self.base        = Signal(awidth)
-        self.end         = Signal(awidth)
-        self.length      = Signal(awidth)
+        self.start = Signal()
+        self.done = Signal()
+        self.base = Signal(awidth)
+        self.end = Signal(awidth)
+        self.length = Signal(awidth)
         self.random_data = Signal()
         self.random_addr = Signal()
-        self.ticks       = Signal(32)
-        self.errors      = Signal(32)
+        self.ticks = Signal(32)
+        self.errors = Signal(32)
 
-        self.run_cascade_in  = Signal(reset=1)
+        self.run_cascade_in = Signal(reset=1)
         self.run_cascade_out = Signal()
 
         # # #
 
         # Data / Address generators ----------------------------------------------------------------
-        data_gen = Generator(31, n_state=31, taps=[27, 30]) # PRBS31
+        data_gen = Generator(31, n_state=31, taps=[27, 30])  # PRBS31
         addr_gen = Generator(31, n_state=31, taps=[27, 30])
         self.submodules += data_gen, addr_gen
         self.comb += data_gen.random_enable.eq(self.random_data)
@@ -450,39 +467,40 @@ class _LiteDRAMBISTChecker(Module, AutoCSR):
         cmd_fsm = FSM(reset_state="IDLE")
         self.submodules += cmd_fsm
         cmd_fsm.act("IDLE",
-            If(self.start,
-                NextValue(cmd_counter, 0),
-                NextState("WAIT")
-            )
-        )
+                    If(self.start,
+                       NextValue(cmd_counter, 0),
+                       NextState("WAIT")
+                       )
+                    )
         cmd_fsm.act("WAIT",
-            If(self.run_cascade_in,
-                NextState("RUN")
-            )
-        )
+                    If(self.run_cascade_in,
+                       NextState("RUN")
+                       )
+                    )
         cmd_fsm.act("RUN",
-            dma.sink.valid.eq(1),
-            If(dma.sink.ready,
-                self.run_cascade_out.eq(1),
-                addr_gen.ce.eq(1),
-                NextValue(cmd_counter, cmd_counter + 1),
-                If(cmd_counter == (self.length[ashift:] - 1),
-                    NextState("DONE")
-                ).Elif(~self.run_cascade_in,
-                    NextState("WAIT")
-                )
-            )
-        )
+                    dma.sink.valid.eq(1),
+                    If(dma.sink.ready,
+                       self.run_cascade_out.eq(1),
+                       addr_gen.ce.eq(1),
+                       NextValue(cmd_counter, cmd_counter + 1),
+                       If(cmd_counter == (self.length[ashift:] - 1),
+                          NextState("DONE")
+                          ).Elif(~self.run_cascade_in,
+                                 NextState("WAIT")
+                                 )
+                       )
+                    )
         cmd_fsm.act("DONE")
 
-        if isinstance(dram_port, LiteDRAMNativePort): # addressing in dwords
+        if isinstance(dram_port, LiteDRAMNativePort):  # addressing in dwords
             dma_sink_addr = dma.sink.address
         elif isinstance(dram_port, LiteDRAMAXIPort):  # addressing in bytes
             dma_sink_addr = dma.sink.address[ashift:]
         else:
             raise NotImplementedError
 
-        self.comb += dma_sink_addr.eq(self.base[ashift:] + (addr_gen.o & addr_mask))
+        self.comb += dma_sink_addr.eq(self.base[ashift:] +
+                                      (addr_gen.o & addr_mask))
 
         # Data FSM ---------------------------------------------------------------------------------
         data_counter = Signal(dram_port.address_width, reset_less=True)
@@ -490,50 +508,53 @@ class _LiteDRAMBISTChecker(Module, AutoCSR):
         data_fsm = FSM(reset_state="IDLE")
         self.submodules += data_fsm
         data_fsm.act("IDLE",
-            If(self.start,
-                NextValue(data_counter, 0),
-                NextValue(self.errors, 0),
-                NextState("RUN")
-            ),
-            NextValue(self.ticks, 0)
-        )
+                     If(self.start,
+                        NextValue(data_counter, 0),
+                        NextValue(self.errors, 0),
+                        NextState("RUN")
+                        ),
+                     NextValue(self.ticks, 0)
+                     )
 
         data_fsm.act("RUN",
-            dma.source.ready.eq(1),
-            If(dma.source.valid,
-                data_gen.ce.eq(1),
-                NextValue(data_counter, data_counter + 1),
-                If(dma.source.data != data_gen.o[:min(len(data_gen.o), dram_port.data_width)],
-                    NextValue(self.errors, self.errors + 1)
-                ),
-                If(data_counter == (self.length[ashift:] - 1),
-                    NextState("DONE")
-                )
-            ),
-            NextValue(self.ticks, self.ticks + 1)
-        )
+                     dma.source.ready.eq(1),
+                     If(dma.source.valid,
+                        data_gen.ce.eq(1),
+                        NextValue(data_counter, data_counter + 1),
+                        If(dma.source.data != data_gen.o[:min(len(data_gen.o), dram_port.data_width)],
+                           NextValue(self.errors, self.errors + 1)
+                           ),
+                         If(data_counter == (self.length[ashift:] - 1),
+                            NextState("DONE")
+                            )
+                        ),
+                     NextValue(self.ticks, self.ticks + 1)
+                     )
         data_fsm.act("DONE",
-            self.done.eq(1)
-        )
+                     self.done.eq(1)
+                     )
+
 
 @ResetInserter()
 class _LiteDRAMPatternChecker(Module, AutoCSR):
     def __init__(self, dram_port, init=[]):
         ashift, awidth = get_ashift_awidth(dram_port)
-        self.start  = Signal()
-        self.done   = Signal()
-        self.ticks  = Signal(32)
+        self.start = Signal()
+        self.done = Signal()
+        self.ticks = Signal(32)
         self.errors = Signal(32)
 
-        self.run_cascade_in  = Signal(reset=1)
+        self.run_cascade_in = Signal(reset=1)
         self.run_cascade_out = Signal()
 
         # # #
 
         # Data / Address pattern -------------------------------------------------------------------
         addr_init, data_init = zip(*init)
-        addr_mem = Memory(dram_port.address_width, len(addr_init), init=addr_init)
-        data_mem = Memory(dram_port.data_width,    len(data_init), init=data_init)
+        addr_mem = Memory(dram_port.address_width,
+                          len(addr_init), init=addr_init)
+        data_mem = Memory(dram_port.data_width,
+                          len(data_init), init=data_init)
         addr_port = addr_mem.get_port(async_read=True)
         data_port = data_mem.get_port(async_read=True)
         self.specials += addr_mem, data_mem, addr_port, data_port
@@ -548,36 +569,36 @@ class _LiteDRAMPatternChecker(Module, AutoCSR):
         cmd_fsm = FSM(reset_state="IDLE")
         self.submodules += cmd_fsm
         cmd_fsm.act("IDLE",
-            If(self.start,
-                NextValue(cmd_counter, 0),
-                If(self.run_cascade_in,
-                    NextState("RUN")
-                ).Else(
-                    NextState("WAIT")
-                )
-            )
-        )
+                    If(self.start,
+                       NextValue(cmd_counter, 0),
+                       If(self.run_cascade_in,
+                          NextState("RUN")
+                          ).Else(
+                           NextState("WAIT")
+                       )
+                       )
+                    )
         cmd_fsm.act("WAIT",
-            If(self.run_cascade_in,
-                NextState("RUN")
-            ),
-            NextValue(self.ticks, self.ticks + 1)
-        )
+                    If(self.run_cascade_in,
+                       NextState("RUN")
+                       ),
+                    NextValue(self.ticks, self.ticks + 1)
+                    )
         cmd_fsm.act("RUN",
-            dma.sink.valid.eq(1),
-            If(dma.sink.ready,
-                self.run_cascade_out.eq(1),
-                NextValue(cmd_counter, cmd_counter + 1),
-                If(cmd_counter == (len(init) - 1),
-                    NextState("DONE")
-                ).Elif(~self.run_cascade_in,
-                    NextState("WAIT")
-                )
-            )
-        )
+                    dma.sink.valid.eq(1),
+                    If(dma.sink.ready,
+                       self.run_cascade_out.eq(1),
+                       NextValue(cmd_counter, cmd_counter + 1),
+                       If(cmd_counter == (len(init) - 1),
+                          NextState("DONE")
+                          ).Elif(~self.run_cascade_in,
+                                 NextState("WAIT")
+                                 )
+                       )
+                    )
         cmd_fsm.act("DONE")
 
-        if isinstance(dram_port, LiteDRAMNativePort): # addressing in dwords
+        if isinstance(dram_port, LiteDRAMNativePort):  # addressing in dwords
             dma_sink_addr = dma.sink.address
         elif isinstance(dram_port, LiteDRAMAXIPort):  # addressing in bytes
             dma_sink_addr = dma.sink.address[ashift:]
@@ -601,32 +622,33 @@ class _LiteDRAMPatternChecker(Module, AutoCSR):
         data_fsm = FSM(reset_state="IDLE")
         self.submodules += data_fsm
         data_fsm.act("IDLE",
-            If(self.start,
-                NextValue(data_counter, 0),
-                NextValue(self.errors, 0),
-                NextState("RUN")
-            ),
-            NextValue(self.ticks, 0)
-        )
+                     If(self.start,
+                        NextValue(data_counter, 0),
+                        NextValue(self.errors, 0),
+                        NextState("RUN")
+                        ),
+                     NextValue(self.ticks, 0)
+                     )
 
         data_fsm.act("RUN",
-            dma.source.ready.eq(1),
-            If(dma.source.valid,
-                NextValue(data_counter, data_counter + 1),
-                If(dma.source.data != expected_data,
-                    NextValue(self.errors, self.errors + 1)
-                ),
-                If(data_counter == (len(init) - 1),
-                    NextState("DONE")
-                )
-            ),
-            NextValue(self.ticks, self.ticks + 1)
-        )
+                     dma.source.ready.eq(1),
+                     If(dma.source.valid,
+                        NextValue(data_counter, data_counter + 1),
+                        If(dma.source.data != expected_data,
+                           NextValue(self.errors, self.errors + 1)
+                           ),
+                         If(data_counter == (len(init) - 1),
+                            NextState("DONE")
+                            )
+                        ),
+                     NextValue(self.ticks, self.ticks + 1)
+                     )
         data_fsm.act("DONE",
-            self.done.eq(1)
-        )
+                     self.done.eq(1)
+                     )
 
 # LiteDRAMBISTChecker ------------------------------------------------------------------------------
+
 
 class LiteDRAMBISTChecker(Module, AutoCSR):
     """DRAM memory pattern checker.
@@ -659,20 +681,21 @@ class LiteDRAMBISTChecker(Module, AutoCSR):
     errors : out
         Number of DRAM words which don't match.
     """
+
     def __init__(self, dram_port):
         ashift, awidth = get_ashift_awidth(dram_port)
-        self.reset       = CSR()
-        self.start       = CSR()
-        self.done        = CSRStatus()
-        self.base        = CSRStorage(awidth)
-        self.end         = CSRStorage(awidth)
-        self.length      = CSRStorage(awidth)
-        self.random      = CSRStorage(fields=[
+        self.reset = CSR()
+        self.start = CSR()
+        self.done = CSRStatus()
+        self.base = CSRStorage(awidth)
+        self.end = CSRStorage(awidth)
+        self.length = CSRStorage(awidth)
+        self.random = CSRStorage(fields=[
             CSRField("data", size=1),
             CSRField("addr", size=1),
         ])
-        self.ticks       = CSRStatus(32)
-        self.errors      = CSRStatus(32)
+        self.ticks = CSRStatus(32)
+        self.errors = CSRStatus(32)
 
         # # #
 
@@ -698,9 +721,11 @@ class LiteDRAMBISTChecker(Module, AutoCSR):
                 ("errors", 32),
             ]
             control_cdc = stream.AsyncFIFO(control_layout)
-            control_cdc = ClockDomainsRenamer({"write" : "sys", "read": clock_domain})(control_cdc)
-            status_cdc  = stream.AsyncFIFO(status_layout)
-            status_cdc  = ClockDomainsRenamer({"write" : clock_domain, "read": "sys"})(status_cdc)
+            control_cdc = ClockDomainsRenamer(
+                {"write": "sys", "read": clock_domain})(control_cdc)
+            status_cdc = stream.AsyncFIFO(status_layout)
+            status_cdc = ClockDomainsRenamer(
+                {"write": clock_domain, "read": "sys"})(status_cdc)
             self.submodules += control_cdc, status_cdc
             # Control CDC In
             self.comb += [
@@ -716,8 +741,10 @@ class LiteDRAMBISTChecker(Module, AutoCSR):
             # Control CDC Out
             self.comb += [
                 control_cdc.source.ready.eq(1),
-                core.reset.eq(control_cdc.source.valid & control_cdc.source.reset),
-                core.start.eq(control_cdc.source.valid & control_cdc.source.start),
+                core.reset.eq(control_cdc.source.valid &
+                              control_cdc.source.reset),
+                core.start.eq(control_cdc.source.valid &
+                              control_cdc.source.start),
             ]
             self.sync += [
                 If(control_cdc.source.valid,
@@ -726,7 +753,7 @@ class LiteDRAMBISTChecker(Module, AutoCSR):
                     core.length.eq(control_cdc.source.length),
                     core.random_data.eq(control_cdc.source.random_data),
                     core.random_addr.eq(control_cdc.source.random_addr),
-                )
+                   )
             ]
             # Status CDC In
             self.comb += [
@@ -742,7 +769,7 @@ class LiteDRAMBISTChecker(Module, AutoCSR):
                     self.done.status.eq(status_cdc.source.done),
                     self.ticks.status.eq(status_cdc.source.ticks),
                     self.errors.status.eq(status_cdc.source.errors),
-                )
+                   )
             ]
         else:
             self.comb += [

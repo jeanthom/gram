@@ -10,14 +10,15 @@ import gram.stream as stream
 
 # LiteDRAMNativePortCDC ----------------------------------------------------------------------------
 
+
 class gramNativePortCDC(Elaboratable):
     def __init__(self, port_from, port_to,
-                 cmd_depth   = 4,
-                 wdata_depth = 16,
-                 rdata_depth = 16):
+                 cmd_depth=4,
+                 wdata_depth=16,
+                 rdata_depth=16):
         assert port_from.address_width == port_to.address_width
-        assert port_from.data_width    == port_to.data_width
-        assert port_from.mode          == port_to.mode
+        assert port_from.data_width == port_to.data_width
+        assert port_from.mode == port_to.mode
 
         self._port_from = port_from
         self._port_to = port_to
@@ -72,6 +73,7 @@ class gramNativePortCDC(Elaboratable):
 
 # LiteDRAMNativePortDownConverter ------------------------------------------------------------------
 
+
 class gramNativePortDownConverter(Elaboratable):
     """LiteDRAM port DownConverter
 
@@ -83,10 +85,11 @@ class gramNativePortDownConverter(Elaboratable):
     - A read from the user generates N reads to the controller and returned
       datas are regrouped in a single data presented to the user.
     """
+
     def __init__(self, port_from, port_to, reverse=False):
         assert port_from.clock_domain == port_to.clock_domain
-        assert port_from.data_width    > port_to.data_width
-        assert port_from.mode         == port_to.mode
+        assert port_from.data_width > port_to.data_width
+        assert port_from.mode == port_to.mode
         if port_from.data_width % port_to.data_width:
             raise ValueError("Ratio must be an int")
 
@@ -102,11 +105,11 @@ class gramNativePortDownConverter(Elaboratable):
         reverse = self._reverse
 
         ratio = port_from.data_width//port_to.data_width
-        mode  = port_from.mode
+        mode = port_from.mode
 
-        counter       = Signal(max=ratio)
+        counter = Signal(max=ratio)
         counter_reset = Signal()
-        counter_ce    = Signal()
+        counter_ce = Signal()
 
         with m.If(counter_reset):
             m.d.sync += counter.eq(0)
@@ -153,6 +156,7 @@ class gramNativePortDownConverter(Elaboratable):
 
 # LiteDRAMNativeWritePortUpConverter ---------------------------------------------------------------
 
+
 class gramNativeWritePortUpConverter(Elaboratable):
     # TODO: finish and remove hack
     """LiteDRAM write port UpConverter
@@ -163,11 +167,12 @@ class gramNativeWritePortUpConverter(Elaboratable):
     - N writes from user are regrouped in a single one to the controller
     (when possible, ie when consecutive and bursting)
     """
+
     def __init__(self, port_from, port_to, reverse=False):
         assert port_from.clock_domain == port_to.clock_domain
-        assert port_from.data_width    < port_to.data_width
-        assert port_from.mode         == port_to.mode
-        assert port_from.mode         == "write"
+        assert port_from.data_width < port_to.data_width
+        assert port_from.mode == port_to.mode
+        assert port_from.mode == "write"
         if port_to.data_width % port_from.data_width:
             raise ValueError("Ratio must be an int")
 
@@ -184,18 +189,18 @@ class gramNativeWritePortUpConverter(Elaboratable):
 
         ratio = port_to.data_width//port_from.data_width
 
-        we      = Signal()
+        we = Signal()
         address = Signal(port_to.address_width)
 
-        counter       = Signal(max=ratio)
+        counter = Signal(max=ratio)
         counter_reset = Signal()
-        counter_ce    = Signal()
+        counter_ce = Signal()
         self.sync += \
             If(counter_reset,
                 counter.eq(0)
-            ).Elif(counter_ce,
-                counter.eq(counter + 1)
-            )
+               ).Elif(counter_ce,
+                      counter.eq(counter + 1)
+                      )
 
         with m.FSM():
             with m.State("Idle"):
@@ -237,6 +242,7 @@ class gramNativeWritePortUpConverter(Elaboratable):
 
 # LiteDRAMNativeReadPortUpConverter ----------------------------------------------------------------
 
+
 class gramNativeReadPortUpConverter(Elaboratable):
     """LiteDRAM port UpConverter
 
@@ -246,11 +252,12 @@ class gramNativeReadPortUpConverter(Elaboratable):
     - N read from user are regrouped in a single one to the controller
     (when possible, ie when consecutive and bursting)
     """
+
     def __init__(self, port_from, port_to, reverse=False):
         assert port_from.clock_domain == port_to.clock_domain
-        assert port_from.data_width    < port_to.data_width
-        assert port_from.mode         == port_to.mode
-        assert port_from.mode         == "read"
+        assert port_from.data_width < port_to.data_width
+        assert port_from.mode == port_to.mode
+        assert port_from.mode == "read"
         if port_to.data_width % port_from.data_width:
             raise ValueError("Ratio must be an int")
 
@@ -300,23 +307,25 @@ class gramNativeReadPortUpConverter(Elaboratable):
 
         # Datapath ---------------------------------------------------------------------------------
 
-        rdata_buffer    = stream.Buffer(port_to.rdata.description)
+        rdata_buffer = stream.Buffer(port_to.rdata.description)
         rdata_converter = stream.StrideConverter(
             port_to.rdata.description,
             port_from.rdata.description,
             reverse=reverse)
-        m.submodules +=  rdata_buffer, rdata_converter
+        m.submodules += rdata_buffer, rdata_converter
 
-        rdata_chunk       = Signal(ratio, reset=1)
+        rdata_chunk = Signal(ratio, reset=1)
         rdata_chunk_valid = Signal()
         with m.If(rdata_converter.source.valid & rdata_converter.source.ready):
-            m.d.sync += rdata_chunk.eq(Cat(rdata_chunk[ratio-1], rdata_chunk[:ratio-1]))
+            m.d.sync += rdata_chunk.eq(
+                Cat(rdata_chunk[ratio-1], rdata_chunk[:ratio-1]))
 
         m.d.comb += [
             port_to.rdata.connect(rdata_buffer.sink),
             rdata_buffer.source.connect(rdata_converter.sink),
             rdata_chunk_valid.eq((cmd_buffer.source.sel & rdata_chunk) != 0),
-            cmd_buffer.source.ready.eq(rdata_converter.source.ready & rdata_chunk[ratio-1]),
+            cmd_buffer.source.ready.eq(
+                rdata_converter.source.ready & rdata_chunk[ratio-1]),
         ]
 
         with m.If(port_from.flush):
@@ -335,10 +344,11 @@ class gramNativeReadPortUpConverter(Elaboratable):
 
 # LiteDRAMNativePortConverter ----------------------------------------------------------------------
 
+
 class LiteDRAMNativePortConverter(Elaboratable):
     def __init__(self, port_from, port_to, reverse=False):
         assert port_from.clock_domain == port_to.clock_domain
-        assert port_from.mode         == port_to.mode
+        assert port_from.mode == port_to.mode
 
         self._port_from = port_from
         self._port_to = port_to
@@ -354,13 +364,16 @@ class LiteDRAMNativePortConverter(Elaboratable):
         mode = port_from.mode
 
         if port_from.data_width > port_to.data_width:
-            converter = gramNativePortDownConverter(port_from, port_to, reverse)
+            converter = gramNativePortDownConverter(
+                port_from, port_to, reverse)
             m.submodules += converter
         elif port_from.data_width < port_to.data_width:
             if mode == "write":
-                converter = gramNativeWritePortUpConverter(port_from, port_to, reverse)
+                converter = gramNativeWritePortUpConverter(
+                    port_from, port_to, reverse)
             elif mode == "read":
-                converter = gramNativeReadPortUpConverter(port_from, port_to, reverse)
+                converter = gramNativeReadPortUpConverter(
+                    port_from, port_to, reverse)
             else:
                 raise NotImplementedError
             m.submodules += converter

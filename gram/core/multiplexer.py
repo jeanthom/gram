@@ -20,6 +20,7 @@ from gram.compat import RoundRobin, delayed_enter
 
 # _CommandChooser ----------------------------------------------------------------------------------
 
+
 class _CommandChooser(Elaboratable):
     """Arbitrates between requests, filtering them based on their type
 
@@ -44,14 +45,15 @@ class _CommandChooser(Elaboratable):
     cmd : Endpoint(cmd_request_rw_layout)
         Currently selected request stream (when ~cmd.valid, cas/ras/we are 0)
     """
+
     def __init__(self, requests):
-        self.want_reads     = Signal()
-        self.want_writes    = Signal()
-        self.want_cmds      = Signal()
+        self.want_reads = Signal()
+        self.want_writes = Signal()
+        self.want_cmds = Signal()
         self.want_activates = Signal()
 
         self._requests = requests
-        a  = len(requests[0].a)
+        a = len(requests[0].a)
         ba = len(requests[0].ba)
 
         # cas/ras/we are 0 when valid is inactive
@@ -66,11 +68,12 @@ class _CommandChooser(Elaboratable):
         valids = Signal(n)
         for i, request in enumerate(self._requests):
             is_act_cmd = request.ras & ~request.cas & ~request.we
-            command = request.is_cmd & self.want_cmds & (~is_act_cmd | self.want_activates)
+            command = request.is_cmd & self.want_cmds & (
+                ~is_act_cmd | self.want_activates)
             read = request.is_read == self.want_reads
             write = request.is_write == self.want_writes
-            m.d.comb += valids[i].eq(request.valid & (command | (read & write)))
-
+            m.d.comb += valids[i].eq(request.valid &
+                                     (command | (read & write)))
 
         arbiter = RoundRobin(n)
         m.submodules += arbiter
@@ -91,9 +94,10 @@ class _CommandChooser(Elaboratable):
                 m.d.comb += getattr(self.cmd, name).eq(choices[arbiter.grant])
 
         for i, request in enumerate(self._requests):
-            #with m.If(self.cmd.valid & self.cmd.ready & (arbiter.grant == i)):
-                #m.d.comb += request.ready.eq(1) # TODO: this shouldn't be commented
-            self.ready[i].eq(self.cmd.valid & self.cmd.ready & (arbiter.grant == i))
+            # with m.If(self.cmd.valid & self.cmd.ready & (arbiter.grant == i)):
+            # m.d.comb += request.ready.eq(1) # TODO: this shouldn't be commented
+            self.ready[i].eq(self.cmd.valid & self.cmd.ready &
+                             (arbiter.grant == i))
 
         # Arbitrate if a command is being accepted or if the command is not valid to ensure a valid
         # command is selected when cmd.ready goes high.
@@ -116,7 +120,9 @@ class _CommandChooser(Elaboratable):
 
 # _Steerer -----------------------------------------------------------------------------------------
 
+
 (STEER_NOP, STEER_CMD, STEER_REQ, STEER_REFRESH) = range(4)
+
 
 class _Steerer(Elaboratable):
     """Connects selected request to DFI interface
@@ -142,11 +148,12 @@ class _Steerer(Elaboratable):
         DFI phase. The signals should take one of the values from STEER_* to
         select given source.
     """
+
     def __init__(self, commands, dfi):
         self._commands = commands
         self._dfi = dfi
         ncmd = len(commands)
-        nph  = len(dfi.phases)
+        nph = len(dfi.phases)
         self.sel = [Signal(range(ncmd)) for i in range(nph)]
 
     def elaborate(self, platform):
@@ -162,7 +169,7 @@ class _Steerer(Elaboratable):
                 return cmd.valid & cmd.ready & getattr(cmd, attr)
 
         for i, (phase, sel) in enumerate(zip(dfi.phases, self.sel)):
-            nranks   = len(phase.cs_n)
+            nranks = len(phase.cs_n)
             rankbits = log2_int(nranks)
             if hasattr(phase, "reset_n"):
                 m.d.comb += phase.reset_n.eq(1)
@@ -173,15 +180,17 @@ class _Steerer(Elaboratable):
             if rankbits:
                 rank_decoder = Decoder(nranks)
                 m.submodules += rank_decoder
-                m.d.comb += rank_decoder.i.eq((Array(cmd.ba[-rankbits:] for cmd in commands)[sel]))
-                if i == 0: # Select all ranks on refresh.
+                m.d.comb += rank_decoder.i.eq(
+                    (Array(cmd.ba[-rankbits:] for cmd in commands)[sel]))
+                if i == 0:  # Select all ranks on refresh.
                     with m.If(sel == STEER_REFRESH):
                         m.d.sync += phase.cs_n.eq(0)
                     with m.Else():
                         m.d.sync += phase.cs_n.eq(~rank_decoder.o)
                 else:
                     m.d.sync += phase.cs_n.eq(~rank_decoder.o)
-                m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits] for cmd in commands)[sel])
+                m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits]
+                                                for cmd in commands)[sel])
             else:
                 m.d.sync += [
                     phase.cs_n.eq(0),
@@ -190,9 +199,12 @@ class _Steerer(Elaboratable):
 
             m.d.sync += [
                 phase.address.eq(Array(cmd.a for cmd in commands)[sel]),
-                phase.cas_n.eq(~Array(valid_and(cmd, "cas") for cmd in commands)[sel]),
-                phase.ras_n.eq(~Array(valid_and(cmd, "ras") for cmd in commands)[sel]),
-                phase.we_n.eq(~Array(valid_and(cmd, "we") for cmd in commands)[sel])
+                phase.cas_n.eq(~Array(valid_and(cmd, "cas")
+                                      for cmd in commands)[sel]),
+                phase.ras_n.eq(~Array(valid_and(cmd, "ras")
+                                      for cmd in commands)[sel]),
+                phase.we_n.eq(~Array(valid_and(cmd, "we")
+                                     for cmd in commands)[sel])
             ]
 
             rddata_ens = Array(valid_and(cmd, "is_read") for cmd in commands)
@@ -205,6 +217,7 @@ class _Steerer(Elaboratable):
         return m
 
 # Multiplexer --------------------------------------------------------------------------------------
+
 
 class Multiplexer(Peripheral, Elaboratable):
     """Multplexes requets from BankMachines to DFI
@@ -227,12 +240,13 @@ class Multiplexer(Peripheral, Elaboratable):
     interface : LiteDRAMInterface
         Data interface connected directly to LiteDRAMCrossbar
     """
+
     def __init__(self,
-            settings,
-            bank_machines,
-            refresher,
-            dfi,
-            interface):
+                 settings,
+                 bank_machines,
+                 refresher,
+                 dfi,
+                 interface):
         assert(settings.phy.nphases == len(dfi.phases))
         self._settings = settings
         self._bank_machines = bank_machines
@@ -257,7 +271,8 @@ class Multiplexer(Peripheral, Elaboratable):
         m.submodules.choose_cmd = choose_cmd = _CommandChooser(requests)
         m.submodules.choose_req = choose_req = _CommandChooser(requests)
         for i, request in enumerate(requests):
-            m.d.comb += request.ready.eq(choose_cmd.ready[i] | choose_req.ready[i])
+            m.d.comb += request.ready.eq(
+                choose_cmd.ready[i] | choose_req.ready[i])
         if settings.phy.nphases == 1:
             # When only 1 phase, use choose_req for all requests
             choose_cmd = choose_req
@@ -274,18 +289,21 @@ class Multiplexer(Peripheral, Elaboratable):
 
         # tRRD timing (Row to Row delay) -----------------------------------------------------------
         m.submodules.trrdcon = trrdcon = tXXDController(settings.timing.tRRD)
-        m.d.comb += trrdcon.valid.eq(choose_cmd.accept() & choose_cmd.activate())
+        m.d.comb += trrdcon.valid.eq(choose_cmd.accept()
+                                     & choose_cmd.activate())
 
         # tFAW timing (Four Activate Window) -------------------------------------------------------
         m.submodules.tfawcon = tfawcon = tFAWController(settings.timing.tFAW)
-        m.d.comb += tfawcon.valid.eq(choose_cmd.accept() & choose_cmd.activate())
+        m.d.comb += tfawcon.valid.eq(choose_cmd.accept()
+                                     & choose_cmd.activate())
 
         # RAS control ------------------------------------------------------------------------------
         m.d.comb += ras_allowed.eq(trrdcon.ready & tfawcon.ready)
 
         # tCCD timing (Column to Column delay) -----------------------------------------------------
         m.submodules.tccdcon = tccdcon = tXXDController(settings.timing.tCCD)
-        m.d.comb += tccdcon.valid.eq(choose_req.accept() & (choose_req.write() | choose_req.read()))
+        m.d.comb += tccdcon.valid.eq(choose_req.accept()
+                                     & (choose_req.write() | choose_req.read()))
 
         # CAS control ------------------------------------------------------------------------------
         m.d.comb += cas_allowed.eq(tccdcon.ready)
@@ -329,7 +347,8 @@ class Multiplexer(Peripheral, Elaboratable):
         write_time_en, max_write_time = anti_starvation(settings.write_time)
 
         # Refresh ----------------------------------------------------------------------------------
-        m.d.comb += [bm.refresh_req.eq(refresher.cmd.valid) for bm in bank_machines]
+        m.d.comb += [bm.refresh_req.eq(refresher.cmd.valid)
+                     for bm in bank_machines]
         go_to_refresh = Signal()
         bm_refresh_gnts = [bm.refresh_gnt for bm in bank_machines]
         m.d.comb += go_to_refresh.eq(reduce(and_, bm_refresh_gnts))
@@ -373,11 +392,13 @@ class Multiplexer(Peripheral, Elaboratable):
                 ]
 
                 with m.If(settings.phy.nphases == 1):
-                    m.d.comb += choose_req.cmd.ready.eq(cas_allowed & (~choose_req.activate() | ras_allowed))
+                    m.d.comb += choose_req.cmd.ready.eq(
+                        cas_allowed & (~choose_req.activate() | ras_allowed))
                 with m.Else():
                     m.d.comb += [
                         choose_cmd.want_activates.eq(ras_allowed),
-                        choose_cmd.cmd.ready.eq(~choose_cmd.activate() | ras_allowed),
+                        choose_cmd.cmd.ready.eq(
+                            ~choose_cmd.activate() | ras_allowed),
                         choose_req.cmd.ready.eq(cas_allowed),
                     ]
 
@@ -397,11 +418,13 @@ class Multiplexer(Peripheral, Elaboratable):
                 ]
 
                 with m.If(settings.phy.nphases == 1):
-                    m.d.comb += choose_req.cmd.ready.eq(cas_allowed & (~choose_req.activate() | ras_allowed))
+                    m.d.comb += choose_req.cmd.ready.eq(
+                        cas_allowed & (~choose_req.activate() | ras_allowed))
                 with m.Else():
                     m.d.comb += [
                         choose_cmd.want_activates.eq(ras_allowed),
-                        choose_cmd.cmd.ready.eq(~choose_cmd.activate() | ras_allowed),
+                        choose_cmd.cmd.ready.eq(
+                            ~choose_cmd.activate() | ras_allowed),
                         choose_req.cmd.ready.eq(cas_allowed),
                     ]
 
@@ -423,7 +446,7 @@ class Multiplexer(Peripheral, Elaboratable):
             with m.State("WTR"):
                 with m.If(twtrcon.ready):
                     m.next = "Read"
-            
+
             # TODO: reduce this, actual limit is around (cl+1)/nphases
             delayed_enter(m, "RTW", "Write", settings.phy.read_latency-1)
 

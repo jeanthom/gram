@@ -16,52 +16,55 @@ from gram.core.multiplexer import Multiplexer
 
 # Settings -----------------------------------------------------------------------------------------
 
+
 class ControllerSettings(Settings):
     def __init__(self,
-        # Command buffers
-        cmd_buffer_depth    = 8,
-        cmd_buffer_buffered = False,
+                 # Command buffers
+                 cmd_buffer_depth=8,
+                 cmd_buffer_buffered=False,
 
-        # Read/Write times
-        read_time           = 32,
-        write_time          = 16,
+                 # Read/Write times
+                 read_time=32,
+                 write_time=16,
 
-        # Refresh
-        with_refresh        = True,
-        refresh_cls         = Refresher,
-        refresh_zqcs_freq   = 1e0,
-        refresh_postponing  = 1,
+                 # Refresh
+                 with_refresh=True,
+                 refresh_cls=Refresher,
+                 refresh_zqcs_freq=1e0,
+                 refresh_postponing=1,
 
-        # Auto-Precharge
-        with_auto_precharge = True,
+                 # Auto-Precharge
+                 with_auto_precharge=True,
 
-        # Address mapping
-        address_mapping     = "ROW_BANK_COL"):
+                 # Address mapping
+                 address_mapping="ROW_BANK_COL"):
         self.set_attributes(locals())
 
 # Controller ---------------------------------------------------------------------------------------
 
+
 class gramController(Elaboratable):
     def __init__(self, phy_settings, geom_settings, timing_settings, clk_freq,
-        controller_settings=ControllerSettings()):
+                 controller_settings=ControllerSettings()):
         self._address_align = log2_int(burst_lengths[phy_settings.memtype])
 
         # Settings ---------------------------------------------------------------------------------
-        self.settings        = controller_settings
-        self.settings.phy    = phy_settings
-        self.settings.geom   = geom_settings
+        self.settings = controller_settings
+        self.settings.phy = phy_settings
+        self.settings.geom = geom_settings
         self.settings.timing = timing_settings
 
         # LiteDRAM Interface (User) ----------------------------------------------------------------
-        self.interface = interface = gramInterface(self._address_align, self.settings)
+        self.interface = interface = gramInterface(
+            self._address_align, self.settings)
 
         # DFI Interface (Memory) -------------------------------------------------------------------
         self.dfi = dfi.Interface(
-            addressbits = geom_settings.addressbits,
-            bankbits    = geom_settings.bankbits,
-            nranks      = phy_settings.nranks,
-            databits    = phy_settings.dfi_databits,
-            nphases     = phy_settings.nphases)
+            addressbits=geom_settings.addressbits,
+            bankbits=geom_settings.bankbits,
+            nranks=phy_settings.nranks,
+            databits=phy_settings.dfi_databits,
+            nphases=phy_settings.nphases)
 
         self._clk_freq = clk_freq
 
@@ -73,29 +76,30 @@ class gramController(Elaboratable):
 
         # Refresher --------------------------------------------------------------------------------
         m.submodules.refresher = self.settings.refresh_cls(self.settings,
-            clk_freq   = self._clk_freq,
-            zqcs_freq  = self.settings.refresh_zqcs_freq,
-            postponing = self.settings.refresh_postponing)
+                                                           clk_freq=self._clk_freq,
+                                                           zqcs_freq=self.settings.refresh_zqcs_freq,
+                                                           postponing=self.settings.refresh_postponing)
 
         # Bank Machines ----------------------------------------------------------------------------
         bank_machines = []
         for n in range(nranks*nbanks):
             bank_machine = BankMachine(n,
-                address_width = self.interface.address_width,
-                address_align = self._address_align,
-                nranks        = nranks,
-                settings      = self.settings)
+                                       address_width=self.interface.address_width,
+                                       address_align=self._address_align,
+                                       nranks=nranks,
+                                       settings=self.settings)
             bank_machines.append(bank_machine)
             m.submodules += bank_machine
-            m.d.comb += getattr(self.interface, "bank"+str(n)).connect(bank_machine.req)
+            m.d.comb += getattr(self.interface, "bank" +
+                                str(n)).connect(bank_machine.req)
 
         # Multiplexer ------------------------------------------------------------------------------
         m.submodules.multiplexer = Multiplexer(
-            settings      = self.settings,
-            bank_machines = bank_machines,
-            refresher     = m.submodules.refresher,
-            dfi           = self.dfi,
-            interface     = self.interface)
+            settings=self.settings,
+            bank_machines=bank_machines,
+            refresher=m.submodules.refresher,
+            dfi=self.dfi,
+            interface=self.interface)
 
         return m
 

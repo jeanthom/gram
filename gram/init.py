@@ -18,6 +18,7 @@ cmds = {
 
 # SDR ----------------------------------------------------------------------------------------------
 
+
 def get_sdr_phy_init_sequence(phy_settings, timing_settings):
     cl = phy_settings.cl
     bl = 1
@@ -27,21 +28,24 @@ def get_sdr_phy_init_sequence(phy_settings, timing_settings):
     init_sequence = [
         ("Bring CKE high", 0x0000, 0, cmds["CKE"], 20000),
         ("Precharge All",  0x0400, 0, cmds["PRECHARGE_ALL"], 0),
-        ("Load Mode Register / Reset DLL, CL={0:d}, BL={1:d}".format(cl, bl), mr + reset_dll, 0, cmds["MODE_REGISTER"], 200),
+        ("Load Mode Register / Reset DLL, CL={0:d}, BL={1:d}".format(
+            cl, bl), mr + reset_dll, 0, cmds["MODE_REGISTER"], 200),
         ("Precharge All", 0x0400, 0, cmds["PRECHARGE_ALL"], 0),
         ("Auto Refresh", 0x0, 0, cmds["AUTO_REFRESH"], 4),
         ("Auto Refresh", 0x0, 0, cmds["AUTO_REFRESH"], 4),
-        ("Load Mode Register / CL={0:d}, BL={1:d}".format(cl, bl), mr, 0, cmds["MODE_REGISTER"], 200)
+        ("Load Mode Register / CL={0:d}, BL={1:d}".format(cl,
+                                                          bl), mr, 0, cmds["MODE_REGISTER"], 200)
     ]
 
     return init_sequence, None
 
 # DDR ----------------------------------------------------------------------------------------------
 
+
 def get_ddr_phy_init_sequence(phy_settings, timing_settings):
-    cl  = phy_settings.cl
-    bl  = 4
-    mr  = log2_int(bl) + (cl << 4)
+    cl = phy_settings.cl
+    bl = 4
+    mr = log2_int(bl) + (cl << 4)
     emr = 0
     reset_dll = 1 << 8
 
@@ -49,21 +53,24 @@ def get_ddr_phy_init_sequence(phy_settings, timing_settings):
         ("Bring CKE high", 0x0000, 0, cmds["CKE"], 20000),
         ("Precharge All",  0x0400, 0, cmds["PRECHARGE_ALL"], 0),
         ("Load Extended Mode Register", emr, 1, cmds["MODE_REGISTER"], 0),
-        ("Load Mode Register / Reset DLL, CL={0:d}, BL={1:d}".format(cl, bl), mr + reset_dll, 0, cmds["MODE_REGISTER"], 200),
+        ("Load Mode Register / Reset DLL, CL={0:d}, BL={1:d}".format(
+            cl, bl), mr + reset_dll, 0, cmds["MODE_REGISTER"], 200),
         ("Precharge All", 0x0400, 0, cmds["PRECHARGE_ALL"], 0),
         ("Auto Refresh", 0x0, 0, cmds["AUTO_REFRESH"], 4),
         ("Auto Refresh", 0x0, 0, cmds["AUTO_REFRESH"], 4),
-        ("Load Mode Register / CL={0:d}, BL={1:d}".format(cl, bl), mr, 0, cmds["MODE_REGISTER"], 200)
+        ("Load Mode Register / CL={0:d}, BL={1:d}".format(cl,
+                                                          bl), mr, 0, cmds["MODE_REGISTER"], 200)
     ]
 
     return init_sequence, None
 
 # LPDDR --------------------------------------------------------------------------------------------
 
+
 def get_lpddr_phy_init_sequence(phy_settings, timing_settings):
-    cl  = phy_settings.cl
-    bl  = 4
-    mr  = log2_int(bl) + (cl << 4)
+    cl = phy_settings.cl
+    bl = 4
+    mr = log2_int(bl) + (cl << 4)
     emr = 0
     reset_dll = 1 << 8
 
@@ -71,26 +78,29 @@ def get_lpddr_phy_init_sequence(phy_settings, timing_settings):
         ("Bring CKE high", 0x0000, 0, cmds["CKE"], 20000),
         ("Precharge All",  0x0400, 0, cmds["PRECHARGE_ALL"], 0),
         ("Load Extended Mode Register", emr, 2, cmds["MODE_REGISTER"], 0),
-        ("Load Mode Register / Reset DLL, CL={0:d}, BL={1:d}".format(cl, bl), mr + reset_dll, 0, cmds["MODE_REGISTER"], 200),
+        ("Load Mode Register / Reset DLL, CL={0:d}, BL={1:d}".format(
+            cl, bl), mr + reset_dll, 0, cmds["MODE_REGISTER"], 200),
         ("Precharge All", 0x0400, 0, cmds["PRECHARGE_ALL"], 0),
         ("Auto Refresh", 0x0, 0, cmds["AUTO_REFRESH"], 4),
         ("Auto Refresh", 0x0, 0, cmds["AUTO_REFRESH"], 4),
-        ("Load Mode Register / CL={0:d}, BL={1:d}".format(cl, bl), mr, 0, cmds["MODE_REGISTER"], 200)
+        ("Load Mode Register / CL={0:d}, BL={1:d}".format(cl,
+                                                          bl), mr, 0, cmds["MODE_REGISTER"], 200)
     ]
 
     return init_sequence, None
 
 # DDR2 ---------------------------------------------------------------------------------------------
 
+
 def get_ddr2_phy_init_sequence(phy_settings, timing_settings):
-    cl   = phy_settings.cl
-    bl   = 4
-    wr   = 2
-    mr   = log2_int(bl) + (cl << 4) + (wr << 9)
-    emr  = 0
+    cl = phy_settings.cl
+    bl = 4
+    wr = 2
+    mr = log2_int(bl) + (cl << 4) + (wr << 9)
+    emr = 0
     emr2 = 0
     emr3 = 0
-    ocd  = 7 << 7
+    ocd = 7 << 7
     reset_dll = 1 << 8
 
     init_sequence = [
@@ -99,22 +109,27 @@ def get_ddr2_phy_init_sequence(phy_settings, timing_settings):
         ("Load Extended Mode Register 3", emr3, 3, cmds["MODE_REGISTER"], 0),
         ("Load Extended Mode Register 2", emr2, 2, cmds["MODE_REGISTER"], 0),
         ("Load Extended Mode Register", emr, 1, cmds["MODE_REGISTER"], 0),
-        ("Load Mode Register / Reset DLL, CL={0:d}, BL={1:d}".format(cl, bl), mr + reset_dll, 0, cmds["MODE_REGISTER"], 200),
+        ("Load Mode Register / Reset DLL, CL={0:d}, BL={1:d}".format(
+            cl, bl), mr + reset_dll, 0, cmds["MODE_REGISTER"], 200),
         ("Precharge All", 0x0400, 0, cmds["PRECHARGE_ALL"], 0),
         ("Auto Refresh", 0x0, 0, cmds["AUTO_REFRESH"], 4),
         ("Auto Refresh", 0x0, 0, cmds["AUTO_REFRESH"], 4),
-        ("Load Mode Register / CL={0:d}, BL={1:d}".format(cl, bl), mr, 0, cmds["MODE_REGISTER"], 200),
-        ("Load Extended Mode Register / OCD Default", emr+ocd, 1, cmds["MODE_REGISTER"], 0),
-        ("Load Extended Mode Register / OCD Exit", emr, 1, cmds["MODE_REGISTER"], 0),
+        ("Load Mode Register / CL={0:d}, BL={1:d}".format(cl,
+                                                          bl), mr, 0, cmds["MODE_REGISTER"], 200),
+        ("Load Extended Mode Register / OCD Default",
+         emr+ocd, 1, cmds["MODE_REGISTER"], 0),
+        ("Load Extended Mode Register / OCD Exit",
+         emr, 1, cmds["MODE_REGISTER"], 0),
     ]
 
     return init_sequence, None
 
 # DDR3 ---------------------------------------------------------------------------------------------
 
+
 def get_ddr3_phy_init_sequence(phy_settings, timing_settings):
-    cl  = phy_settings.cl
-    bl  = 8
+    cl = phy_settings.cl
+    bl = 8
     cwl = phy_settings.cwl
 
     def format_mr0(bl, cl, wr, dll_reset):
@@ -123,11 +138,11 @@ def get_ddr3_phy_init_sequence(phy_settings, timing_settings):
             8: 0b00
         }
         cl_to_mr0 = {
-             5: 0b0010,
-             6: 0b0100,
-             7: 0b0110,
-             8: 0b1000,
-             9: 0b1010,
+            5: 0b0010,
+            6: 0b0100,
+            7: 0b0110,
+            8: 0b1000,
+            9: 0b1010,
             10: 0b1100,
             11: 0b1110,
             12: 0b0001,
@@ -136,10 +151,10 @@ def get_ddr3_phy_init_sequence(phy_settings, timing_settings):
         }
         wr_to_mr0 = {
             16: 0b000,
-             5: 0b001,
-             6: 0b010,
-             7: 0b011,
-             8: 0b100,
+            5: 0b001,
+            6: 0b010,
+            7: 0b011,
+            8: 0b100,
             10: 0b101,
             12: 0b110,
             14: 0b111
@@ -165,29 +180,29 @@ def get_ddr3_phy_init_sequence(phy_settings, timing_settings):
         return mr2
 
     z_to_rtt_nom = {
-        "disabled" : 0,
-        "60ohm"    : 1,
-        "120ohm"   : 2,
-        "40ohm"    : 3,
-        "20ohm"    : 4,
-        "30ohm"    : 5
+        "disabled": 0,
+        "60ohm": 1,
+        "120ohm": 2,
+        "40ohm": 3,
+        "20ohm": 4,
+        "30ohm": 5
     }
 
     z_to_rtt_wr = {
-        "disabled" : 0,
-        "60ohm"    : 1,
-        "120ohm"   : 2,
+        "disabled": 0,
+        "60ohm": 1,
+        "120ohm": 2,
     }
 
     z_to_ron = {
-        "40ohm" : 0,
-        "34ohm" : 1,
+        "40ohm": 0,
+        "34ohm": 1,
     }
 
     # default electrical settings (point to point)
     rtt_nom = "60ohm"
-    rtt_wr  = "60ohm"
-    ron     = "34ohm"
+    rtt_wr = "60ohm"
+    ron = "34ohm"
 
     # override electrical settings if specified
     if hasattr(phy_settings, "rtt_nom"):
@@ -197,7 +212,8 @@ def get_ddr3_phy_init_sequence(phy_settings, timing_settings):
     if hasattr(phy_settings, "ron"):
         ron = phy_settings.ron
 
-    wr  = max(timing_settings.tWTR*phy_settings.nphases, 5) # >= ceiling(tWR/tCK)
+    # >= ceiling(tWR/tCK)
+    wr = max(timing_settings.tWTR*phy_settings.nphases, 5)
     mr0 = format_mr0(bl, cl, wr, 1)
     mr1 = format_mr1(z_to_ron[ron], z_to_rtt_nom[rtt_nom])
     mr2 = format_mr2(cwl, z_to_rtt_wr[rtt_wr])
@@ -206,10 +222,12 @@ def get_ddr3_phy_init_sequence(phy_settings, timing_settings):
     init_sequence = [
         ("Release reset", 0x0000, 0, cmds["UNRESET"], 50000),
         ("Bring CKE high", 0x0000, 0, cmds["CKE"], 10000),
-        ("Load Mode Register 2, CWL={0:d}".format(cwl), mr2, 2, cmds["MODE_REGISTER"], 0),
+        ("Load Mode Register 2, CWL={0:d}".format(
+            cwl), mr2, 2, cmds["MODE_REGISTER"], 0),
         ("Load Mode Register 3", mr3, 3, cmds["MODE_REGISTER"], 0),
         ("Load Mode Register 1", mr1, 1, cmds["MODE_REGISTER"], 0),
-        ("Load Mode Register 0, CL={0:d}, BL={1:d}".format(cl, bl), mr0, 0, cmds["MODE_REGISTER"], 200),
+        ("Load Mode Register 0, CL={0:d}, BL={1:d}".format(
+            cl, bl), mr0, 0, cmds["MODE_REGISTER"], 200),
         ("ZQ Calibration", 0x0400, 0, "DFII_COMMAND_WE|DFII_COMMAND_CS", 200),
     ]
 
@@ -217,9 +235,10 @@ def get_ddr3_phy_init_sequence(phy_settings, timing_settings):
 
 # DDR4 ---------------------------------------------------------------------------------------------
 
+
 def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
-    cl  = phy_settings.cl
-    bl  = 8
+    cl = phy_settings.cl
+    bl = 8
     cwl = phy_settings.cwl
 
     def format_mr0(bl, cl, wr, dll_reset):
@@ -228,7 +247,7 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
             8: 0b00
         }
         cl_to_mr0 = {
-             9: 0b00000,
+            9: 0b00000,
             10: 0b00001,
             11: 0b00010,
             12: 0b00011,
@@ -285,7 +304,7 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
 
     def format_mr2(cwl, rtt_wr):
         cwl_to_mr2 = {
-             9: 0b000,
+            9: 0b000,
             10: 0b001,
             11: 0b010,
             12: 0b011,
@@ -319,33 +338,33 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
         return mr6
 
     z_to_rtt_nom = {
-        "disabled" : 0b000,
-        "60ohm"    : 0b001,
-        "120ohm"   : 0b010,
-        "40ohm"    : 0b011,
-        "240ohm"   : 0b100,
-        "48ohm"    : 0b101,
-        "80ohm"    : 0b110,
-        "34ohm"    : 0b111
+        "disabled": 0b000,
+        "60ohm": 0b001,
+        "120ohm": 0b010,
+        "40ohm": 0b011,
+        "240ohm": 0b100,
+        "48ohm": 0b101,
+        "80ohm": 0b110,
+        "34ohm": 0b111
     }
 
     z_to_rtt_wr = {
-        "disabled" : 0b000,
-        "120ohm"   : 0b001,
-        "240ohm"   : 0b010,
-        "high-z"   : 0b011,
-        "80ohm"    : 0b100,
+        "disabled": 0b000,
+        "120ohm": 0b001,
+        "240ohm": 0b010,
+        "high-z": 0b011,
+        "80ohm": 0b100,
     }
 
     z_to_ron = {
-        "34ohm" : 0b00,
-        "48ohm" : 0b01,
+        "34ohm": 0b00,
+        "48ohm": 0b01,
     }
 
     # default electrical settings (point to point)
     rtt_nom = "40ohm"
-    rtt_wr  = "120ohm"
-    ron     = "34ohm"
+    rtt_wr = "120ohm"
+    ron = "34ohm"
 
     # override electrical settings if specified
     if hasattr(phy_settings, "rtt_nom"):
@@ -355,14 +374,15 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
     if hasattr(phy_settings, "ron"):
         ron = phy_settings.ron
 
-    wr  = max(timing_settings.tWTR*phy_settings.nphases, 10) # >= ceiling(tWR/tCK)
+    # >= ceiling(tWR/tCK)
+    wr = max(timing_settings.tWTR*phy_settings.nphases, 10)
     mr0 = format_mr0(bl, cl, wr, 1)
     mr1 = format_mr1(1, z_to_ron[ron], z_to_rtt_nom[rtt_nom])
     mr2 = format_mr2(cwl, z_to_rtt_wr[rtt_wr])
     mr3 = format_mr3(timing_settings.fine_refresh_mode)
     mr4 = 0
     mr5 = 0
-    mr6 = format_mr6(4) # FIXME: tCCD
+    mr6 = format_mr6(4)  # FIXME: tCCD
 
     rdimm_init = []
     if phy_settings.is_rdimm:
@@ -381,9 +401,10 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
                 return 7
             else:
                 for f, speed in f_to_coarse_speed.items():
-                        if tck >= 2/f:
-                            return speed
+                    if tck >= 2/f:
+                        return speed
                 raise ValueError
+
         def get_fine_speed(tck):
             # JESD82-31A page 83
             freq = 2/tck
@@ -392,10 +413,12 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
             fine_speed = min(fine_speed, 0b1100001)
             return fine_speed
 
-        coarse_speed = get_coarse_speed(phy_settings.tck, phy_settings.rcd_pll_bypass)
+        coarse_speed = get_coarse_speed(
+            phy_settings.tck, phy_settings.rcd_pll_bypass)
         fine_speed = get_fine_speed(phy_settings.tck)
 
-        rcd_reset = 0x060 | 0x0                          # F0RC06: command space control; 0: reset RCD
+        # F0RC06: command space control; 0: reset RCD
+        rcd_reset = 0x060 | 0x0
 
         f0rc0f = 0x0F0 | 0x4                             # F0RC05: 0 nCK latency adder
 
@@ -403,7 +426,8 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
         f0rc04 = 0x040 | phy_settings.rcd_odt_cke_drive  # F0RC04: ODT/CKE drive strength
         f0rc05 = 0x050 | phy_settings.rcd_clk_drive      # F0RC04: ODT/CKE drive strength
 
-        f0rc0a = 0x0A0 | coarse_speed                    # F0RC0A: coarse speed selection and PLL bypass
+        # F0RC0A: coarse speed selection and PLL bypass
+        f0rc0a = 0x0A0 | coarse_speed
         f0rc3x = 0x300 | fine_speed                      # F0RC3x: fine speed selection
 
         rdimm_init = [
@@ -424,9 +448,11 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
         ("Load Mode Register 6", mr6, 6, cmds["MODE_REGISTER"], 0),
         ("Load Mode Register 5", mr5, 5, cmds["MODE_REGISTER"], 0),
         ("Load Mode Register 4", mr4, 4, cmds["MODE_REGISTER"], 0),
-        ("Load Mode Register 2, CWL={0:d}".format(cwl), mr2, 2, cmds["MODE_REGISTER"], 0),
+        ("Load Mode Register 2, CWL={0:d}".format(
+            cwl), mr2, 2, cmds["MODE_REGISTER"], 0),
         ("Load Mode Register 1", mr1, 1, cmds["MODE_REGISTER"], 0),
-        ("Load Mode Register 0, CL={0:d}, BL={1:d}".format(cl, bl), mr0, 0, cmds["MODE_REGISTER"], 200),
+        ("Load Mode Register 0, CL={0:d}, BL={1:d}".format(
+            cl, bl), mr0, 0, cmds["MODE_REGISTER"], 200),
         ("ZQ Calibration", 0x0400, 0, "DFII_COMMAND_WE|DFII_COMMAND_CS", 200),
     ]
 
@@ -434,17 +460,19 @@ def get_ddr4_phy_init_sequence(phy_settings, timing_settings):
 
 # Init Sequence ------------------------------------------------------------------------------------
 
+
 def get_sdram_phy_init_sequence(phy_settings, timing_settings):
     return {
-        "SDR"  : get_sdr_phy_init_sequence,
-        "DDR"  : get_ddr_phy_init_sequence,
+        "SDR": get_sdr_phy_init_sequence,
+        "DDR": get_ddr_phy_init_sequence,
         "LPDDR": get_lpddr_phy_init_sequence,
-        "DDR2" : get_ddr2_phy_init_sequence,
-        "DDR3" : get_ddr3_phy_init_sequence,
-        "DDR4" : get_ddr4_phy_init_sequence,
+        "DDR2": get_ddr2_phy_init_sequence,
+        "DDR3": get_ddr3_phy_init_sequence,
+        "DDR4": get_ddr4_phy_init_sequence,
     }[phy_settings.memtype](phy_settings, timing_settings)
 
 # C Header -----------------------------------------------------------------------------------------
+
 
 def get_sdram_phy_c_header(phy_settings, timing_settings):
     r = "#ifndef __GENERATED_SDRAM_PHY_H\n#define __GENERATED_SDRAM_PHY_H\n"
@@ -530,7 +558,8 @@ __attribute__((unused)) static void command_p{n}(int cmd)
     r += "#define DFII_PIX_DATA_SIZE CSR_SDRAM_DFII_PI0_WRDATA_SIZE\n"
     sdram_dfii_pix_wrdata_addr = []
     for n in range(nphases):
-        sdram_dfii_pix_wrdata_addr.append("CSR_SDRAM_DFII_PI{n}_WRDATA_ADDR".format(n=n))
+        sdram_dfii_pix_wrdata_addr.append(
+            "CSR_SDRAM_DFII_PI{n}_WRDATA_ADDR".format(n=n))
     r += """
 const unsigned long sdram_dfii_pix_wrdata_addr[SDRAM_PHY_PHASES] = {{
 \t{sdram_dfii_pix_wrdata_addr}
@@ -539,7 +568,8 @@ const unsigned long sdram_dfii_pix_wrdata_addr[SDRAM_PHY_PHASES] = {{
 
     sdram_dfii_pix_rddata_addr = []
     for n in range(nphases):
-        sdram_dfii_pix_rddata_addr.append("CSR_SDRAM_DFII_PI{n}_RDDATA_ADDR".format(n=n))
+        sdram_dfii_pix_rddata_addr.append(
+            "CSR_SDRAM_DFII_PI{n}_RDDATA_ADDR".format(n=n))
     r += """
 const unsigned long sdram_dfii_pix_rddata_addr[SDRAM_PHY_PHASES] = {{
 \t{sdram_dfii_pix_rddata_addr}
@@ -547,7 +577,8 @@ const unsigned long sdram_dfii_pix_rddata_addr[SDRAM_PHY_PHASES] = {{
 """.format(sdram_dfii_pix_rddata_addr=",\n\t".join(sdram_dfii_pix_rddata_addr))
     r += "\n"
 
-    init_sequence, mr1 = get_sdram_phy_init_sequence(phy_settings, timing_settings)
+    init_sequence, mr1 = get_sdram_phy_init_sequence(
+        phy_settings, timing_settings)
 
     if phy_settings.memtype in ["DDR3", "DDR4"]:
         # the value of MR1 needs to be modified during write leveling
@@ -573,7 +604,8 @@ const unsigned long sdram_dfii_pix_rddata_addr[SDRAM_PHY_PHASES] = {{
         for a_inv, ba_inv in invert_masks:
             r += "\t/* {0} */\n".format(comment)
             r += "\tsdram_dfii_pi0_address_write({0:#x});\n".format(a ^ a_inv)
-            r += "\tsdram_dfii_pi0_baddress_write({0:d});\n".format(ba ^ ba_inv)
+            r += "\tsdram_dfii_pi0_baddress_write({0:d});\n".format(
+                ba ^ ba_inv)
             if cmd[:12] == "DFII_CONTROL":
                 r += "\tsdram_dfii_control_write({0});\n".format(cmd)
             else:
@@ -588,6 +620,7 @@ const unsigned long sdram_dfii_pix_rddata_addr[SDRAM_PHY_PHASES] = {{
     return r
 
 # Python Header ------------------------------------------------------------------------------------
+
 
 def get_sdram_phy_py_header(phy_settings, timing_settings):
     r = ""
@@ -604,7 +637,8 @@ def get_sdram_phy_py_header(phy_settings, timing_settings):
     r += "dfii_command_rddata = 0x20\n"
     r += "\n"
 
-    init_sequence, mr1 = get_sdram_phy_init_sequence(phy_settings, timing_settings)
+    init_sequence, mr1 = get_sdram_phy_init_sequence(
+        phy_settings, timing_settings)
 
     if mr1 is not None:
         r += "ddrx_mr1 = 0x{:x}\n".format(mr1)

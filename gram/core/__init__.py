@@ -9,12 +9,13 @@ from gram.core.crossbar import gramCrossbar
 
 # Core ---------------------------------------------------------------------------------------------
 
+
 class gramCore(Peripheral, Elaboratable):
     def __init__(self, phy, geom_settings, timing_settings, clk_freq, **kwargs):
         super().__init__()
 
         bank = self.csr_bank()
-        
+
         self._zero_ev = self.event(mode="rise")
 
         self._phy = phy
@@ -24,26 +25,27 @@ class gramCore(Peripheral, Elaboratable):
         self._kwargs = kwargs
 
         self.dfii = DFIInjector(
-            csr_bank = CSRPrefixProxy(bank, "dfii"),
-            addressbits = self._geom_settings.addressbits,
-            bankbits    = self._geom_settings.bankbits,
-            nranks      = self._phy.settings.nranks,
-            databits    = self._phy.settings.dfi_databits,
-            nphases     = self._phy.settings.nphases)
+            csr_bank=CSRPrefixProxy(bank, "dfii"),
+            addressbits=self._geom_settings.addressbits,
+            bankbits=self._geom_settings.bankbits,
+            nranks=self._phy.settings.nranks,
+            databits=self._phy.settings.dfi_databits,
+            nphases=self._phy.settings.nphases)
 
         self.controller = gramController(
-            phy_settings    = self._phy.settings,
-            geom_settings   = self._geom_settings,
-            timing_settings = self._timing_settings,
-            clk_freq        = self._clk_freq,
+            phy_settings=self._phy.settings,
+            geom_settings=self._geom_settings,
+            timing_settings=self._timing_settings,
+            clk_freq=self._clk_freq,
             **self._kwargs)
 
         # Size in bytes
-        self.size = 2**geom_settings.bankbits * 2**geom_settings.rowbits * 2**geom_settings.colbits
+        self.size = 2**geom_settings.bankbits * \
+            2**geom_settings.rowbits * 2**geom_settings.colbits
 
         self.crossbar = gramCrossbar(self.controller.interface)
 
-        self._bridge  = self.bridge(data_width=32, granularity=8, alignment=2)
+        self._bridge = self.bridge(data_width=32, granularity=8, alignment=2)
         self.bus = self._bridge.bus
         self.irq = self._bridge.irq
 
