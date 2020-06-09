@@ -14,6 +14,7 @@ from lambdasoc.soc.cpu import CPUSoC
 from gram.core import gramCore
 from gram.phy.ecp5ddrphy import ECP5DDRPHY
 from gram.modules import MT41K256M16
+from gram.frontend.wishbone import gramWishbone
 
 from customecpix5 import ECPIX5Platform
 
@@ -113,7 +114,8 @@ class DDR3SoC(CPUSoC, Elaboratable):
 				 ram_addr, ram_size,
 				 uart_addr, uart_divisor, uart_pins,
 				 timer_addr, timer_width,
-				 ddrphy_addr, dramcore_addr):
+				 ddrphy_addr, dramcore_addr,
+				 ddr_addr):
 		self._arbiter = wishbone.Arbiter(addr_width=30, data_width=32, granularity=8,
 										 features={"cti", "bte"})
 		self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
@@ -154,7 +156,8 @@ class DDR3SoC(CPUSoC, Elaboratable):
 			clk_freq = clk_freq)
 		self._decoder.add(self.dramcore.bus, addr=dramcore_addr)
 
-		self.dramport = self.dramcore.crossbar.get_port()
+		self.drambone = gramWishbone(self.dramcore)
+		self._decoder.add(self.drambone.bus, addr=ddr_addr)
 
 		self.memory_map = self._decoder.bus.memory_map
 
@@ -174,6 +177,7 @@ class DDR3SoC(CPUSoC, Elaboratable):
 		m.submodules.intc    = self.intc
 		m.submodules.ddrphy  = self.ddrphy
 		m.submodules.dramcore = self.dramcore
+		m.submodules.drambone = self.drambone
 
 		m.submodules.sysclk = SysClocker()
 
@@ -198,7 +202,8 @@ if __name__ == "__main__":
 		   ram_addr=0x00004000, ram_size=0x1000,
 		  uart_addr=0x00005000, uart_divisor=uart_divisor, uart_pins=uart_pins,
 		 timer_addr=0x00006000, timer_width=32,
-		ddrphy_addr=0x00008000, dramcore_addr=0x00009000
+		ddrphy_addr=0x00008000, dramcore_addr=0x00009000,
+		   ddr_addr=0x10000000
 	)
 
 	soc.build(do_build=True, do_init=True)
