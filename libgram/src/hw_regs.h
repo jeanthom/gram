@@ -1,7 +1,7 @@
 #ifndef HW_REGS_H
 #define HW_REGS_H
 
-struct ECP5PHY {
+struct gramPHYRegs {
 	uint32_t dly_sel;
 	uint32_t rdly_dq_rst;
 	uint32_t rdly_dq_inc;
@@ -20,9 +20,9 @@ struct DFII_Phase {
 	uint32_t rddata;
 } __attribute__((packed));
 
-struct DFII {
+struct gramCoreRegs {
 	uint32_t control;
-
+	struct DFII_Phase phases[4];
 } __attribute__((packed));
 
 #endif /* HW_REGS_H */

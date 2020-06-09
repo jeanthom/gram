@@ -1,40 +1,12 @@
 #include <gram.h>
+#include "dfii.h"
 
-int gram_init(void) {
-#ifdef CSR_DDRCTRL_BASE
-	ddrctrl_init_done_write(0);
-	ddrctrl_init_error_write(0);
-#endif
+int gram_init(struct gramCtx *ctx, void *ddr_base, void *core_base, void *phy_base) {
+	ctx->ddr_base = ddr_base;
+	ctx->core = core_base;
+	ctx->phy = phy_base;
 
-	sdrsw();
-	init_sequence();
-
-#ifdef CSR_DDRPHY_BASE
-#ifdef DDRPHY_CMD_DELAY
-	ddrphy_cdly(DDRPHY_CMD_DELAY);
-#endif
-#if CSR_DDRPHY_EN_VTC_ADDR
-	ddrphy_en_vtc_write(0);
-#endif
-#if defined(SDRAM_PHY_WRITE_LEVELING_CAPABLE) || defined(SDRAM_PHY_READ_LEVELING_CAPABLE)
-	sdrlevel();
-#endif
-#if CSR_DDRPHY_EN_VTC_ADDR
-	ddrphy_en_vtc_write(1);
-#endif
-#endif
-	sdrhw();
-
-	if(!memtest()) {
-#ifdef CSR_DDRCTRL_BASE
-		ddrctrl_init_done_write(1);
-		ddrctrl_init_error_write(1);
-#endif
-		return GRAM_ERR_MEMTEST;
-	}
-#ifdef CSR_DDRCTRL_BASE
-	ddrctrl_init_done_write(1);
-#endif
-
-	return GRAM_ERR_NONE;
+	dfii_setsw(ctx, true);
+	dfii_initseq(ctx);
+	dfii_setsw(ctx, false);
 }
