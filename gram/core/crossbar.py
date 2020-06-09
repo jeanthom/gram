@@ -114,7 +114,7 @@ class gramCrossbar(Elaboratable):
                 data_width=data_width,
                 clock_domain=clock_domain,
                 id=port.id)
-            self._pending_submodules.append(ClockDomainsRenamer(clock_domain)(
+            self._pending_submodules.append(DomainRenamer(clock_domain)(
                 gramNativePortConverter(new_port, port, reverse)))
             port = new_port
 
