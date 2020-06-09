@@ -1,0 +1,4 @@
+#!/bin/sh
+
+autopep8 --in-place --recursive gram
+autopep8 --in-place --recursive examples
