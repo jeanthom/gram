@@ -155,6 +155,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
+        m.submodules += self._bridge
+
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.oe)

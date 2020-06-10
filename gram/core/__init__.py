@@ -52,6 +52,8 @@ class gramCore(Peripheral, Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
+        m.submodules += self._bridge
+
         m.submodules += self.dfii
         m.d.comb += self.dfii.master.connect(self._phy.dfi)
 
