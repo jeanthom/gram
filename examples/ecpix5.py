@@ -176,6 +176,7 @@ class DDR3SoC(CPUSoC, Elaboratable):
 
         m.submodules.decoder = self._decoder
         m.submodules.rom = self.rom
+        m.submodules.rom2 = self.rom2
         m.submodules.ram = self.ram
         m.submodules.uart = self.uart
         m.submodules.timer = self.timer
