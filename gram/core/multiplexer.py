@@ -12,8 +12,6 @@ from operator import or_, and_
 
 from nmigen import *
 
-from lambdasoc.periph import Peripheral
-
 from gram.common import *
 import gram.stream as stream
 from gram.compat import RoundRobin, delayed_enter
@@ -219,7 +217,7 @@ class _Steerer(Elaboratable):
 # Multiplexer --------------------------------------------------------------------------------------
 
 
-class Multiplexer(Peripheral, Elaboratable):
+class Multiplexer(Elaboratable):
     """Multplexes requets from BankMachines to DFI
 
     This module multiplexes requests from BankMachines (and Refresher) and
