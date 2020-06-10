@@ -153,7 +153,7 @@ class _UpConverter(Elaboratable):
             source_layout.append(("valid_token_count", bits_for(ratio)))
         self.source = source = Endpoint(source_layout)
         self.ratio = ratio
-        self._nbits_from  = nbits_from
+        self._nbits_from = nbits_from
         self._reverse = reverse
         self._report_valid_token_count = report_valid_token_count
 
@@ -195,7 +195,8 @@ class _UpConverter(Elaboratable):
                 for i in range(self.ratio):
                     with m.Case(i):
                         n = self.ratio-i-1 if self._reverse else i
-                        m.d.sync += self.source.payload.lower()[n*self._nbits_from:(n+1)*self._nbits_from].eq(self.sink.payload)
+                        m.d.sync += self.source.payload.lower()[n*self._nbits_from:(
+                            n+1)*self._nbits_from].eq(self.sink.payload)
 
         if self._report_valid_token_count:
             with m.If(load_part):
@@ -246,7 +247,8 @@ class _DownConverter(Elaboratable):
             for i in range(self.ratio):
                 with m.Case(i):
                     n = self.ratio-i-1 if self._reverse else i
-                    m.d.comb += self.source.data.eq(self.sink.data[n*self._nbits_to:(n+1)*self._nbits_to])
+                    m.d.comb += self.source.data.eq(
+                        self.sink.data[n*self._nbits_to:(n+1)*self._nbits_to])
 
         if self._report_valid_token_count:
             m.d.comb += self.source.valid_token_count.eq(last)
@@ -299,7 +301,7 @@ class Converter(Elaboratable):
                  report_valid_token_count=False):
         cls, ratio = _get_converter_ratio(nbits_from, nbits_to)
         self.specialized = cls(nbits_from, nbits_to, ratio,
-            reverse, report_valid_token_count)
+                               reverse, report_valid_token_count)
         self.sink = self.specialized.sink
         self.source = self.specialized.source
 
@@ -328,7 +330,7 @@ class StrideConverter(Elaboratable):
 
         nbits_from = len(self.sink.payload.lower())
         nbits_to = len(self.source.payload.lower())
-        
+
         m.submodules += self.converter
 
         # cast sink to converter.sink (user fields --> raw bits)
@@ -343,12 +345,13 @@ class StrideConverter(Elaboratable):
                 j = 0
                 for name, width in self._layout_to.payload_layout:
                     src = getattr(self.sink, name)[i*width:(i+1)*width]
-                    dst = self.converter.sink.data[i*nbits_to+j:i*nbits_to+j+width]
+                    dst = self.converter.sink.data[i *
+                                                   nbits_to+j:i*nbits_to+j+width]
                     m.d.comb += dst.eq(src)
                     j += width
         else:
-            m.d.comb += self.converter.sink.payload.eq(self.sink.payload.lower())
-
+            m.d.comb += self.converter.sink.payload.eq(
+                self.sink.payload.lower())
 
         # cast converter.source to source (raw bits --> user fields)
         m.d.comb += [
@@ -361,7 +364,8 @@ class StrideConverter(Elaboratable):
             for i in range(ratio):
                 j = 0
                 for name, width in self._layout_from.payload_layout:
-                    src = self.converter.source.data[i*nbits_from+j:i*nbits_from+j+width]
+                    src = self.converter.source.data[i *
+                                                     nbits_from+j:i*nbits_from+j+width]
                     dst = getattr(self.source, name)[i*width:(i+1)*width]
                     m.d.comb += dst.eq(src)
                     j += width
@@ -369,6 +373,7 @@ class StrideConverter(Elaboratable):
             m.d.comb += self.source.payload.lower().eq(self.converter.source.payload)
 
         return m
+
 
 class Pipeline(Elaboratable):
     def __init__(self, *modules):
@@ -389,7 +394,7 @@ class Pipeline(Elaboratable):
 
         n = len(self._modules)
         mod = self._modules[0]
-        
+
         for i in range(1, n):
             mod_n = self._modules[i]
             if isinstance(mod, Endpoint):

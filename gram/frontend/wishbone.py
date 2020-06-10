@@ -22,7 +22,8 @@ class gramWishbone(Peripheral, Elaboratable):
         self.bus = wishbone.Interface(addr_width=dram_addr_width,
                                       data_width=32, granularity=granularity)
 
-        map = MemoryMap(addr_width=dram_addr_width+log2_int(granularity)-1, data_width=granularity)
+        map = MemoryMap(addr_width=dram_addr_width +
+                        log2_int(granularity)-1, data_width=granularity)
         self.bus.memory_map = map
 
     def elaborate(self, platform):
@@ -30,7 +31,8 @@ class gramWishbone(Peripheral, Elaboratable):
 
         # Write datapath
         m.d.comb += [
-            self._port.wdata.valid.eq(self.bus.cyc & self.bus.stb & self.bus.we),
+            self._port.wdata.valid.eq(
+                self.bus.cyc & self.bus.stb & self.bus.we),
             self._port.wdata.data.eq(self.bus.dat_w),
             self._port.wdata.we.eq(self.bus.sel),
         ]
@@ -63,6 +65,5 @@ class gramWishbone(Peripheral, Elaboratable):
                 with m.If(self._port.wdata.ready):
                     m.d.comb += self.bus.ack.eq(1)
                     m.next = "Send-Cmd"
-
 
         return m
