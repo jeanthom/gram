@@ -7,7 +7,6 @@ from nmigen import *
 
 from gram.phy import dfi
 from gram.compat import CSRPrefixProxy
-from lambdasoc.periph import Peripheral
 
 # PhaseInjector ------------------------------------------------------------------------------------
 
