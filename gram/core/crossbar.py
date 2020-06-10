@@ -76,7 +76,7 @@ class gramCrossbar(Elaboratable):
         self.masters = []
         self._pending_submodules = []
 
-    def get_port(self, mode="both", data_width=None, clock_domain="sys", reverse=False):
+    def get_port(self, mode="both", data_width=None, clock_domain="sync", reverse=False):
         if data_width is None:
             # use internal data_width when no width adaptation is requested
             data_width = self.controller.data_width
@@ -87,12 +87,12 @@ class gramCrossbar(Elaboratable):
             mode=mode,
             address_width=self.rca_bits + self.bank_bits - self.rank_bits,
             data_width=self.controller.data_width,
-            clock_domain="sys",
+            clock_domain="sync",
             id=len(self.masters))
         self.masters.append(port)
 
         # Clock domain crossing --------------------------------------------------------------------
-        if clock_domain != "sys":
+        if clock_domain != "sync":
             new_port = gramNativePort(
                 mode=mode,
                 address_width=port.address_width,
