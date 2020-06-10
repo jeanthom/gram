@@ -102,6 +102,3 @@ class gramController(Elaboratable):
             interface=self.interface)
 
         return m
-
-    def get_csrs(self):
-        return self.multiplexer.get_csrs()
