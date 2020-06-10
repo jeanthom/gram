@@ -30,25 +30,25 @@ class gramWishbone(Peripheral, Elaboratable):
 
         # Write datapath
         m.d.comb += [
-            self._port.wdata.valid.eq(wishbone.cyc & wishbone.stb & wishbone.we),
-            self._port.wdata.data.eq(wishbone.dat_w),
-            self._port.wdata.we.eq(wishbone.sel),
+            self._port.wdata.valid.eq(self.bus.cyc & self.bus.stb & self.bus.we),
+            self._port.wdata.data.eq(self.bus.dat_w),
+            self._port.wdata.we.eq(self.bus.sel),
         ]
 
         # Read datapath
         m.d.comb += [
-            self.bus.dat_r.eq(self._port.rdata.data),
-            self._port.rdata.data.ready.eq(1),
+            self.bus.dat_r.eq(self._port.rdata),
+            self._port.rdata.ready.eq(1),
         ]
 
         with m.FSM():
             with m.State("Send-Cmd"):
                 m.d.comb += [
-                    port.cmd.valid.eq(self.bus.cyc & self.bus.stb),
-                    port.cmd.we.eq(self.bus.we),
-                    port.cmd.addr.eq(self.bus.adr),
+                    self._port.cmd.valid.eq(self.bus.cyc & self.bus.stb),
+                    self._port.cmd.we.eq(self.bus.we),
+                    self._port.cmd.addr.eq(self.bus.adr),
                 ]
-                with m.If(port.cmd.valid & port.cmd.ready):
+                with m.If(self._port.cmd.valid & self._port.cmd.ready):
                     with m.If(self.bus.we):
                         m.next = "Wait-Write"
                     with m.Else():
