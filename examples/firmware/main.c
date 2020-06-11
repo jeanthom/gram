@@ -40,6 +40,26 @@ void uart_writestr(const char *c) {
 	}
 }
 
+void memcpy(void *dest, void *src, size_t n) {
+   int i;
+   //cast src and dest to char*
+   char *src_char = (char *)src;
+   char *dest_char = (char *)dest;
+   for (i=0; i<n; i++)
+      dest_char[i] = src_char[i]; //copy contents byte by byte
+}
+
+void uart_writeuint32(uint32_t val) {
+	const char lut[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+	uint8_t *val_arr = &val;
+	size_t i;
+
+	for (i = 0; i < 4; i++) {
+		uart_write(lut[(val_arr[3-i] >> 4) & 0xF]);
+		uart_write(lut[val_arr[3-i] & 0xF]);
+	}
+}
+
 void isr(void) {
 
 }
@@ -52,15 +72,22 @@ int main(void) {
 	gram_init(&ctx, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
 	uart_writestr("done\n");
 
-	uart_writestr("DRAM test... ");
+	uart_writestr("DRAM test... \n");
 	volatile uint32_t *ram = 0x10000000;
 	for (size_t i = 0; i < 1000; i++) {
-		ram[i] = 0xdeadbeef << (i%32);
+		uart_writestr("Writing to 0x");
+		uart_writeuint32(&ram[i]);
+		uart_write('\n');
+		ram[i] = 0xaaaaaaaa;
 	}
 
 	for (size_t i = 0; i < 1000; i++) {
-		if (ram[i] != 0xdeadbeef << (i%32)) {
-			uart_writestr("fail\n");
+		if (ram[i] != 0xdeadbeef) {
+			uart_writestr("fail : *(0x");
+			uart_writeuint32(&ram[i]);
+			uart_writestr(") = ");
+			uart_writeuint32(ram[i]);
+			uart_write('\n');
 		}
 	}
 	uart_writestr("done\n");
