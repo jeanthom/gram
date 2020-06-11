@@ -14,6 +14,8 @@ from gram.core.multiplexer import *
 from gram.compat import delayed_enter
 import gram.stream as stream
 
+__ALL__ = ["BankMachine"]
+
 # AddressSlicer ------------------------------------------------------------------------------------
 
 
@@ -115,7 +117,6 @@ class BankMachine(Elaboratable):
         cmd_buffer = stream.Buffer(cmd_buffer_layout)
         m.submodules += cmd_buffer_lookahead, cmd_buffer
         m.d.comb += [
-            #self.req.connect(cmd_buffer_lookahead.sink, include={"valid", "ready", "payload.we", "payload.addr"}),
             cmd_buffer_lookahead.sink.valid.eq(self.req.valid),
             self.req.ready.eq(cmd_buffer_lookahead.sink.ready),
             cmd_buffer_lookahead.sink.payload.we.eq(self.req.we),

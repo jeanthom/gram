@@ -7,8 +7,7 @@ from gram.compat import CSRPrefixProxy
 from gram.core.controller import ControllerSettings, gramController
 from gram.core.crossbar import gramCrossbar
 
-# Core ---------------------------------------------------------------------------------------------
-
+__ALL__ = ["gramCore"]
 
 class gramCore(Peripheral, Elaboratable):
     def __init__(self, phy, geom_settings, timing_settings, clk_freq, **kwargs):

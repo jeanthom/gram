@@ -15,7 +15,7 @@ from gram.core.bankmachine import BankMachine
 from gram.core.multiplexer import Multiplexer
 
 # Settings -----------------------------------------------------------------------------------------
-
+__ALL__ = ["gramController"]
 
 class ControllerSettings(Settings):
     def __init__(self,

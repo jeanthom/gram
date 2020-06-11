@@ -16,8 +16,7 @@ from gram.common import *
 import gram.stream as stream
 from gram.compat import RoundRobin, delayed_enter
 
-# _CommandChooser ----------------------------------------------------------------------------------
-
+__ALL__ = ["Multiplexer"]
 
 class _CommandChooser(Elaboratable):
     """Arbitrates between requests, filtering them based on their type
