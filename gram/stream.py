@@ -249,6 +249,10 @@ class _DownConverter(Elaboratable):
                     n = self.ratio-i-1 if self._reverse else i
                     m.d.comb += self.source.data.eq(
                         self.sink.data[n*self._nbits_to:(n+1)*self._nbits_to])
+            with m.Case():
+                n = self.ratio-self.ratio-1-1 if self._reverse else self.ratio-1
+                m.d.comb += self.source.data.eq(
+                    self.sink.data[n*self._nbits_to:(n+1)*self._nbits_to])
 
         if self._report_valid_token_count:
             m.d.comb += self.source.valid_token_count.eq(last)
@@ -397,16 +401,20 @@ class Pipeline(Elaboratable):
 
         for i in range(1, n):
             mod_n = self._modules[i]
+
             if isinstance(mod, Endpoint):
                 source = mod
             else:
                 source = mod.source
+
             if isinstance(mod_n, Endpoint):
                 sink = mod_n
             else:
                 sink = mod_n.sink
+
             if mod is not mod_n:
                 m.d.comb += source.connect(sink)
+            
             mod = mod_n
 
         return m
