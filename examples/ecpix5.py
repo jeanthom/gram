@@ -101,9 +101,9 @@ class SysClocker(Elaboratable):
 
         m.submodules.pll = pll = PLL(ClockSignal(
             "sync"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=2, CLK2_DIV=16)
-        cd_sys2x = ClockDomain("sys2x", local=False)
-        m.d.comb += cd_sys2x.clk.eq(pll.clkout1)
-        m.domains += cd_sys2x
+        cd_sync2x = ClockDomain("sync2x", local=False)
+        m.d.comb += cd_sync2x.clk.eq(pll.clkout1)
+        m.domains += cd_sync2x
 
         cd_init = ClockDomain("init", local=False)
         m.d.comb += cd_init.clk.eq(pll.clkout2)
