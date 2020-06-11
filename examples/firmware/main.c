@@ -78,11 +78,11 @@ int main(void) {
 		uart_writestr("Writing to 0x");
 		uart_writeuint32(&ram[i]);
 		uart_write('\n');
-		ram[i] = 0xaaaaaaaa;
+		ram[i] = 0xDEADBEEF;
 	}
 
 	for (size_t i = 0; i < 1000; i++) {
-		if (ram[i] != 0xdeadbeef) {
+		if (ram[i] != 0xDEADBEEF) {
 			uart_writestr("fail : *(0x");
 			uart_writeuint32(&ram[i]);
 			uart_writestr(") = ");
