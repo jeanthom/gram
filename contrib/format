@@ -1,4 +1,4 @@
 #!/bin/sh
 
-autopep8 --in-place --recursive gram
-autopep8 --in-place --recursive examples
+autopep8 --in-place --recursive --max-line-length 119 gram
+autopep8 --in-place --recursive --max-line-length 119 examples
