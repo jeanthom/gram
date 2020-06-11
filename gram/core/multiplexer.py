@@ -91,10 +91,8 @@ class _CommandChooser(Elaboratable):
                 m.d.comb += getattr(self.cmd, name).eq(choices[arbiter.grant])
 
         for i, request in enumerate(self._requests):
-            # with m.If(self.cmd.valid & self.cmd.ready & (arbiter.grant == i)):
-            # m.d.comb += request.ready.eq(1) # TODO: this shouldn't be commented
-            self.ready[i].eq(self.cmd.valid & self.cmd.ready &
-                             (arbiter.grant == i))
+            with m.If(self.cmd.valid & self.cmd.ready & (arbiter.grant == i)):
+                m.d.comb += self.ready[i].eq(1)
 
         # Arbitrate if a command is being accepted or if the command is not valid to ensure a valid
         # command is selected when cmd.ready goes high.
