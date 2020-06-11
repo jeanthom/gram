@@ -313,11 +313,6 @@ class gramNativePort(Settings):
 
         self.flush = Signal()
 
-        # retro-compatibility # FIXME: remove
-        self.aw = self.address_width
-        self.dw = self.data_width
-        self.cd = self.clock_domain
-
     def get_bank_address(self, bank_bits, cba_shift):
         cba_upper = cba_shift + bank_bits
         return self.cmd.addr[cba_shift:cba_upper]
