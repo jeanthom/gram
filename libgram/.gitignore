@@ -1,3 +1,5 @@
+libgram.o
+libgram.clean.o
 libgram.a
 src/*.o
 src/*.d

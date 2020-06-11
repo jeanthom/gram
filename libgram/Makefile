@@ -6,9 +6,10 @@ CC := $(TRIPLE)-gcc
 AS := $(TRIPLE)-as
 OBJCOPY := $(TRIPLE)-objcopy
 AR := $(TRIPLE)-ar
+LD := $(TRIPLE)-ld
 
-CFLAGS  := -march=rv32i -mabi=ilp32 -nostdlib -Os -Iinclude
-LDFLAGS := -march=rv32i -mabi=ilp32 -nostdlib
+CFLAGS  := -fvisibility=hidden -march=rv32i -mabi=ilp32 -nostdlib -Os -Iinclude
+LDFLAGS := -melf32lriscv -nostdlib
 
 all: libgram.a
 
@@ -16,9 +17,13 @@ all: libgram.a
 	$(CC) $(CFLAGS) -c $< -o $@
 
 libgram.a: $(OBJS)
-	$(AR) rcs $@ $(OBJS)
+	$(LD) $(LDFLAGS) -r $(OBJS) -o libgram.o
+	$(OBJCOPY) --localize-hidden libgram.o libgram.clean.o
+	$(AR) -rcs $@ libgram.clean.o
 
 clean:
 	rm -rf $(OBJS)
 	rm -f libgram.a
+	rm -f libgram.o
+	rm -f libgram.clean.o
 .PHONY: clean
