@@ -54,7 +54,7 @@ class PhaseInjector(Elaboratable):
             ]
 
         with m.If(self._phase.rddata_valid):
-            m.d.sync += self._rddata.w_data.eq(self._phase.rddata)
+            m.d.sync += self._rddata.r_data.eq(self._phase.rddata)
 
         return m
 
