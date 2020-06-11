@@ -348,8 +348,7 @@ class gramNativeReadPort(gramNativePort):
 class tXXDController(Elaboratable):
     def __init__(self, txxd):
         self.valid = Signal()
-        self.ready = ready = Signal(reset=txxd is None)
-        # ready.attr.add("no_retiming") TODO
+        self.ready = ready = Signal(reset=txxd is None, attrs={"no_retiming": True})
         self._txxd = txxd
 
     def elaborate(self, platform):
@@ -372,8 +371,7 @@ class tXXDController(Elaboratable):
 class tFAWController(Elaboratable):
     def __init__(self, tfaw):
         self.valid = Signal()
-        self.ready = Signal(reset=1)
-        # ready.attr.add("no_retiming") TODO
+        self.ready = Signal(reset=1, attrs={"no_retiming": True})
         self._tfaw = tfaw
 
     def elaborate(self, platform):
