@@ -275,7 +275,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      p_DQS_LO_DEL_ADJ="MINUS",
                                      p_DQS_LO_DEL_VAL=4,
                                      # Clocks / Reset
-                                     i_SCLK=ClockSignal("sys"),
+                                     i_SCLK=ClockSignal("sync"),
                                      i_ECLK=ClockSignal("sync2x"),
                                      i_RST=ResetSignal("sync2x"),
                                      i_DDRDEL=self.init.delay,
