@@ -302,7 +302,7 @@ class gramInterface(Record):
 
 
 class gramNativePort(Settings):
-    def __init__(self, mode, address_width, data_width, clock_domain="sys", id=0):
+    def __init__(self, mode, address_width, data_width, clock_domain="sync", id=0):
         self.set_attributes(locals())
 
         self.lock = Signal()
