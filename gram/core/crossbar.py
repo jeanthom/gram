@@ -4,8 +4,6 @@
 # This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 # License: BSD
 
-"""LiteDRAM Crossbar."""
-
 from functools import reduce
 from operator import or_
 
@@ -17,8 +15,7 @@ from gram.frontend.adaptation import *
 from gram.compat import RoundRobin
 import gram.stream as stream
 
-# LiteDRAMCrossbar ---------------------------------------------------------------------------------
-
+__ALL__ = ["gramCrossbar"]
 
 class gramCrossbar(Elaboratable):
     """Multiplexes LiteDRAMController (slave) between ports (masters)
@@ -76,11 +73,20 @@ class gramCrossbar(Elaboratable):
         self.masters = []
         self._pending_submodules = []
 
+    def get_native_port(self):
+        port = gramNativePort(
+            mode="both",
+            address_width=self.rca_bits + self.bank_bits - self.rank_bits,
+            data_width=self.controller.data_width,
+            clock_domain="sync",
+            id=len(self.masters))
+        self.masters.append(port)
+        return port
+
     def get_port(self, mode="both", data_width=None, clock_domain="sync", reverse=False):
         if data_width is None:
             # use internal data_width when no width adaptation is requested
             data_width = self.controller.data_width
-            print("data_width=", data_width)
 
         # Crossbar port ----------------------------------------------------------------------------
         port = gramNativePort(
