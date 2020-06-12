@@ -92,5 +92,7 @@ int main(void) {
 	}
 	uart_writestr("done\n");
 
+	while (1);
+
 	return 0;
 }
