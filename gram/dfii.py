@@ -38,16 +38,14 @@ class PhaseInjector(Elaboratable):
 
         with m.If(self._command_issue.r_stb):
             m.d.comb += [
-                self._phase.cs_n.eq(
-                    Repl(value=~self._command.r_data[0], count=len(self._phase.cs_n))),
+                self._phase.cs_n.eq(Repl(value=~self._command.r_data[0], count=len(self._phase.cs_n))),
                 self._phase.we_n.eq(~self._command.r_data[1]),
                 self._phase.cas_n.eq(~self._command.r_data[2]),
                 self._phase.ras_n.eq(~self._command.r_data[3]),
             ]
         with m.Else():
             m.d.comb += [
-                self._phase.cs_n.eq(
-                    Repl(value=1, count=len(self._phase.cs_n))),
+                self._phase.cs_n.eq(Repl(value=1, count=len(self._phase.cs_n))),
                 self._phase.we_n.eq(1),
                 self._phase.cas_n.eq(1),
                 self._phase.ras_n.eq(1),
