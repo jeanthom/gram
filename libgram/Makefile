@@ -1,12 +1,12 @@
 OBJS := src/init.o src/memtest.o src/dfii.o
 
-TRIPLE := riscv64-unknown-elf
+TRIPLE := riscv64-unknown-elf-
 
-CC := $(TRIPLE)-gcc
-AS := $(TRIPLE)-as
-OBJCOPY := $(TRIPLE)-objcopy
-AR := $(TRIPLE)-ar
-LD := $(TRIPLE)-ld
+CC := $(TRIPLE)gcc
+AS := $(TRIPLE)as
+OBJCOPY := $(TRIPLE)objcopy
+AR := $(TRIPLE)ar
+LD := $(TRIPLE)ld
 
 CFLAGS  := -fvisibility=hidden -march=rv32i -mabi=ilp32 -nostdlib -Os -Iinclude
 LDFLAGS := -melf32lriscv -nostdlib
