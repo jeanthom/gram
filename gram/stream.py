@@ -349,8 +349,7 @@ class StrideConverter(Elaboratable):
                 j = 0
                 for name, width in self._layout_to.payload_layout:
                     src = getattr(self.sink, name)[i*width:(i+1)*width]
-                    dst = self.converter.sink.data[i *
-                                                   nbits_to+j:i*nbits_to+j+width]
+                    dst = self.converter.sink.data[i*nbits_to+j:i*nbits_to+j+width]
                     m.d.comb += dst.eq(src)
                     j += width
         else:
@@ -368,8 +367,7 @@ class StrideConverter(Elaboratable):
             for i in range(ratio):
                 j = 0
                 for name, width in self._layout_from.payload_layout:
-                    src = self.converter.source.data[i *
-                                                     nbits_from+j:i*nbits_from+j+width]
+                    src = self.converter.source.data[i*nbits_from+j:i*nbits_from+j+width]
                     dst = getattr(self.source, name)[i*width:(i+1)*width]
                     m.d.comb += dst.eq(src)
                     j += width
