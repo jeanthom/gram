@@ -211,17 +211,17 @@ class gramCrossbar(Elaboratable):
 
         # Route data writes ------------------------------------------------------------------------
         with m.Switch(Cat(*master_wdata_readys)):
-            with m.Case():
-                m.d.comb += [
-                    controller.wdata.eq(0),
-                    controller.wdata_we.eq(0),
-                ]
             for nm, master in enumerate(self.masters):
                 with m.Case(2**nm):
                     m.d.comb += [
                         controller.wdata.eq(master.wdata.data),
                         controller.wdata_we.eq(master.wdata.we),
                     ]
+            with m.Case():
+                m.d.comb += [
+                    controller.wdata.eq(0),
+                    controller.wdata_we.eq(0),
+                ]
 
         # Route data reads -------------------------------------------------------------------------
         for master in self.masters:
