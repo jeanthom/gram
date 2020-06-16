@@ -134,6 +134,7 @@ class TimelineTestCase(unittest.TestCase):
 
             yield timeline.trigger.eq(1)
             yield
+            yield timeline.trigger.eq(0)
 
             for i in range(11+1):
                 yield
@@ -153,6 +154,12 @@ class TimelineTestCase(unittest.TestCase):
                 elif i == 11:
                     self.assertFalse((yield sigA))
                     self.assertFalse((yield sigB))
+
+            # Ensure no changes happen once the sequence is done
+            for i in range(100):
+                yield
+                self.assertFalse((yield sigA))
+                self.assertFalse((yield sigB))
 
         sim = Simulator(m)
         with sim.write_vcd("test_compat.vcd"):
