@@ -1,8 +1,11 @@
 # This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
+import unittest
+
 from nmigen import *
 from nmigen import tracer
 from nmigen.compat import Case
+from nmigen.back.pysim import *
 
 __ALL__ = ["delayed_enter", "RoundRobin", "Timeline", "CSRPrefixProxy"]
 
@@ -102,6 +105,60 @@ class Timeline(Elaboratable):
                     m.d.sync += e[1]
 
         return m
+
+class TimelineTestCase(unittest.TestCase):
+    def test_sequence(self):
+        sigA = Signal()
+        sigB = Signal()
+        sigC = Signal()
+        timeline = Timeline([
+            (1, sigA.eq(1)),
+            (5, sigA.eq(1)),
+            (7, sigA.eq(0)),
+            (10, sigB.eq(1)),
+            (11, sigB.eq(0)),
+        ])
+        m = Module()
+        m.submodules.timeline = timeline
+
+        def process():
+            # Test default value for unset signals
+            self.assertFalse((yield sigA))
+            self.assertFalse((yield sigB))
+
+            # Ensure that the sequence isn't triggered without the trigger signal
+            for i in range(100):
+                yield
+                self.assertFalse((yield sigA))
+                self.assertFalse((yield sigB))
+
+            yield timeline.trigger.eq(1)
+            yield
+
+            for i in range(11+1):
+                yield
+
+                if i == 1:
+                    self.assertTrue((yield sigA))
+                    self.assertFalse((yield sigB))
+                elif i == 5:
+                    self.assertTrue((yield sigA))
+                    self.assertFalse((yield sigB))
+                elif i == 7:
+                    self.assertFalse((yield sigA))
+                    self.assertFalse((yield sigB))
+                elif i == 10:
+                    self.assertFalse((yield sigA))
+                    self.assertTrue((yield sigB))
+                elif i == 11:
+                    self.assertFalse((yield sigA))
+                    self.assertFalse((yield sigB))
+
+        sim = Simulator(m)
+        with sim.write_vcd("test_compat.vcd"):
+            sim.add_clock(1e-6)
+            sim.add_sync_process(process)
+            sim.run()
 
 
 class CSRPrefixProxy:
