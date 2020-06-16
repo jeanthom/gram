@@ -314,9 +314,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             burstdet_d = Signal()
             m.d.sync += burstdet_d.eq(burstdet)
             with m.If(self._burstdet_clr.w_stb):
-                m.d.sync += self._burstdet_seen.status[i].eq(0)
+                m.d.sync += self._burstdet_seen.r_data[i].eq(0)
             with m.If(burstdet & ~burstdet_d):
-                m.d.sync += self._burstdet_seen.status[i].eq(1)
+                m.d.sync += self._burstdet_seen.r_data[i].eq(1)
 
             # DQS and DM ---------------------------------------------------------------------------
             dm_o_data = Signal(8)
