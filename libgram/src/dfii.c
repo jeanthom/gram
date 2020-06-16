@@ -6,7 +6,11 @@
 #include "helpers.h"
 
 static void dfii_setcontrol(struct gramCtx *ctx, uint8_t val) {
+#ifdef GRAM_RW_FUNC
+	gram_write(ctx, &(ctx->core->control), val);
+#else
 	ctx->core->control = val;
+#endif
 }
 
 void dfii_setsw(struct gramCtx *ctx, bool software_control) {
@@ -18,16 +22,29 @@ void dfii_setsw(struct gramCtx *ctx, bool software_control) {
 }
 
 static void dfii_set_p0_address(struct gramCtx *ctx, uint32_t val) {
+#ifdef GRAM_RW_FUNC
+	gram_write(ctx, &(ctx->core->phases[0].address), val);
+#else
 	ctx->core->phases[0].address = val;
+#endif
 }
 
 static void dfii_set_p0_baddress(struct gramCtx *ctx, uint32_t val) {
+#ifdef GRAM_RW_FUNC
+	gram_write(ctx, &(ctx->core->phases[0].baddress), val);
+#else
 	ctx->core->phases[0].baddress = val;
+#endif
 }
 
 static void dfii_p0_command(struct gramCtx *ctx, uint32_t cmd) {
+#ifdef GRAM_RW_FUNC
+	gram_write(ctx, &(ctx->core->phases[0].command), cmd);
+	gram_write(ctx, &(ctx->core->phases[0].command_issue), 1);
+#else
 	ctx->core->phases[0].command = cmd;
 	ctx->core->phases[0].command_issue = 1;
+#endif
 }
 
 /* TODO: those values are hardcoded for ECPIX-5's RAM */

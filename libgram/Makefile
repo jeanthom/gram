@@ -8,8 +8,13 @@ OBJCOPY := $(TRIPLE)objcopy
 AR := $(TRIPLE)ar
 LD := $(TRIPLE)ld
 
-CFLAGS  := -fvisibility=hidden -march=rv32i -mabi=ilp32 -nostdlib -Os -Iinclude
-LDFLAGS := -melf32lriscv -nostdlib
+CFLAGS += -fvisibility=hidden -nostdlib -Os -Iinclude
+LDFLAGS += -nostdlib
+
+ifeq ($(TRIPLE),riscv64-unknown-elf-)
+CFLAGS += -march=rv32i -mabi=ilp32
+LDFLAGS += -melf32lriscv
+endif
 
 all: libgram.a
 
