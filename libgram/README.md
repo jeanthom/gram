@@ -26,9 +26,9 @@ GRAM_ERR_NONE: No error happened (hardcoded to zero)
 GRAM_ERR_UNDOCUMENTED: Undocumented error, shame on us lazy coders (take a look at the code)
 ```
 
-## Using libgram when you can't directly access the bus
+## Using libgram outside the SoC
 
-Compile libgram with `CFLAGS="-DGRAM_RW_FUNC"` (run `make clean` beforehand) then define the following functions:
+Compile libgram with `CFLAGS="-DGRAM_RW_FUNC"` (run `make clean` beforehand) and define the following bus access functions:
 
 ```c
 uint32_t gram_read(struct gramCtx *ctx, void *addr);
