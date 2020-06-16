@@ -120,13 +120,13 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n)
-        databits = len(self.pads.dq.oe)
+        databits = len(self.pads.dq.o)
         self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
 
         # PHY settings -----------------------------------------------------------------------------
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
-        databits = len(self.pads.dq.oe)
+        databits = len(self.pads.dq.o)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n)
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
