@@ -127,7 +127,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.o)
-        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n)
+        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
         cl, cwl = get_cl_cw("DDR3", tck)
@@ -160,7 +160,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.o)
-        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n)
+        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
 
@@ -233,7 +233,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                          i_D1=getattr(dfi.phases[0], name)[i],
                                          i_D2=getattr(dfi.phases[1], name)[i],
                                          i_D3=getattr(dfi.phases[1], name)[i],
-                                         o_Q=getattr(self.pads, name)[i]
+                                         o_Q=getattr(self.pads, name).o[i]
                                          )
 
         # DQ ---------------------------------------------------------------------------------------
@@ -334,10 +334,11 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 dfi.phases[1].wrdata_mask[3*databits//8+i]),
             )
             m.d.sync += dm_o_data_d.eq(dm_o_data)
-            dm_bl8_cases = {}
-            dm_bl8_cases[0] = dm_o_data_muxed.eq(dm_o_data[:4])
-            dm_bl8_cases[1] = dm_o_data_muxed.eq(dm_o_data_d[4:])
-            m.d.sync += Case(bl8_chunk, dm_bl8_cases)  # FIXME: use self.comb?
+            with m.Switch(bl8_chunk):
+                with m.Case(0):
+                    m.d.sync += dm_o_data_muxed.eq(dm_o_data[:4])
+                with m.Case(1):
+                    m.d.sync += dm_o_data_muxed.eq(dm_o_data_d[4:])
             m.submodules += Instance("ODDRX2DQA",
                                      i_RST=ResetSignal("sync2x"),
                                      i_ECLK=ClockSignal("sync2x"),
@@ -347,7 +348,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      i_D1=dm_o_data_muxed[1],
                                      i_D2=dm_o_data_muxed[2],
                                      i_D3=dm_o_data_muxed[3],
-                                     o_Q=pads.dm[i]
+                                     o_Q=self.pads.dm.o[i]
                                      )
 
             dqs = Signal()
@@ -399,11 +400,12 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                     dfi.phases[1].wrdata[3*databits+j])
                 )
                 m.d.sync += dq_o_data_d.eq(dq_o_data)
-                dq_bl8_cases = {}
-                dq_bl8_cases[0] = dq_o_data_muxed.eq(dq_o_data[:4])
-                dq_bl8_cases[1] = dq_o_data_muxed.eq(dq_o_data_d[4:])
                 # FIXME: use self.comb?
-                m.d.sync += Case(bl8_chunk, dq_bl8_cases)
+                with m.Switch(bl8_chunk):
+                    with m.Case(0):
+                        m.d.sync += dq_o_data_muxed.eq(dq_o_data[:4])
+                    with m.Case(1):
+                        m.d.sync += dq_o_data_muxed.eq(dq_o_data_d[4:])
                 _dq_i_data = Signal(4)
                 m.submodules += [
                     Instance("ODDRX2DQA",
