@@ -250,7 +250,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             rdpntr = Signal(3)
             wrpntr = Signal(3)
             rdly = Signal(7)
-            with m.If(self._dly_sel.storage[i]):
+            with m.If(self._dly_sel.w_data[i]):
                 with m.If(self._rdly_dq_rst.re):
                     m.d.sync += rdly.eq(0)
                 with m.Elif(self._rdly_dq_inc.re):
@@ -259,7 +259,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             burstdet = Signal()
             dqs_read = Signal()
             dqs_bitslip = Signal(2)
-            with m.If(self._dly_sel.storage[i]):
+            with m.If(self._dly_sel.w_data[i]):
                 with m.If(self._rdly_dq_bitslip_rst.re):
                     m.d.sync += dqs_bitslip.eq(0)
                 with m.Elif(self._rdly_dq_bitslip.re):
@@ -279,7 +279,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      i_ECLK=ClockSignal("sync2x"),
                                      i_RST=ResetSignal("sync2x"),
                                      i_DDRDEL=self.init.delay,
-                                     i_PAUSE=self.init.pause | self._dly_sel.storage[i],
+                                     i_PAUSE=self.init.pause | self._dly_sel.w_data[i],
 
                                      # Control
                                      # Assert LOADNs to use DDRDEL control
