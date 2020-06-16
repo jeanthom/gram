@@ -376,7 +376,13 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                 dqs_pattern.postamble),
                          o_Q=dqs_oe_n
                          ),
-                Tristate(pads.dqs_p[i], dqs, ~dqs_oe_n, dqs_i)
+                #Tristate(pads.dqs_p[i], dqs, ~dqs_oe_n, dqs_i)
+            ]
+            m.d.comb += [
+                #TODO: fix the tristate situation below and remove the Tristate instance above
+                #self.pads.dqs.oe[i].eq(~dqs_oe_n),
+                self.pads.dqs.o[i].eq(dqs),
+                self.pads.dqs.i[i].eq(dqs_i),
             ]
 
             for j in range(8*i, 8*(i+1)):
@@ -469,7 +475,13 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                     dqs_pattern.postamble),
                              o_Q=dq_oe_n,
                              ),
-                    Tristate(pads.dq[j], dq_o, ~dq_oe_n, dq_i)
+                    #Tristate(pads.dq[j], dq_o, ~dq_oe_n, dq_i)
+                ]
+                m.d.comb += [
+                    #TODO: fix the tristate situation below and remove the Tristate instance above
+                    #self.pads.dq.oe[j].eq(~dq_oe_n),
+                    self.pads.dq.o[j].eq(dq_o),
+                    self.pads.dq.i[j].eq(dq_i),
                 ]
 
         # Read Control Path ------------------------------------------------------------------------
