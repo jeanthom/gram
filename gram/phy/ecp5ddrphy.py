@@ -165,7 +165,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         bankbits = len(self.pads.ba.o)
 
         # Init -------------------------------------------------------------------------------------
-        m.submodules.init = DomainRenamer("init")(ECP5DDRPHYInit("sync2x"))
+        m.submodules.init = init = DomainRenamer("init")(ECP5DDRPHYInit("sync2x"))
 
         # Parameters -------------------------------------------------------------------------------
         cl, cwl = get_cl_cw("DDR3", tck)
@@ -278,8 +278,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      i_SCLK=ClockSignal("sync"),
                                      i_ECLK=ClockSignal("sync2x"),
                                      i_RST=ResetSignal("sync2x"),
-                                     i_DDRDEL=self.init.delay,
-                                     i_PAUSE=self.init.pause | self._dly_sel.w_data[i],
+                                     i_DDRDEL=init.delay,
+                                     i_PAUSE=init.pause | self._dly_sel.w_data[i],
 
                                      # Control
                                      # Assert LOADNs to use DDRDEL control
