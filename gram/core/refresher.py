@@ -223,8 +223,6 @@ class ZQCSExecuter(Elaboratable):
         trp = self._trp
         tzqcs = self._tzqcs
 
-        #m.d.sync += self.done.eq(0)
-
         tl = Timeline([
             # Precharge All
             (0, [
