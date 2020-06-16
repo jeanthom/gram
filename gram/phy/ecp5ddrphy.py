@@ -251,18 +251,18 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             wrpntr = Signal(3)
             rdly = Signal(7)
             with m.If(self._dly_sel.w_data[i]):
-                with m.If(self._rdly_dq_rst.re):
+                with m.If(self._rdly_dq_rst.w_stb):
                     m.d.sync += rdly.eq(0)
-                with m.Elif(self._rdly_dq_inc.re):
+                with m.Elif(self._rdly_dq_inc.w_stb):
                     m.d.sync += rdly.eq(rdly + 1)
             datavalid = Signal()
             burstdet = Signal()
             dqs_read = Signal()
             dqs_bitslip = Signal(2)
             with m.If(self._dly_sel.w_data[i]):
-                with m.If(self._rdly_dq_bitslip_rst.re):
+                with m.If(self._rdly_dq_bitslip_rst.w_stb):
                     m.d.sync += dqs_bitslip.eq(0)
-                with m.Elif(self._rdly_dq_bitslip.re):
+                with m.Elif(self._rdly_dq_bitslip.w_stb):
                     m.d.sync += dqs_bitslip.eq(dqs_bitslip + 1)
             dqs_cases = {}
             for j, b in enumerate(range(-2, 2)):
@@ -313,7 +313,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      )
             burstdet_d = Signal()
             m.d.sync += burstdet_d.eq(burstdet)
-            with m.If(self._burstdet_clr.re):
+            with m.If(self._burstdet_clr.w_stb):
                 m.d.sync += self._burstdet_seen.status[i].eq(0)
             with m.If(burstdet & ~burstdet_d):
                 m.d.sync += self._burstdet_seen.status[i].eq(1)
