@@ -264,11 +264,11 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                     m.d.sync += dqs_bitslip.eq(0)
                 with m.Elif(self._rdly_dq_bitslip.w_stb):
                     m.d.sync += dqs_bitslip.eq(dqs_bitslip + 1)
-            dqs_cases = {}
-            for j, b in enumerate(range(-2, 2)):
-                dqs_cases[j] = dqs_read.eq(
-                    rddata_en[cl_sys_latency + b:cl_sys_latency + b + 2] != 0)
-            m.d.sync += Case(dqs_bitslip, dqs_cases)
+            with m.Switch(dqs_bitslip):
+                for j, b in enumerate(range(-2, 2)):
+                    with m.Case(j):
+                        m.d.sync += dqs_read.eq(rddata_en[cl_sys_latency + b:cl_sys_latency + b + 2] != 0)
+
             m.submodules += Instance("DQSBUFM",
                                      p_DQS_LI_DEL_ADJ="MINUS",
                                      p_DQS_LI_DEL_VAL=1,
