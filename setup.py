@@ -14,6 +14,6 @@ setup(
     license="BSD",
     python_requires="~=3.6",
     install_requires=["pyyaml"],
-    packages=find_packages(exclude=("test*", "sim*", "doc*", "examples*")),
+    packages=find_packages(exclude=("test*", "doc*", "examples*", "contrib*", "libgram*")),
     include_package_data=True,
 )
