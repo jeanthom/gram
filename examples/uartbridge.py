@@ -4,8 +4,6 @@ from nmigen_soc import wishbone
 from nmigen_stdio.serial import AsyncSerial, AsyncSerialTX
 from nmigen.back.pysim import *
 
-from lambdasoc.periph import Peripheral
-
 import unittest
 
 __ALL__ = ["UARTBridge"]
