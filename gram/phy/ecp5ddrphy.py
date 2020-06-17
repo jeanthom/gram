@@ -11,6 +11,7 @@ import math
 from nmigen import *
 from nmigen.lib.cdc import FFSynchronizer
 from nmigen.utils import log2_int
+from nmigen.compat.fhdl.specials import Tristate
 
 from lambdasoc.periph import Peripheral
 
@@ -95,7 +96,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self.pads = pads
         self._sys_clk_freq = sys_clk_freq
 
-        databits = len(self.pads.dq.o)
+        databits = len(self.pads.dq.io)
         assert databits % 8 == 0
 
         # CSR
@@ -119,14 +120,14 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
-        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n)
-        databits = len(self.pads.dq.o)
+        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
+        databits = len(self.pads.dq.io)
         self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
 
         # PHY settings -----------------------------------------------------------------------------
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
-        databits = len(self.pads.dq.o)
+        databits = len(self.pads.dq.io)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
@@ -159,7 +160,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
-        databits = len(self.pads.dq.o)
+        databits = len(self.pads.dq.io)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
@@ -376,13 +377,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                 dqs_pattern.postamble),
                          o_Q=dqs_oe_n
                          ),
-                #Tristate(pads.dqs_p[i], dqs, ~dqs_oe_n, dqs_i)
-            ]
-            m.d.comb += [
-                #TODO: fix the tristate situation below and remove the Tristate instance above
-                #self.pads.dqs.oe[i].eq(~dqs_oe_n),
-                self.pads.dqs.o[i].eq(dqs),
-                self.pads.dqs.i[i].eq(dqs_i),
+                Tristate(self.pads.dqs.io[i], dqs, ~dqs_oe_n, dqs_i),
             ]
 
             for j in range(8*i, 8*(i+1)):
@@ -475,13 +470,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                     dqs_pattern.postamble),
                              o_Q=dq_oe_n,
                              ),
-                    #Tristate(pads.dq[j], dq_o, ~dq_oe_n, dq_i)
-                ]
-                m.d.comb += [
-                    #TODO: fix the tristate situation below and remove the Tristate instance above
-                    #self.pads.dq.oe[j].eq(~dq_oe_n),
-                    self.pads.dq.o[j].eq(dq_o),
-                    self.pads.dq.i[j].eq(dq_i),
+                    Tristate(self.pads.dq.io[j], dq_o, ~dq_oe_n, dq_i),
                 ]
 
         # Read Control Path ------------------------------------------------------------------------
