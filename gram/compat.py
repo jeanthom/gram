@@ -29,37 +29,46 @@ def delayed_enter(m, src, dst, delay):
 
 class DelayedEnterTestCase(unittest.TestCase):
     def test_sequence(self):
-        m = Module()
+        def sequence(expected_delay):
+            m = Module()
 
-        before = Signal()
-        end = Signal()
+            before = Signal()
+            end = Signal()
 
-        with m.FSM():
-            with m.State("Before-Delayed-Enter"):
-                m.d.comb += before.eq(1)
-                m.next = "Delayed-Enter"
+            with m.FSM():
+                with m.State("Before-Delayed-Enter"):
+                    m.d.comb += before.eq(1)
+                    m.next = "Delayed-Enter"
 
-            delayed_enter(m, "Delayed-Enter", "End-Delayed-Enter", 10)
+                delayed_enter(m, "Delayed-Enter", "End-Delayed-Enter", expected_delay)
 
-            with m.State("End-Delayed-Enter"):
-                m.d.comb += end.eq(1)
+                with m.State("End-Delayed-Enter"):
+                    m.d.comb += end.eq(1)
 
-        def process():
-            while (yield before):
-                yield
+            def process():
+                while (yield before):
+                    yield
 
-            delay = 0
-            while not (yield end):
-                yield
-                delay += 1
+                delay = 0
+                while not (yield end):
+                    yield
+                    delay += 1
 
-            self.assertEqual(delay, 10)
+                self.assertEqual(delay, expected_delay)
 
-        sim = Simulator(m)
-        with sim.write_vcd("test_compat.vcd"):
-            sim.add_clock(1e-6)
-            sim.add_sync_process(process)
-            sim.run()
+            sim = Simulator(m)
+            with sim.write_vcd("test_compat.vcd"):
+                sim.add_clock(1e-6)
+                sim.add_sync_process(process)
+                sim.run()
+
+        with self.assertRaises(AssertionError):
+            sequence(0)
+        sequence(1)
+        sequence(2)
+        sequence(10)
+        sequence(100)
+        sequence(1000)
 
 class RoundRobin(Elaboratable):
     """A round-robin scheduler. (HarryHo90sHK)
