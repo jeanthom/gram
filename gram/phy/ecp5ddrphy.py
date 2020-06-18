@@ -11,7 +11,6 @@ import math
 from nmigen import *
 from nmigen.lib.cdc import FFSynchronizer
 from nmigen.utils import log2_int
-from nmigen.compat.fhdl.specials import Tristate
 
 from lambdasoc.periph import Peripheral
 
@@ -377,7 +376,11 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                 dqs_pattern.postamble),
                          o_Q=dqs_oe_n
                          ),
-                Tristate(self.pads.dqs.io[i], dqs, ~dqs_oe_n, dqs_i),
+                Instance("BB",
+                        i_I=dqs,
+                        i_T=dqs_oe_n,
+                        o_O=dqs_i,
+                        io_B=self.pads.dqs.io[i]),
             ]
 
             for j in range(8*i, 8*(i+1)):
@@ -470,7 +473,11 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                     dqs_pattern.postamble),
                              o_Q=dq_oe_n,
                              ),
-                    Tristate(self.pads.dq.io[j], dq_o, ~dq_oe_n, dq_i),
+                    Instance("BB",
+                        i_I=dq_o,
+                        i_T=dq_oe_n,
+                        o_O=dq_i,
+                        io_B=self.pads.dq.io[j]),
                 ]
 
         # Read Control Path ------------------------------------------------------------------------
