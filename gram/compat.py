@@ -27,11 +27,42 @@ def delayed_enter(m, src, dst, delay):
         with m.State(statename):
             m.next = deststate
 
-# Original nMigen implementation by HarryHo90sHK
+class DelayedEnterTestCase(unittest.TestCase):
+    def test_sequence(self):
+        m = Module()
 
+        before = Signal()
+        end = Signal()
+
+        with m.FSM():
+            with m.State("Before-Delayed-Enter"):
+                m.d.comb += before.eq(1)
+                m.next = "Delayed-Enter"
+
+            delayed_enter(m, "Delayed-Enter", "End-Delayed-Enter", 10)
+
+            with m.State("End-Delayed-Enter"):
+                m.d.comb += end.eq(1)
+
+        def process():
+            while (yield before):
+                yield
+
+            delay = 0
+            while not (yield end):
+                yield
+                delay += 1
+
+            self.assertEqual(delay, 10)
+
+        sim = Simulator(m)
+        with sim.write_vcd("test_compat.vcd"):
+            sim.add_clock(1e-6)
+            sim.add_sync_process(process)
+            sim.run()
 
 class RoundRobin(Elaboratable):
-    """A round-robin scheduler.
+    """A round-robin scheduler. (HarryHo90sHK)
     Parameters
     ----------
     n : int
