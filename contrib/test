@@ -1,3 +1,4 @@
 #!/bin/sh
 
-python -m unittest gram/compat.py
+cd "$(dirname "$0")/../gram/test"
+python -m unittest
