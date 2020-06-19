@@ -1,6 +1,9 @@
 import unittest
+from gram.test.utils.formal import FHDLTestCase
 
 from nmigen import *
+from nmigen.hdl.ast import Past
+from nmigen.asserts import Assert, Assume
 
 from gram.compat import *
 
@@ -107,3 +110,51 @@ class TimelineTestCase(unittest.TestCase):
             sim.add_clock(1e-6)
             sim.add_sync_process(process)
             sim.run()
+
+class RoundRobinOutputMatchSpec(Elaboratable):
+    def __init__(self, dut):
+        self.dut = dut
+
+    def elaborate(self, platform):
+        m = Module()
+
+        m.d.comb += Assume(Rose(self.dut.stb).implies(self.dut.request == Past(self.dut.request)))
+
+        m.d.sync += Assert(((Past(self.dut.request) != 0) & Past(self.dut.stb)).implies(Past(self.dut.request) & (1 << self.dut.grant)))
+
+        return m
+
+class RoundRobinTestCase(FHDLTestCase):
+    def test_sequence(self):
+        m = Module()
+        m.submodules.rb = roundrobin = RoundRobin(8)
+
+        def process():
+            yield roundrobin.request.eq(0b10001000)
+            yield roundrobin.stb.eq(1)
+            yield
+            yield
+
+            self.assertEqual((yield roundrobin.grant), 3)
+            yield
+
+            self.assertEqual((yield roundrobin.grant), 7)
+            yield
+
+            self.assertEqual((yield roundrobin.grant), 3)
+            yield roundrobin.request.eq(0b00000001)
+            yield
+            yield
+
+            self.assertEqual((yield roundrobin.grant), 0)
+
+        sim = Simulator(m)
+        with sim.write_vcd("test_compat.vcd"):
+            sim.add_clock(1e-6)
+            sim.add_sync_process(process)
+            sim.run()
+
+    # def test_output_match(self):
+    #     roundrobin = RoundRobin(32)
+    #     spec = RoundRobinOutputMatchSpec(roundrobin)
+    #     self.assertFormal(spec, mode="bmc", depth=10)
