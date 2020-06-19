@@ -9,6 +9,11 @@ enum GramError {
 	GRAM_ERR_MEMTEST,
 };
 
+enum GramWidth {
+	GRAM_8B,
+	GRAM_32B,
+}
+
 struct gramCoreRegs;
 struct gramPHYRegs;
 struct gramCtx {
