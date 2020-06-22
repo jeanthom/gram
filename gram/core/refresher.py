@@ -172,7 +172,7 @@ class RefreshPostponer(Elaboratable):
 
     def __init__(self, postponing=1):
         self.req_i = Signal()
-        self.req_o = Signal()
+        self.req_o = Signal(reset=0)
         self._postponing = postponing
 
     def elaborate(self, platform):
@@ -180,7 +180,6 @@ class RefreshPostponer(Elaboratable):
 
         count = Signal(range(self._postponing), reset=self._postponing-1)
 
-        m.d.sync += self.req_o.eq(0)
         with m.If(self.req_i):
             with m.If(count == 0):
                 m.d.sync += [
