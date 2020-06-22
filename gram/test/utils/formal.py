@@ -66,14 +66,6 @@ class FHDLTestCase(unittest.TestCase):
         if os.path.exists(os.path.join(spec_dir, spec_name)):
             shutil.rmtree(os.path.join(spec_dir, spec_name))
 
-        if mode == "hybrid":
-            # A mix of BMC and k-induction, as per personal
-            # communication with Clifford Wolf.
-            script = "setattr -unset init w:* a:nmigen.sample_reg %d"
-            mode   = "bmc"
-        else:
-            script = ""
-
         config = textwrap.dedent("""\
         [options]
         mode {mode}
@@ -86,7 +78,6 @@ class FHDLTestCase(unittest.TestCase):
         [script]
         read_ilang top.il
         prep
-        {script}
 
         [file top.il]
         {rtlil}
