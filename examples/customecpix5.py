@@ -10,8 +10,7 @@ __all__ = ["ECPIX5Platform"]
 
 
 class ECPIX5Platform(LatticeECP5Platform):
-    #device = "LFE5UM5G-85F"
-    device = "LFE5U-85F"
+    device = "LFE5UM5G-85F"
     package = "BG554"
     speed = "8"
     default_clk = "clk100"
