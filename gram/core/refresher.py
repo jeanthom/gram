@@ -6,7 +6,7 @@
 """LiteDRAM Refresher."""
 
 from nmigen import *
-from nmigen.utils import bits_for, log2_int
+from nmigen.utils import log2_int
 
 from gram.core.multiplexer import *
 from gram.compat import Timeline
@@ -111,7 +111,7 @@ class RefreshSequencer(Elaboratable):
             self.we.eq(executer.we),
         ]
 
-        count = Signal(bits_for(self._postponing), reset=self._postponing-1)
+        count = Signal(range(self._postponing), reset=self._postponing-1)
         with m.If(self.start):
             m.d.sync += count.eq(count.reset)
         with m.Elif(executer.done):
@@ -137,7 +137,7 @@ class RefreshTimer(Elaboratable):
     def __init__(self, trefi):
         self.wait = Signal()
         self.done = Signal()
-        self.count = Signal(bits_for(trefi))
+        self.count = Signal(range(trefi))
         self._trefi = trefi
 
     def elaborate(self, platform):
@@ -146,7 +146,7 @@ class RefreshTimer(Elaboratable):
         trefi = self._trefi
 
         done = Signal()
-        count = Signal(bits_for(trefi), reset=trefi-1)
+        count = Signal(range(trefi), reset=trefi-1)
 
         with m.If(self.wait & ~self.done):
             m.d.sync += count.eq(count-1)
@@ -178,7 +178,7 @@ class RefreshPostponer(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        count = Signal(bits_for(self._postponing), reset=self._postponing-1)
+        count = Signal(range(self._postponing), reset=self._postponing-1)
 
         m.d.sync += self.req_o.eq(0)
         with m.If(self.req_i):
