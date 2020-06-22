@@ -376,11 +376,13 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                 dqs_pattern.postamble),
                          o_Q=dqs_oe_n
                          ),
-                Instance("BB",
-                        i_I=dqs,
-                        i_T=dqs_oe_n,
-                        o_O=dqs_i,
-                        io_B=self.pads.dqs.io[i]),
+                Instance("TRELLIS_IO",
+                    p_DIR="BIDIR",
+                    i_I=dqs,
+                    i_T=dqs_oe_n,
+                    o_O=dqs_i,
+                    io_B=self.pads.dqs.io[i]
+                    )
             ]
 
             for j in range(8*i, 8*(i+1)):
@@ -473,11 +475,13 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                     dqs_pattern.postamble),
                              o_Q=dq_oe_n,
                              ),
-                    Instance("BB",
+                    Instance("TRELLIS_IO",
+                        p_DIR="BIDIR",
                         i_I=dq_o,
                         i_T=dq_oe_n,
                         o_O=dq_i,
-                        io_B=self.pads.dq.io[j]),
+                        io_B=self.pads.dq.io[j]
+                        )
                 ]
 
         # Read Control Path ------------------------------------------------------------------------
