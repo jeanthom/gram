@@ -10,7 +10,8 @@ __all__ = ["ECPIX5Platform"]
 
 
 class ECPIX5Platform(LatticeECP5Platform):
-    device = "LFE5UM5G-85F"
+    #device = "LFE5UM5G-85F"
+    device = "LFE5U-85F"
     package = "BG554"
     speed = "8"
     default_clk = "clk100"
@@ -65,22 +66,38 @@ class ECPIX5Platform(LatticeECP5Platform):
         # ERROR: cannot place differential IO at location PIOB
         # if we choose to use DiffPairs
         Resource("ddr3", 0,
-                 Subsignal("clk",    Pins("H3", dir="o")),
+                 Subsignal("clk", Pins("H3", dir="o")),
                  #Subsignal("clk",    DiffPairs("H3", "J3", dir="o"), Attrs(IO_TYPE="SSTL135D_I")),
                  Subsignal("cke", Pins("P1", dir="o")),
-                 Subsignal("we_n",     Pins("R3", dir="o")),
-                 Subsignal("ras_n",    Pins("T3", dir="o")),
-                 Subsignal("cas_n",    Pins("P2", dir="o")),
-                 Subsignal("a",      Pins(
-                     "T5 M3 L3 V6 K2 W6 K3 L1 H2 L2 N1 J1 M1 K1", dir="o")),
-                 Subsignal("ba",     Pins("U6 N3 N4", dir="o")),
+                 Subsignal("we_n", Pins("R3", dir="o")),
+                 Subsignal("ras_n", Pins("T3", dir="o")),
+                 Subsignal("cas_n", Pins("P2", dir="o")),
+                 Subsignal("a", Pins("T5 M3 L3 V6 K2 W6 K3 L1 H2 L2 N1 J1 M1 K1", dir="o")),
+                 Subsignal("ba", Pins("U6 N3 N4", dir="o")),
                  #Subsignal("dqs",    DiffPairs("V4 V1", "U5 U2", dir="io"), Attrs(IO_TYPE="SSTL135D_I")),
-                 Subsignal("dqs",    Pins("V4 V1", dir="io"), Attrs(
-                     IO_TYPE="SSTL135D_I", TERMINATION="OFF", DIFFRESISTOR="100")),
-                 Subsignal("dq",     Pins(
-                     "T4 W4 R4 W5 R6 P6 P5 P4 R1 W3 T2 V3 U3 W1 T1 W2", dir="io")),
-                 Subsignal("dm",     Pins("J4 H5", dir="o")),
-                 Subsignal("odt",    Pins("P3", dir="o")),
+                 # Subsignal("dqs0", Pins("V4", dir="io"), Attrs(IO_TYPE="SSTL135D_I", TERMINATION="OFF", DIFFRESISTOR="100")),
+                 # Subsignal("dqs1", Pins("V1", dir="io"), Attrs(IO_TYPE="SSTL135D_I", TERMINATION="OFF", DIFFRESISTOR="100")),
+                 # Subsignal("dq0", Pins("T4", dir="io")),
+                 # Subsignal("dq1", Pins("W4", dir="io")),
+                 # Subsignal("dq2", Pins("R4", dir="io")),
+                 # Subsignal("dq3", Pins("W5", dir="io")),
+                 # Subsignal("dq4", Pins("R6", dir="io")),
+                 # Subsignal("dq5", Pins("P6", dir="io")),
+                 # Subsignal("dq6", Pins("P5", dir="io")),
+                 # Subsignal("dq7", Pins("P4", dir="io")),
+                 # Subsignal("dq8", Pins("R1", dir="io")),
+                 # Subsignal("dq9", Pins("W3", dir="io")),
+                 # Subsignal("dq10", Pins("T2", dir="io")),
+                 # Subsignal("dq11", Pins("V3", dir="io")),
+                 # Subsignal("dq12", Pins("U3", dir="io")),
+                 # Subsignal("dq13", Pins("W1", dir="io")),
+                 # Subsignal("dq14", Pins("T1", dir="io")),
+                 # Subsignal("dq15", Pins("W2", dir="io")),
+                 Subsignal("dqs", Pins("V4 V1", dir="io"), Attrs(IO_TYPE="SSTL135D_I", TERMINATION="OFF", DIFFRESISTOR="100")),
+                 Subsignal("dq", Pins("T4 W4 R4 W5 R6 P6 P5 P4 R1 W3 T2 V3 U3 W1 T1 W2", dir="io")),
+
+                 Subsignal("dm", Pins("U4 U1", dir="o")),
+                 Subsignal("odt", Pins("P3", dir="o")),
                  Attrs(IO_TYPE="SSTL135_I")
                  ),
 
