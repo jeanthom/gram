@@ -25,14 +25,14 @@ class RefreshExecuter(Elaboratable):
     - Wait tRFC
     """
 
-    def __init__(self, addrbits, trp, trfc):
+    def __init__(self, abits, babits, trp, trfc):
         self.start = Signal()
         self.done = Signal()
         self._trp = trp
         self._trfc = trfc
 
-        self.a = Signal(addrbits)
-        self.ba = Signal()
+        self.a = Signal(abits)
+        self.ba = Signal(babits)
         self.cas = Signal()
         self.ras = Signal()
         self.we = Signal()
@@ -84,17 +84,18 @@ class RefreshSequencer(Elaboratable):
     Sequence N refreshs to the DRAM.
     """
 
-    def __init__(self, addrbits, trp, trfc, postponing=1):
+    def __init__(self, abits, babits, trp, trfc, postponing=1):
         self.start = Signal()
         self.done = Signal()
 
         self._trp = trp
         self._trfc = trfc
         self._postponing = postponing
-        self._addrbits = addrbits
+        self._abits = abits
+        self._babits = babits
 
-        self.a = Signal(addrbits)
-        self.ba = Signal()
+        self.a = Signal(abits)
+        self.ba = Signal(babits)
         self.cas = Signal()
         self.ras = Signal()
         self.we = Signal()
@@ -102,7 +103,7 @@ class RefreshSequencer(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        executer = RefreshExecuter(self._addrbits, self._trp, self._trfc)
+        executer = RefreshExecuter(self._abits, self._babits, self._trp, self._trfc)
         m.submodules += executer
         m.d.comb += [
             self.a.eq(executer.a),
@@ -205,14 +206,14 @@ class ZQCSExecuter(Elaboratable):
     - Wait tZQCS
     """
 
-    def __init__(self, trp, tzqcs):
+    def __init__(self, abits, babits, trp, tzqcs):
         self.start = Signal()
         self.done = Signal()
         self._trp = trp
         self._tzqcs = tzqcs
 
-        self.a = Signal()
-        self.ba = Signal()
+        self.a = Signal(abits)
+        self.ba = Signal(babits)
         self.cas = Signal()
         self.ras = Signal()
         self.we = Signal()
@@ -277,10 +278,10 @@ class Refresher(Elaboratable):
 
     def __init__(self, settings, clk_freq, zqcs_freq=1e0, postponing=1):
         assert postponing <= 8
-        abits = settings.geom.addressbits
-        babits = settings.geom.bankbits + log2_int(settings.phy.nranks)
+        self._abits = settings.geom.addressbits
+        self._babits = settings.geom.bankbits + log2_int(settings.phy.nranks)
         self.cmd = cmd = stream.Endpoint(
-            cmd_request_rw_layout(a=abits, ba=babits))
+            cmd_request_rw_layout(a=self._abits, ba=self._babits))
         self._postponing = postponing
         self._settings = settings
         self._clk_freq = clk_freq
@@ -309,7 +310,7 @@ class Refresher(Elaboratable):
 
         # Refresh Sequencer ------------------------------------------------------------------------
         sequencer = RefreshSequencer(
-            settings.geom.addressbits, settings.timing.tRP, settings.timing.tRFC, self._postponing)
+            self._abits, self._babits, settings.timing.tRP, settings.timing.tRFC, self._postponing)
         m.submodules.sequencer = sequencer
 
         if settings.timing.tZQCS is not None:
@@ -320,7 +321,7 @@ class Refresher(Elaboratable):
 
             # ZQCS Executer ------------------------------------------------------------------------
             zqcs_executer = ZQCSExecuter(
-                settings.timing.tRP, settings.timing.tZQCS)
+                self._abits, self._babits, settings.timing.tRP, settings.timing.tZQCS)
             m.submodules.zqs_executer = zqcs_executer
             m.d.comb += zqcs_timer.wait.eq(~zqcs_executer.done)
 
