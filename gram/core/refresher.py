@@ -291,7 +291,6 @@ class Refresher(Elaboratable):
         m = Module()
 
         wants_refresh = Signal()
-        wants_zqcs = Signal()
 
         settings = self._settings
 
@@ -314,6 +313,8 @@ class Refresher(Elaboratable):
         m.submodules.sequencer = sequencer
 
         if settings.timing.tZQCS is not None:
+            wants_zqcs = Signal()
+
             # ZQCS Timer ---------------------------------------------------------------------------
             zqcs_timer = RefreshTimer(int(self._clk_freq/self._zqcs_freq))
             m.submodules.zqcs_timer = zqcs_timer
@@ -369,6 +370,7 @@ class Refresher(Elaboratable):
                         ]
                         m.next = "Idle"
 
+        # Connect sequencer/executer outputs to cmd
         if settings.timing.tZQCS is None:
             m.d.comb += [
                 self.cmd.a.eq(sequencer.a),
