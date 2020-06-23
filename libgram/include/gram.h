@@ -12,7 +12,7 @@ enum GramError {
 enum GramWidth {
 	GRAM_8B,
 	GRAM_32B,
-}
+};
 
 struct gramCoreRegs;
 struct gramPHYRegs;
