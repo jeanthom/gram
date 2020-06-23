@@ -2,6 +2,7 @@
 #define GRAM_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 enum GramError {
 	GRAM_ERR_NONE = 0,
@@ -24,7 +25,7 @@ struct gramCtx {
 };
 
 extern __attribute__((visibility ("default"))) int gram_init(struct gramCtx *ctx, void *ddr_base, void *core_base, void *phy_base);
-extern __attribute__((visibility ("default"))) int gram_memtest(struct gramCtx *ctx);
+extern __attribute__((visibility ("default"))) int gram_memtest(struct gramCtx *ctx, size_t length, enum GramWidth width);
 
 #ifdef GRAM_RW_FUNC
 extern uint32_t gram_read(struct gramCtx *ctx, void *addr);
