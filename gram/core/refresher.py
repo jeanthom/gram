@@ -339,14 +339,7 @@ class Refresher(Elaboratable):
 
             if settings.timing.tZQCS is None:
                 with m.State("Do-Refresh"):
-                    m.d.comb += [
-                        self.cmd.valid.eq(1),
-                        self.cmd.a.eq(sequencer.a),
-                        self.cmd.ba.eq(sequencer.ba),
-                        self.cmd.cas.eq(sequencer.cas),
-                        self.cmd.ras.eq(sequencer.ras),
-                        self.cmd.we.eq(sequencer.we),
-                    ]
+                    m.d.comb += self.cmd.valid.eq(1)
                     with m.If(sequencer.done):
                         m.d.comb += [
                             self.cmd.valid.eq(0),
@@ -368,19 +361,30 @@ class Refresher(Elaboratable):
                             m.next = "Idle"
 
                 with m.State("Do-Zqcs"):
-                    m.d.comb += [
-                        self.cmd.valid.eq(1),
-                        self.cmd.a.eq(zqcs_executer.a),
-                        self.cmd.ba.eq(zqcs_executer.ba),
-                        self.cmd.cas.eq(zqcs_executer.cas),
-                        self.cmd.ras.eq(zqcs_executer.ras),
-                        self.cmd.we.eq(zqcs_executer.we),
-                    ]
+                    m.d.comb += self.cmd.valid.eq(1)
                     with m.If(zqcs_executer.done):
                         m.d.comb += [
                             self.cmd.valid.eq(0),
                             self.cmd.last.eq(1),
                         ]
                         m.next = "Idle"
+
+        if settings.timing.tZQCS is None:
+            m.d.comb += [
+                self.cmd.a.eq(sequencer.a),
+                self.cmd.ba.eq(sequencer.ba),
+                self.cmd.cas.eq(sequencer.cas),
+                self.cmd.ras.eq(sequencer.ras),
+                self.cmd.we.eq(sequencer.we),
+            ]
+        else:
+            m.d.comb += [
+                self.cmd.a.eq(zqcs_executer.a),
+                self.cmd.ba.eq(zqcs_executer.ba),
+                self.cmd.cas.eq(zqcs_executer.cas),
+                self.cmd.ras.eq(zqcs_executer.ras),
+                self.cmd.we.eq(zqcs_executer.we),
+            ]
+
 
         return m
