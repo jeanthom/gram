@@ -1,13 +1,11 @@
-import unittest
-from gram.test.utils.formal import FHDLTestCase
-
 from nmigen import *
 from nmigen.hdl.ast import Past
 from nmigen.asserts import Assert, Assume
 
 from gram.compat import *
+from utils import *
 
-class DelayedEnterTestCase(unittest.TestCase):
+class DelayedEnterTestCase(FHDLTestCase):
     def test_sequence(self):
         def sequence(expected_delay):
             m = Module()
@@ -36,11 +34,7 @@ class DelayedEnterTestCase(unittest.TestCase):
 
                 self.assertEqual(delay, expected_delay)
 
-            sim = Simulator(m)
-            with sim.write_vcd("test_compat.vcd"):
-                sim.add_clock(1e-6)
-                sim.add_sync_process(process)
-                sim.run()
+            runSimulation(m, process, "test_delayedenter.vcd")
 
         with self.assertRaises(AssertionError):
             sequence(0)
@@ -50,7 +44,7 @@ class DelayedEnterTestCase(unittest.TestCase):
         sequence(100)
         sequence(1000)
 
-class TimelineTestCase(unittest.TestCase):
+class TimelineTestCase(FHDLTestCase):
     def test_sequence(self):
         sigA = Signal()
         sigB = Signal()
@@ -105,11 +99,7 @@ class TimelineTestCase(unittest.TestCase):
                 self.assertFalse((yield sigA))
                 self.assertFalse((yield sigB))
 
-        sim = Simulator(m)
-        with sim.write_vcd("test_compat.vcd"):
-            sim.add_clock(1e-6)
-            sim.add_sync_process(process)
-            sim.run()
+        runSimulation(m, process, "test_timeline.vcd")
 
 class RoundRobinOutputMatchSpec(Elaboratable):
     def __init__(self, dut):
@@ -148,11 +138,7 @@ class RoundRobinTestCase(FHDLTestCase):
 
             self.assertEqual((yield roundrobin.grant), 0)
 
-        sim = Simulator(m)
-        with sim.write_vcd("test_compat.vcd"):
-            sim.add_clock(1e-6)
-            sim.add_sync_process(process)
-            sim.run()
+        runSimulation(m, process, "test_roundrobin.vcd")
 
     # def test_output_match(self):
     #     roundrobin = RoundRobin(32)

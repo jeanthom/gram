@@ -8,13 +8,21 @@ import unittest
 import warnings
 from contextlib import contextmanager
 
+from nmigen import *
+from nmigen.back.pysim import *
 from nmigen.hdl.ir import Fragment
 from nmigen.back import rtlil
 from nmigen._toolchain import require_tool
 
 
-__all__ = ["FHDLTestCase"]
+__all__ = ["FHDLTestCase", "runSimulation"]
 
+def runSimulation(module, process, vcd_filename="anonymous.vcd", clock=1e-6):
+    sim = Simulator(module)
+    with sim.write_vcd(vcd_filename):
+        sim.add_clock(clock)
+        sim.add_sync_process(process)
+        sim.run()
 
 class FHDLTestCase(unittest.TestCase):
     def assertRepr(self, obj, repr_str):
