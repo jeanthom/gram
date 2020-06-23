@@ -25,13 +25,13 @@ class RefreshExecuter(Elaboratable):
     - Wait tRFC
     """
 
-    def __init__(self, trp, trfc):
+    def __init__(self, addrbits, trp, trfc):
         self.start = Signal()
         self.done = Signal()
         self._trp = trp
         self._trfc = trfc
 
-        self.a = Signal()
+        self.a = Signal(addrbits)
         self.ba = Signal()
         self.cas = Signal()
         self.ras = Signal()
@@ -84,15 +84,16 @@ class RefreshSequencer(Elaboratable):
     Sequence N refreshs to the DRAM.
     """
 
-    def __init__(self, trp, trfc, postponing=1):
+    def __init__(self, addrbits, trp, trfc, postponing=1):
         self.start = Signal()
         self.done = Signal()
 
         self._trp = trp
         self._trfc = trfc
         self._postponing = postponing
+        self._addrbits = addrbits
 
-        self.a = Signal()
+        self.a = Signal(addrbits)
         self.ba = Signal()
         self.cas = Signal()
         self.ras = Signal()
@@ -101,7 +102,7 @@ class RefreshSequencer(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        executer = RefreshExecuter(self._trp, self._trfc)
+        executer = RefreshExecuter(self._addrbits, self._trp, self._trfc)
         m.submodules += executer
         m.d.comb += [
             self.a.eq(executer.a),
@@ -308,7 +309,7 @@ class Refresher(Elaboratable):
 
         # Refresh Sequencer ------------------------------------------------------------------------
         sequencer = RefreshSequencer(
-            settings.timing.tRP, settings.timing.tRFC, self._postponing)
+            settings.geom.addressbits, settings.timing.tRP, settings.timing.tRFC, self._postponing)
         m.submodules.sequencer = sequencer
 
         if settings.timing.tZQCS is not None:
