@@ -26,22 +26,20 @@ class PhaseInjector(Elaboratable):
         m = Module()
 
         m.d.comb += [
-            self._phase.address.eq(self._address.r_data),
-            self._phase.bank.eq(self._baddress.r_data),
-            self._phase.wrdata_en.eq(
-                self._command_issue.r_stb & self._command.r_data[4]),
-            self._phase.rddata_en.eq(
-                self._command_issue.r_stb & self._command.r_data[5]),
-            self._phase.wrdata.eq(self._wrdata.r_data),
+            self._phase.address.eq(self._address.w_data),
+            self._phase.bank.eq(self._baddress.w_data),
+            self._phase.wrdata_en.eq(self._command_issue.w_stb & self._command.w_data[4]),
+            self._phase.rddata_en.eq(self._command_issue.w_stb & self._command.w_data[5]),
+            self._phase.wrdata.eq(self._wrdata.w_data),
             self._phase.wrdata_mask.eq(0)
         ]
 
-        with m.If(self._command_issue.r_stb):
+        with m.If(self._command_issue.w_stb):
             m.d.comb += [
-                self._phase.cs_n.eq(Repl(value=~self._command.r_data[0], count=len(self._phase.cs_n))),
-                self._phase.we_n.eq(~self._command.r_data[1]),
-                self._phase.cas_n.eq(~self._command.r_data[2]),
-                self._phase.ras_n.eq(~self._command.r_data[3]),
+                self._phase.cs_n.eq(Repl(value=~self._command.w_data[0], count=len(self._phase.cs_n))),
+                self._phase.we_n.eq(~self._command.w_data[1]),
+                self._phase.cas_n.eq(~self._command.w_data[2]),
+                self._phase.ras_n.eq(~self._command.w_data[3]),
             ]
         with m.Else():
             m.d.comb += [
