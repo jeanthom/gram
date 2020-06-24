@@ -133,6 +133,7 @@ class gramCrossbar(Elaboratable):
 
         controller = self.controller
         nmasters = len(self.masters)
+        assert nmasters > 0
 
         # Address mapping --------------------------------------------------------------------------
         cba_shifts = {
