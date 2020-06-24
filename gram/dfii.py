@@ -82,17 +82,17 @@ class DFIInjector(Elaboratable):
 
         m.submodules += self._phases
 
-        with m.If(self._control.r_data[0]):
+        with m.If(self._control.w_data[0]):
             m.d.comb += self.slave.connect(self.master)
         with m.Else():
             m.d.comb += self._inti.connect(self.master)
 
         for i in range(self._nranks):
-            m.d.comb += [phase.cke[i].eq(self._control.r_data[1])
+            m.d.comb += [phase.cke[i].eq(self._control.w_data[1])
                          for phase in self._inti.phases]
-            m.d.comb += [phase.odt[i].eq(self._control.r_data[2])
+            m.d.comb += [phase.odt[i].eq(self._control.w_data[2])
                          for phase in self._inti.phases if hasattr(phase, "odt")]
-        m.d.comb += [phase.reset_n.eq(self._control.r_data[3])
+        m.d.comb += [phase.reset_n.eq(self._control.w_data[3])
                      for phase in self._inti.phases if hasattr(phase, "reset_n")]
 
         return m
