@@ -10,9 +10,9 @@ from utils import *
 class CSRHost(Peripheral, Elaboratable):
     def __init__(self, name="csrhost"):
         super().__init__(name=name)
-
         self.bank = self.csr_bank()
 
+    def init_bridge(self):
         self._bridge = self.bridge(data_width=32, granularity=8, alignment=2)
         self.bus = self._bridge.bus
 
@@ -22,16 +22,33 @@ class CSRHost(Peripheral, Elaboratable):
         return m
 
 class PhaseInjectorTestCase(FHDLTestCase):
-    def test_initialstate(self):
+    def generate_phaseinjector(self):
         dfi = Interface(12, 8, 1, 8, 1)
+        csrhost = CSRHost()
+        dut = PhaseInjector(csrhost.bank, dfi.phases[0])
+        csrhost.init_bridge()
         m = Module()
-        m.submodules.csrhost = csrhost = CSRHost()
-        m.submodules.dut = dut = PhaseInjector(csrhost.bank, dfi.phases[0])
+        m.submodules += csrhost
+        m.submodules += dut
+
+        return (m, dfi, csrhost)
+
+    def test_initialstate(self):
+        m, dfi, csrhost = self.generate_phaseinjector()
 
         def process():
-            self.assertTrue((yield dut.phases[0].cas_n))
-            self.assertTrue((yield dut.phases[0].ras_n))
-            self.assertTrue((yield dut.phases[0].we_n))
-            self.assertTrue((yield dut.phases[0].act_n))
+            self.assertTrue((yield dfi.phases[0].cas_n))
+            self.assertTrue((yield dfi.phases[0].ras_n))
+            self.assertTrue((yield dfi.phases[0].we_n))
+            self.assertTrue((yield dfi.phases[0].act_n))
+
+        runSimulation(m, process, "test_phaseinjector.vcd")
+
+    def test_setaddress(self):
+        m, dfi, csrhost = self.generate_phaseinjector()
+
+        def process():
+            yield from wb_write(csrhost.bus, 0x8 >> 2, 0xCDC, sel=0xF)
+            self.assertEqual((yield dfi.phases[0].address), 0xCDC)
 
         runSimulation(m, process, "test_phaseinjector.vcd")
