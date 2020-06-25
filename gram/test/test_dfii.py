@@ -50,6 +50,7 @@ class PhaseInjectorTestCase(FHDLTestCase):
             self.assertTrue((yield dfi.phases[0].ras_n))
             self.assertTrue((yield dfi.phases[0].we_n))
             self.assertTrue((yield dfi.phases[0].act_n))
+            self.assertFalse((yield dfi.phases[0].wrdata_mask))
 
         runSimulation(m, process, "test_phaseinjector.vcd")
 
@@ -95,5 +96,21 @@ class PhaseInjectorTestCase(FHDLTestCase):
             yield from wb_write(csrhost.bus, PI_COMMAND_ISSUE_ADDR >> 2, 1, sel=0xF)
             self.assertEqual((yield pc.cnt), 2)
 
+        runSimulation(m, process, "test_phaseinjector.vcd")
+
+    def test_rddata_en(self):
+        m, dfi, csrhost = self.generate_phaseinjector()
+
+        m.submodules.pc = pc = PulseCounter()
+        m.d.comb += pc.i.eq(dfi.phases[0].rddata_en)
+
+        def process():
+            yield from wb_write(csrhost.bus, PI_COMMAND_ADDR >> 2, (1 << 5), sel=0xF)
+            yield
+            yield from wb_write(csrhost.bus, PI_COMMAND_ISSUE_ADDR >> 2, 1, sel=0xF)
+            self.assertEqual((yield pc.cnt), 1)
+            yield
+            yield from wb_write(csrhost.bus, PI_COMMAND_ISSUE_ADDR >> 2, 1, sel=0xF)
+            self.assertEqual((yield pc.cnt), 2)
 
         runSimulation(m, process, "test_phaseinjector.vcd")
