@@ -1,6 +1,4 @@
 from nmigen import *
-from nmigen.hdl.ast import Past
-from nmigen.asserts import Assert, Assume
 from lambdasoc.periph import Peripheral
 
 from gram.dfii import *
@@ -14,6 +12,9 @@ PI_ADDRESS_ADDR = 0x08
 PI_BADDRESS_ADDR = 0x0C
 PI_WRDATA_ADDR = 0x10
 PI_RDDATA_ADDR = 0x14
+
+# DFI injector CSR addresses
+DFII_CONTROL_ADDR = 0x00
 
 class CSRHost(Peripheral, Elaboratable):
     def __init__(self, name="csrhost"):
@@ -67,5 +68,32 @@ class PhaseInjectorTestCase(FHDLTestCase):
         def process():
             yield from wb_write(csrhost.bus, PI_BADDRESS_ADDR >> 2, 0xA8, sel=0xF)
             self.assertEqual((yield dfi.phases[0].bank), 0xA8)
+
+        runSimulation(m, process, "test_phaseinjector.vcd")
+
+    def test_setwrdata(self):
+        m, dfi, csrhost = self.generate_phaseinjector()
+
+        def process():
+            yield from wb_write(csrhost.bus, PI_WRDATA_ADDR >> 2, 0xCC, sel=0xF)
+            self.assertEqual((yield dfi.phases[0].wrdata), 0xCC)
+
+        runSimulation(m, process, "test_phaseinjector.vcd")
+
+    def test_wrdata_en(self):
+        m, dfi, csrhost = self.generate_phaseinjector()
+
+        m.submodules.pc = pc = PulseCounter()
+        m.d.comb += pc.i.eq(dfi.phases[0].wrdata_en)
+
+        def process():
+            yield from wb_write(csrhost.bus, PI_COMMAND_ADDR >> 2, (1 << 4), sel=0xF)
+            yield
+            yield from wb_write(csrhost.bus, PI_COMMAND_ISSUE_ADDR >> 2, 1, sel=0xF)
+            self.assertEqual((yield pc.cnt), 1)
+            yield
+            yield from wb_write(csrhost.bus, PI_COMMAND_ISSUE_ADDR >> 2, 1, sel=0xF)
+            self.assertEqual((yield pc.cnt), 2)
+
 
         runSimulation(m, process, "test_phaseinjector.vcd")

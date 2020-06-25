@@ -15,7 +15,7 @@ from nmigen.back import rtlil
 from nmigen._toolchain import require_tool
 
 
-__all__ = ["FHDLTestCase", "runSimulation", "wb_read", "wb_write"]
+__all__ = ["FHDLTestCase", "runSimulation", "wb_read", "wb_write", "PulseCounter"]
 
 def runSimulation(module, process, vcd_filename="anonymous.vcd", clock=1e-6):
     sim = Simulator(module)
@@ -138,3 +138,19 @@ def wb_write(bus, addr, data, sel, timeout=32):
     yield bus.cyc.eq(0)
     yield bus.stb.eq(0)
     yield bus.we.eq(0)
+
+class PulseCounter(Elaboratable):
+    def __init__(self, max=16):
+        self.i = Signal()
+        self.rst = Signal()
+        self.cnt = Signal(range(max))
+
+    def elaborate(self, platform):
+        m = Module()
+
+        with m.If(self.rst):
+            m.d.sync += self.cnt.eq(0)
+        with m.Elif(self.i):
+            m.d.sync += self.cnt.eq(self.cnt+1)
+
+        return m
