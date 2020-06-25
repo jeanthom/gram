@@ -4,7 +4,7 @@ This folder contains code used for low level simulation of various aspects of gr
 
 ## Requirements
 
- * Icarius Verilog (preferably a recent version)
+ * Icarus Verilog (preferably a recent version)
  * ECP5 instances models from a Lattice Diamond installation (just install Lattice Diamond)
 
 ## Available simulations
