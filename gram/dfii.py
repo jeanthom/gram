@@ -13,12 +13,12 @@ from gram.compat import CSRPrefixProxy
 
 class PhaseInjector(Elaboratable):
     def __init__(self, csr_bank, phase):
-        self._command = csr_bank.csr(6, "rw")
-        self._command_issue = csr_bank.csr(1, "rw")
-        self._address = csr_bank.csr(len(phase.address), "rw")
-        self._baddress = csr_bank.csr(len(phase.bank), "rw")
-        self._wrdata = csr_bank.csr(len(phase.wrdata), "rw")
-        self._rddata = csr_bank.csr(len(phase.rddata), "rw")
+        self._command = csr_bank.csr(6, "w")
+        self._command_issue = csr_bank.csr(1, "w")
+        self._address = csr_bank.csr(len(phase.address), "w")
+        self._baddress = csr_bank.csr(len(phase.bank), "w")
+        self._wrdata = csr_bank.csr(len(phase.wrdata), "w")
+        self._rddata = csr_bank.csr(len(phase.rddata), "r")
 
         self._phase = phase
 
@@ -68,7 +68,7 @@ class DFIInjector(Elaboratable):
         self.master = dfi.Interface(
             addressbits, bankbits, nranks, databits, nphases)
 
-        self._control = csr_bank.csr(4, "rw")  # sel, cke, odt, reset_n
+        self._control = csr_bank.csr(4, "w")  # sel, cke, odt, reset_n
 
         self._phases = []
         for n, phase in enumerate(self._inti.phases):
