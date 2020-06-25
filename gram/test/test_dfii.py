@@ -7,6 +7,14 @@ from gram.dfii import *
 from gram.phy.dfi import Interface
 from utils import *
 
+# Phase injector CSR addresses
+PI_COMMAND_ADDR = 0x00
+PI_COMMAND_ISSUE_ADDR = 0x04
+PI_ADDRESS_ADDR = 0x08
+PI_BADDRESS_ADDR = 0x0C
+PI_WRDATA_ADDR = 0x10
+PI_RDDATA_ADDR = 0x14
+
 class CSRHost(Peripheral, Elaboratable):
     def __init__(self, name="csrhost"):
         super().__init__(name=name)
@@ -48,7 +56,7 @@ class PhaseInjectorTestCase(FHDLTestCase):
         m, dfi, csrhost = self.generate_phaseinjector()
 
         def process():
-            yield from wb_write(csrhost.bus, 0x8 >> 2, 0xCDC, sel=0xF)
+            yield from wb_write(csrhost.bus, PI_ADDRESS_ADDR >> 2, 0xCDC, sel=0xF)
             self.assertEqual((yield dfi.phases[0].address), 0xCDC)
 
         runSimulation(m, process, "test_phaseinjector.vcd")
@@ -57,7 +65,7 @@ class PhaseInjectorTestCase(FHDLTestCase):
         m, dfi, csrhost = self.generate_phaseinjector()
 
         def process():
-            yield from wb_write(csrhost.bus, 0xC >> 2, 0xA8, sel=0xF)
+            yield from wb_write(csrhost.bus, PI_BADDRESS_ADDR >> 2, 0xA8, sel=0xF)
             self.assertEqual((yield dfi.phases[0].bank), 0xA8)
 
         runSimulation(m, process, "test_phaseinjector.vcd")
