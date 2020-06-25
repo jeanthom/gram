@@ -52,3 +52,12 @@ class PhaseInjectorTestCase(FHDLTestCase):
             self.assertEqual((yield dfi.phases[0].address), 0xCDC)
 
         runSimulation(m, process, "test_phaseinjector.vcd")
+
+    def test_setbankaddress(self):
+        m, dfi, csrhost = self.generate_phaseinjector()
+
+        def process():
+            yield from wb_write(csrhost.bus, 0xC >> 2, 0xA8, sel=0xF)
+            self.assertEqual((yield dfi.phases[0].bank), 0xA8)
+
+        runSimulation(m, process, "test_phaseinjector.vcd")
