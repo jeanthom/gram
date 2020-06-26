@@ -1,0 +1,10 @@
+# Icarius Verilog generated files
+simcrg
+simsoc
+
+# nMigen generated files
+simcrg.v
+simsoc.v
+
+# VCD files
+*.vcd
