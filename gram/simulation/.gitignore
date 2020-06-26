@@ -6,5 +6,6 @@ simsoc
 simcrg.v
 simsoc.v
 
-# VCD files
+# Simulation output
 *.vcd
+*.fst
