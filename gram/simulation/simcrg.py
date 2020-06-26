@@ -48,7 +48,7 @@ class PLL(Elaboratable):
                        p_FEEDBK_PATH='CLKOP',
                        #p_FREQUENCY_PIN_CLKOP='200',
                        i_CLKI=self.clkin,
-                       #i_CLKFB=clkfb,
+                       i_CLKFB=clkfb,
                        i_RST=0,
                        i_STDBY=0,
                        i_PHASESEL0=0,
