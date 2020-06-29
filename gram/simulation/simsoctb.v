@@ -3,6 +3,8 @@
 `timescale 1 ns / 1 ps
 
 module simsoctb;
+  parameter simticks = 700000;
+
   // GSR & PUR init requires for Lattice models
   GSR GSR_INST (
     .GSR(1'b1)
@@ -103,10 +105,6 @@ module simsoctb;
     $dumpvars(0, uart_tx);
     $dumpvars(0, simsoctop);
 
-    // Wait for power-on reset
-    //#700000; // 700us
-    #70000;
-
-    $finish;
+    #simticks $finish;
   end
 endmodule
