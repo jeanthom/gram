@@ -88,7 +88,7 @@ class ECP5DDRPHYInit(Elaboratable):
 
 class ECP5DDRPHY(Peripheral, Elaboratable):
     def __init__(self, pads, sys_clk_freq=100e6):
-        super().__init__()
+        super().__init__(name="phy")
 
         #self.pads = PHYPadsCombiner(pads)
         self.pads = pads
@@ -273,6 +273,17 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      p_DQS_LI_DEL_VAL=1,
                                      p_DQS_LO_DEL_ADJ="MINUS",
                                      p_DQS_LO_DEL_VAL=4,
+
+                                     # Delay
+                                     i_DYNDELAY0=0,
+                                     i_DYNDELAY1=0,
+                                     i_DYNDELAY2=0,
+                                     i_DYNDELAY3=0,
+                                     i_DYNDELAY4=0,
+                                     i_DYNDELAY5=0,
+                                     i_DYNDELAY6=0,
+                                     i_DYNDELAY7=0,
+
                                      # Clocks / Reset
                                      i_SCLK=ClockSignal("sync"),
                                      i_ECLK=ClockSignal("sync2x"),
