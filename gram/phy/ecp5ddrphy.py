@@ -74,7 +74,6 @@ class ECP5DDRPHYInit(Elaboratable):
         # Wait DDRDLLA Lock
         m.d.comb += tl.trigger.eq(new_lock)
 
-        # ------------------------------------------------------------------------------------------
         m.d.comb += [
             self.pause.eq(pause),
             self.stop.eq(stop),
@@ -376,8 +375,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                 dqs_pattern.postamble),
                          o_Q=dqs_oe_n
                          ),
-                Instance("TRELLIS_IO",
-                    p_DIR="BIDIR",
+                Instance("BB",
+                    #p_DIR="BIDIR",
                     i_I=dqs,
                     i_T=dqs_oe_n,
                     o_O=dqs_i,
@@ -475,8 +474,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                     dqs_pattern.postamble),
                              o_Q=dq_oe_n,
                              ),
-                    Instance("TRELLIS_IO",
-                        p_DIR="BIDIR",
+                    Instance("BB",
+                        #p_DIR="BIDIR",
                         i_I=dq_o,
                         i_T=dq_oe_n,
                         o_O=dq_i,
