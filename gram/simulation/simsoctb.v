@@ -48,7 +48,7 @@ module simsoctb;
   ddr3 ram_chip (
     .rst_n(1'b1),
     .ck(dram_ck),
-    .ck_n(dram_ck_n),
+    .ck_n(1'b0),
     .cke(dram_cke),
     .cs_n(1'b0),
     .ras_n(dram_ras_n),
