@@ -42,6 +42,7 @@ module top;
     $dumpvars(0, sync2x);
     $dumpvars(0, dramsync);
     $dumpvars(0, init);
+    $dumpvars(0, simcrgtop);
 
     #10000 $finish;
   end
