@@ -82,6 +82,8 @@ module simsoctb;
     .uart_0__tx__io(uart_tx)
   );
 
+  assign uart_rx = 1'b1;
+
   initial
   begin
     $dumpfile("simsoc.fst");
@@ -101,6 +103,10 @@ module simsoctb;
     $dumpvars(0, uart_tx);
     $dumpvars(0, simsoctop);
 
-    #10000 $finish;
+    // Wait for power-on reset
+    //#700000; // 700us
+    #70000;
+
+    $finish;
   end
 endmodule
