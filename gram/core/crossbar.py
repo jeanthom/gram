@@ -136,13 +136,10 @@ class gramCrossbar(Elaboratable):
         assert nmasters > 0
 
         # Address mapping --------------------------------------------------------------------------
-        cba_shifts = {
-            "ROW_BANK_COL": controller.settings.geom.colbits - controller.address_align}
+        cba_shifts = {"ROW_BANK_COL": controller.settings.geom.colbits - controller.address_align}
         cba_shift = cba_shifts[controller.settings.address_mapping]
-        m_ba = [master.get_bank_address(
-            self.bank_bits, cba_shift) for master in self.masters]
-        m_rca = [master.get_row_column_address(
-            self.bank_bits, self.rca_bits, cba_shift) for master in self.masters]
+        m_ba = [master.get_bank_address(self.bank_bits, cba_shift) for master in self.masters]
+        m_rca = [master.get_row_column_address(self.bank_bits, self.rca_bits, cba_shift) for master in self.masters]
 
         master_readys = [0]*nmasters
         master_wdata_readys = [0]*nmasters
