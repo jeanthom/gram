@@ -48,9 +48,6 @@ class PLL(Elaboratable):
     def elaborate(self, platform):
         clkfb = Signal()
         pll = Instance("EHXPLLL",
-                       p_PLLRST_ENA='DISABLED',
-                       p_INTFB_WAKE='DISABLED',
-                       p_STDBY_ENABLE='DISABLED',
                        p_CLKOP_FPHASE=0,
                        p_CLKOP_CPHASE=1,
                        p_OUTDIVIDER_MUXA='DIVA',
@@ -61,19 +58,19 @@ class PLL(Elaboratable):
                        p_CLKOS3_DIV=self.CLKOS3_DIV,
                        p_CLKFB_DIV=self.CLKFB_DIV,
                        p_CLKI_DIV=self.CLKI_DIV,
-                       p_FEEDBK_PATH='CLKOP',
+                       p_FEEDBK_PATH='INT_OP',
                        #p_FREQUENCY_PIN_CLKOP='200',
                        i_CLKI=self.clkin,
                        i_CLKFB=clkfb,
                        i_RST=0,
                        i_STDBY=0,
-                       i_PHASESEL0=0,
-                       i_PHASESEL1=0,
+                       i_PHASESEL0=1,
+                       i_PHASESEL1=1,
                        i_PHASEDIR=0,
                        i_PHASESTEP=0,
                        i_PLLWAKESYNC=0,
-                       i_ENCLKOP=0,
-                       i_ENCLKOS=0,
+                       i_ENCLKOP=1,
+                       i_ENCLKOS=1,
                        i_ENCLKOS2=0,
                        i_ENCLKOS3=0,
                        o_CLKOP=self.clkout1,
@@ -130,7 +127,7 @@ class ECPIX5CRG(Elaboratable):
         cd_sync2x = ClockDomain("sync2x", local=False)
         cd_sync2x_unbuf = ClockDomain("sync2x_unbuf", local=True, reset_less=True)
         cd_init = ClockDomain("init", local=False)
-        cd_sync = ClockDomain("sync", local=False, reset_less=True)
+        cd_sync = ClockDomain("sync", local=False)
         cd_dramsync = ClockDomain("dramsync", local=False)
         m.submodules.pll = pll = PLL(ClockSignal("rawclk"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=2, CLK2_DIV=16, CLK3_DIV=4,
             clkout1=ClockSignal("sync2x_unbuf"), clkout2=ClockSignal("init"))
@@ -144,6 +141,7 @@ class ECPIX5CRG(Elaboratable):
         m.domains += cd_sync
         m.domains += cd_dramsync
         m.d.comb += ResetSignal("init").eq(~pll.lock|~pod_done)
+        m.d.comb += ResetSignal("sync").eq(~pll.lock|~pod_done)
         m.d.comb += ResetSignal("dramsync").eq(~pll.lock|~pod_done)
 
         rgb_led = platform.request("rgb_led", 2)
@@ -242,19 +240,19 @@ class DDR3SoC(SoC, Elaboratable):
         self.ub = UARTBridge(divisor=868, pins=platform.request("uart", 0))
         self._arbiter.add(self.ub.bus)
 
-        self.ddrphy = ECP5DDRPHY(platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"}))
+        self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"})))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
         ddrmodule = MT41K256M16(clk_freq, "1:4")
 
-        self.dramcore = gramCore(
+        self.dramcore = DomainRenamer("dramsync")(gramCore(
             phy=self.ddrphy,
             geom_settings=ddrmodule.geom_settings,
             timing_settings=ddrmodule.timing_settings,
-            clk_freq=clk_freq)
+            clk_freq=clk_freq))
         self._decoder.add(self.dramcore.bus, addr=dramcore_addr)
 
-        self.drambone = gramWishbone(self.dramcore)
+        self.drambone = DomainRenamer("dramsync")(gramWishbone(self.dramcore))
         self._decoder.add(self.drambone.bus, addr=ddr_addr)
 
         self.memory_map = self._decoder.bus.memory_map
