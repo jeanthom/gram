@@ -68,6 +68,7 @@ class PLL(Elaboratable):
                        i_PHASESEL1=1,
                        i_PHASEDIR=0,
                        i_PHASESTEP=0,
+                       i_PHASELOADREG=0,
                        i_PLLWAKESYNC=0,
                        i_ENCLKOP=1,
                        i_ENCLKOS=1,
