@@ -4,11 +4,6 @@ from nmigen import *
 from nmigen.lib.cdc import ResetSynchronizer
 from nmigen_soc import wishbone, memory
 
-from lambdasoc.cpu.minerva import MinervaCPU
-from lambdasoc.periph.intc import GenericInterruptController
-from lambdasoc.periph.serial import AsyncSerialPeripheral
-from lambdasoc.periph.sram import SRAMPeripheral
-from lambdasoc.periph.timer import TimerPeripheral
 from lambdasoc.periph import Peripheral
 from lambdasoc.soc.base import SoC
 
