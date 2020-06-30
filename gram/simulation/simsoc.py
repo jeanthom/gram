@@ -276,4 +276,4 @@ if __name__ == "__main__":
         ddr_addr=0x10000000)
 
     soc.build(do_build=True)
-    platform.build(soc)
+    platform.build(soc, build_dir="build_simsoc")
