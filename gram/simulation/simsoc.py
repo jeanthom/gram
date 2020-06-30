@@ -140,13 +140,6 @@ class ECPIX5CRG(Elaboratable):
         m.d.comb += ResetSignal("sync").eq(~pll.lock|~pod_done)
         m.d.comb += ResetSignal("dramsync").eq(~pll.lock|~pod_done)
 
-        rgb_led = platform.request("rgb_led", 2)
-        cnt = Signal(25)
-        m.d.sync += cnt.eq(cnt+1)
-        m.d.comb += rgb_led.r.eq(cnt[24])
-        m.d.comb += rgb_led.g.eq(~pod_done)
-        m.d.comb += rgb_led.b.eq(~pll.lock)
-
         # Generating sync (100Mhz) from sync2x
         
         m.submodules += Instance("CLKDIVF",
