@@ -152,79 +152,16 @@ class ECPIX5CRG(Elaboratable):
 
         return m
 
-class OldCRG(Elaboratable):
-    def elaborate(self, platform):
-        m = Module()
-
-        m.submodules.pll = pll = PLL(ClockSignal(
-            "sync"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=2, CLK2_DIV=16)
-        cd_sync2x = ClockDomain("sync2x", local=False)
-        m.d.comb += cd_sync2x.clk.eq(pll.clkout1)
-        m.domains += cd_sync2x
-
-        cd_init = ClockDomain("init", local=False)
-        m.d.comb += cd_init.clk.eq(pll.clkout2)
-        m.domains += cd_init
-
-        return m
-
-class ThinCRG(Elaboratable):
-    """
-    Sync (clk100, resetless) => PLL => sync2x_unbuf (200Mhz) => ECLKSYNC => sync2x => CLKDIVF => dramsync
-    """
-
-    def __init__(self):
-        ...
-
-    def elaborate(self, platform):
-        m = Module()
-
-        # Power-on delay (655us)
-        podcnt = Signal(16, reset=2**16-1)
-        pod_done = Signal()
-        with m.If(podcnt != 0):
-            m.d.sync += podcnt.eq(podcnt-1)
-        m.d.comb += pod_done.eq(podcnt == 0)
-
-        # Generating sync2x (200Mhz) and init (25Mhz) from clk100
-        cd_sync2x = ClockDomain("sync2x", local=False)
-        cd_sync2x_unbuf = ClockDomain("sync2x_unbuf", local=True, reset_less=True)
-        cd_init = ClockDomain("init", local=False)
-        cd_dramsync = ClockDomain("dramsync", local=False)
-        m.submodules.pll = pll = PLL(ClockSignal("sync"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=2, CLK2_DIV=16, CLK3_DIV=4,
-            clkout1=ClockSignal("sync2x_unbuf"), clkout2=ClockSignal("init"))
-        m.submodules += Instance("ECLKSYNCB",
-                i_ECLKI = ClockSignal("sync2x_unbuf"),
-                i_STOP  = 0,
-                o_ECLKO = ClockSignal("sync2x"))
-        m.domains += cd_sync2x_unbuf
-        m.domains += cd_sync2x
-        m.domains += cd_init
-        m.domains += cd_dramsync
-        m.d.comb += ResetSignal("init").eq(~pll.lock|~pod_done)
-        m.d.comb += ResetSignal("dramsync").eq(~pll.lock|~pod_done)
-
-        # Generating sync (100Mhz) from sync2x
-        m.submodules += Instance("CLKDIVF",
-            p_DIV="2.0",
-            i_ALIGNWD=0,
-            i_CLKI=ClockSignal("sync2x"),
-            i_RST=0,
-            o_CDIVX=ClockSignal("dramsync"))
-
-        return m
-
-
 class DDR3SoC(SoC, Elaboratable):
     def __init__(self, *, clk_freq,
                  ddrphy_addr, dramcore_addr,
                  ddr_addr):
+        self.crg = ECPIX5CRG()
+
         self._arbiter = wishbone.Arbiter(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
-
-        self.crg = ECPIX5CRG()
 
         self.ub = UARTBridge(divisor=868, pins=platform.request("uart", 0))
         self._arbiter.add(self.ub.bus)

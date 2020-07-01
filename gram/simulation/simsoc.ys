@@ -1,0 +1,16 @@
+read_ilang build_simsoc/top.il
+delete w:$verilog_initial_trigger
+proc_prune
+proc_clean
+proc_init
+proc_arst
+proc_dff
+proc_rmdead
+proc_mux
+proc_clean
+pmuxtree
+memory_collect
+extract_fa -v
+clean
+opt -fine -full
+write_verilog -norename build_simsoc/top.v

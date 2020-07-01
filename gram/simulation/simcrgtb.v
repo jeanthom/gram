@@ -1,6 +1,6 @@
 // This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
-`timescale 1 ns / 10 fs
+`timescale 1 ns / 1 ns
 
 module top;
   // GSR & PUR init requires for Lattice models
