@@ -4,7 +4,7 @@
 
 module simsoctb;
   //parameter simticks = 70000;
-  parameter simticks = 2000000;
+  parameter simticks = 4000000;
 
   // GSR & PUR init requires for Lattice models
   GSR GSR_INST (
