@@ -1,6 +1,6 @@
 // This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
-`timescale 1 ns / 100 ps
+`timescale 1 ns / 1 ns
 
 module simsoctb;
   //parameter simticks = 70000;
