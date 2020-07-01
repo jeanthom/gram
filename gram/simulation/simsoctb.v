@@ -1,9 +1,10 @@
 // This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
-`timescale 1 ns / 1 ps
+`timescale 1 ns / 100 ps
 
 module simsoctb;
-  parameter simticks = 700000;
+  //parameter simticks = 70000;
+  parameter simticks = 2000000;
 
   // GSR & PUR init requires for Lattice models
   GSR GSR_INST (
@@ -29,7 +30,7 @@ module simsoctb;
   end
 
   // UART
-  wire uart_rx;
+  reg uart_rx;
   wire uart_tx;
 
   // DDR3 init
@@ -84,27 +85,120 @@ module simsoctb;
     .uart_0__tx__io(uart_tx)
   );
 
-  assign uart_rx = 1'b1;
-
   initial
-  begin
-    $dumpfile("simsoc.fst");
-    $dumpvars(0, clkin);
-    $dumpvars(0, dram_dq);
-    $dumpvars(0, dram_dqs);
-    $dumpvars(0, dram_ck);
-    $dumpvars(0, dram_cke);
-    $dumpvars(0, dram_we_n);
-    $dumpvars(0, dram_ras_n);
-    $dumpvars(0, dram_cas_n);
-    $dumpvars(0, dram_a);
-    $dumpvars(0, dram_ba);
-    $dumpvars(0, dram_dm);
-    $dumpvars(0, dram_odt);
-    $dumpvars(0, uart_rx);
-    $dumpvars(0, uart_tx);
-    $dumpvars(0, simsoctop);
+    begin
+      $dumpfile("simsoc.fst");
+      $dumpvars(0, clkin);
+      $dumpvars(0, dram_dq);
+      $dumpvars(0, dram_dqs);
+      $dumpvars(0, dram_ck);
+      $dumpvars(0, dram_cke);
+      $dumpvars(0, dram_we_n);
+      $dumpvars(0, dram_ras_n);
+      $dumpvars(0, dram_cas_n);
+      $dumpvars(0, dram_a);
+      $dumpvars(0, dram_ba);
+      $dumpvars(0, dram_dm);
+      $dumpvars(0, dram_odt);
+      $dumpvars(0, uart_rx);
+      $dumpvars(0, uart_tx);
+      $dumpvars(0, simsoctop);
 
-    #simticks $finish;
-  end
+      #simticks $finish;
+    end
+
+  // UART
+  reg [31:0] tmp;
+  initial
+    begin
+      uart_rx <= 1'b1;
+      #700000; // POR is ~700us
+
+      // Software control
+      wishbone_write(32'h00009000, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
+
+      wishbone_write(32'h0000900c, 32'h0); // p0 address
+      wishbone_write(32'h00009010, 32'h0); // p0 baddress
+      wishbone_write(32'h00009000, 8'h0C); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N
+      #500000;
+      wishbone_write(32'h00009000, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
+      #500000;
+
+      // Set MR2
+      wishbone_write(32'h0000900c, 32'h200); // p0 address
+      wishbone_write(32'h00009010, 32'h2); // p0 baddress
+      wishbone_write(32'h00009004, 8'h0F); // RAS|CAS|WE|CS
+    end
+
+  task wishbone_write;
+    input [31:0] address;
+    input [31:0] value;
+
+    begin
+      uart_send(8'h01); // Write command
+      uart_send(8'h01); // Length
+      uart_send(address[31:24]); // Address
+      uart_send(address[23:16]);
+      uart_send(address[15:8]);
+      uart_send(address[7:0]);
+      uart_send(value[31:24]);
+      uart_send(value[23:16]);
+      uart_send(value[15:8]);
+      uart_send(value[7:0]);
+    end
+  endtask
+
+  task wishbone_read;
+    input [31:0] address;
+    output [31:0] value;
+
+    begin
+      uart_send(8'h02); // Read command
+      uart_send(8'h01); // Length
+      uart_send(address[31:24]); // Address
+      uart_send(address[23:16]);
+      uart_send(address[15:8]);
+      uart_send(address[7:0]);
+      uart_read(value[31:24]);
+      uart_read(value[23:16]);
+      uart_read(value[15:8]);
+      uart_read(value[7:0]);
+    end
+  endtask
+
+  task uart_send;
+    input [7:0] data;
+    integer i;
+
+    begin
+      uart_rx <= 1'b0;
+      #8680;
+      for (i = 0; i < 8; i = i + 1)
+        begin
+          uart_rx <= data[i];
+          #8680;
+        end
+      uart_rx <= 1'b1;
+      #8680;
+    end
+  endtask
+
+  task uart_read;
+    output [7:0] data;
+    integer i;
+
+    begin
+      while (uart_tx)
+        begin
+          #1;
+        end
+
+      for (i = 0; i < 8; i = i+1)
+        begin
+          #8680 data[i] <= uart_tx;
+        end
+
+      #8680;
+    end
+  endtask
 endmodule
