@@ -1,9 +1,10 @@
 // This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
-`timescale 1 ns / 1 ps
+`timescale 1 ns / 100 ps
 
 module simsoctb;
-  parameter simticks = 700000;
+  //parameter simticks = 70000;
+  parameter simticks = 2000000;
 
   // GSR & PUR init requires for Lattice models
   GSR GSR_INST (
@@ -29,7 +30,7 @@ module simsoctb;
   end
 
   // UART
-  wire uart_rx;
+  reg uart_rx;
   wire uart_tx;
 
   // DDR3 init
@@ -84,8 +85,6 @@ module simsoctb;
     .uart_0__tx__io(uart_tx)
   );
 
-  assign uart_rx = 1'b1;
-
   initial
   begin
     $dumpfile("simsoc.fst");
@@ -107,4 +106,47 @@ module simsoctb;
 
     #simticks $finish;
   end
+
+  // UART
+  initial
+  begin
+    uart_rx <= 1'b1;
+    #700000; // POR is ~700us
+    wishbone_write(32'hFEEDBACC, 32'hFACE2BED);
+  end
+
+  task wishbone_write;
+  input [31:0] address;
+  input [31:0] value;
+
+  begin
+    uart_send(8'h01); // Write command
+    uart_send(8'h01); // Length
+    uart_send(address[31:24]); // Address
+    uart_send(address[23:16]);
+    uart_send(address[15:8]);
+    uart_send(address[7:0]);
+    uart_send(value[31:24]);
+    uart_send(value[23:16]);
+    uart_send(value[15:8]);
+    uart_send(value[7:0]);
+  end
+  endtask
+
+  task uart_send;
+  input [7:0] data;
+  integer i;
+
+  begin
+    uart_rx <= 1'b0;
+    #8680;
+    for (i = 0; i < 8; i = i + 1)
+    begin
+      uart_rx <= data[i];
+      #8680;
+    end
+    uart_rx <= 1'b1;
+    #8680;
+  end
+  endtask
 endmodule
