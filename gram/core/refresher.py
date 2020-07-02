@@ -189,7 +189,10 @@ class RefreshPostponer(Elaboratable):
                     self.req_o.eq(1),
                 ]
             with m.Else():
-                m.d.sync += count.eq(count-1)
+                m.d.sync += [
+                    count.eq(count-1),
+                    self.req_o.eq(0),
+                ]
 
         return m
 
