@@ -4,7 +4,7 @@
 
 module simsoctb;
   //parameter simticks = 70000;
-  parameter simticks = 4000000;
+  parameter simticks = 60000000;
 
   // GSR & PUR init requires for Lattice models
   GSR GSR_INST (
@@ -115,19 +115,51 @@ module simsoctb;
       #700000; // POR is ~700us
 
       // Software control
-      wishbone_write(32'h00009000, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
+      wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
 
-      wishbone_write(32'h0000900c, 32'h0); // p0 address
-      wishbone_write(32'h00009010, 32'h0); // p0 baddress
-      wishbone_write(32'h00009000, 8'h0C); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N
+      wishbone_write(32'h0000900c >> 2, 32'h0); // p0 address
+      wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
+      wishbone_write(32'h00009000 >> 2, 8'h0C); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N
       #500000;
-      wishbone_write(32'h00009000, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
+      wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
       #500000;
 
       // Set MR2
-      wishbone_write(32'h0000900c, 32'h200); // p0 address
-      wishbone_write(32'h00009010, 32'h2); // p0 baddress
-      wishbone_write(32'h00009004, 8'h0F); // RAS|CAS|WE|CS
+      wishbone_write(32'h0000900c >> 2, 32'h200); // p0 address
+      wishbone_write(32'h00009010 >> 2, 32'h2); // p0 baddress
+      wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
+      wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
+
+      // Set MR3
+      wishbone_write(32'h0000900c >> 2, 32'h0); // p0 address
+      wishbone_write(32'h00009010 >> 2, 32'h3); // p0 baddress
+      wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
+      wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
+
+      // Set MR1
+      wishbone_write(32'h0000900c >> 2, 32'h6); // p0 address
+      wishbone_write(32'h00009010 >> 2, 32'h1); // p0 baddress
+      wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
+      wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
+
+      // Set MR0
+      wishbone_write(32'h0000900c >> 2, 32'h320); // p0 address
+      wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
+      wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
+      wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
+      #2000;
+
+      // ZQ calibration
+      wishbone_write(32'h0000900c >> 2, 32'h400); // p0 address
+      wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
+      wishbone_write(32'h00009004 >> 2, 8'h03); // WE|CS
+      #2000;
+
+      // Hardware control
+      wishbone_write(32'h00009000 >> 2, 8'h01); // DFII_CONTROL_SEL
+      #2000;
+
+      wishbone_read(32'h10000000 >> 2, tmp);
     end
 
   task wishbone_write;
