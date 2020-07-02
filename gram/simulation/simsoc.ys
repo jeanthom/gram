@@ -12,5 +12,9 @@ pmuxtree
 memory_collect
 extract_fa -v
 clean
+flatten \ub
+flatten \decoder
+flatten \arbiter
+flatten \sysclk
 opt -fine -full
 write_verilog -norename build_simsoc/top.v
