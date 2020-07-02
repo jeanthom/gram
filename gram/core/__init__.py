@@ -11,7 +11,7 @@ __ALL__ = ["gramCore"]
 
 class gramCore(Peripheral, Elaboratable):
     def __init__(self, phy, geom_settings, timing_settings, clk_freq, **kwargs):
-        super().__init__()
+        super().__init__("core")
 
         bank = self.csr_bank()
 

@@ -13,7 +13,7 @@ from lambdasoc.periph import Peripheral
 
 class gramWishbone(Peripheral, Elaboratable):
     def __init__(self, core, data_width = 32):
-        super().__init__()
+        super().__init__(name="wishbone")
 
         self.dw = data_width
         self._port = core.crossbar.get_native_port()
