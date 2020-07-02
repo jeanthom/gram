@@ -13,7 +13,7 @@ setup(
     download_url="https://github.com/lambdaconcept/gram",
     license="BSD",
     python_requires="~=3.6",
-    install_requires=["pyyaml"],
+    install_requires=[],
     packages=find_packages(exclude=("test*", "doc*", "examples*", "contrib*", "libgram*")),
     include_package_data=True,
 )
