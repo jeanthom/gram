@@ -46,6 +46,3 @@ tasks:
   - run-tests: |
       cd ~/gram
       contrib/test
-  - run-simulations: |
-      cd ~/gram
-      YOSYS=yowasp-yosys contrib/simulation
