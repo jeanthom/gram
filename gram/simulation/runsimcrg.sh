@@ -5,9 +5,9 @@ LIB_DIR=/usr/local/diamond/3.11_x64/ispfpga/verilog/data/ecp5u
 
 python simcrg.py
 if [[ -z "${YOSYS}" ]]; then
-  $YOSYS simcrg.ys
+	yosys simcrg.ys
 else
-  yosys simcrg.ys
+	$YOSYS simcrg.ys
 fi
 cp ${LIB_DIR}/DDRDLLA.v DDRDLLA.v
 patch DDRDLLA.v < DDRDLLA.patch
