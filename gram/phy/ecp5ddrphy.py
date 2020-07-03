@@ -379,7 +379,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                          o_Q=dqs_oe_n
                          ),
                 Instance("BB",
-                    #p_DIR="BIDIR",
                     i_I=dqs,
                     i_T=dqs_oe_n,
                     o_O=dqs_i,
@@ -478,7 +477,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                              o_Q=dq_oe_n,
                              ),
                     Instance("BB",
-                        #p_DIR="BIDIR",
                         i_I=dq_o,
                         i_T=dq_oe_n,
                         o_O=dq_i,
