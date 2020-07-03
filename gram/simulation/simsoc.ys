@@ -17,4 +17,5 @@ flatten \decoder
 flatten \arbiter
 flatten \sysclk
 opt -fine -full
+clean
 write_verilog -norename build_simsoc/top.v
