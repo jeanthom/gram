@@ -26,10 +26,6 @@ packages:
 sources:
   - https://git.sr.ht/~macbook/gram
 tasks:
-  - install-diamond: |
-      wget http://files.latticesemi.com/Diamond/3.11/diamond_3_11-base_x64-396-4-x86_64-linux.rpm -P /tmp
-      wget http://files.latticesemi.com/Diamond/3.11.2/diamond_3_11-sp2_x64-446-3-x86_64-linux.rpm -P /tmp
-      sudo rpm -ivh /tmp/*.rpm
   - install-python-packages: |
       pip install yowasp-yosys git+git://github.com/nmigen/nmigen.git git+git://github.com/nmigen/nmigen-boards.git git+git://github.com/nmigen/nmigen-stdio.git git+git://github.com/nmigen/nmigen-soc.git git+git://github.com/lambdaconcept/lambdasoc.git --user
   - install-icarus-verilog: |
