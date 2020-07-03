@@ -48,4 +48,4 @@ tasks:
       contrib/test
   - run-simulations: |
       cd ~/gram
-      contrib/simulation
+      YOSYS=yowasp-yosys contrib/simulation
