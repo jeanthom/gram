@@ -39,9 +39,31 @@ module simcrgtb;
       assert (top.crg_dramsync_rst == 1'b1) else $error("DRAM clock domain is not reset at t=0");
     end
 
-  always @ (negedge top.crg_dramsync_rst)
+  always @(negedge top.crg_dramsync_rst)
     begin
       assert($time > 600000) else $error("DRAM sync got out of reset before 600us (too early)");
       assert($time < 700000) else $error("DRAM sync got out of reset after 700us (too late)");
+    end
+
+  time last_dramsync_tick;
+  always @(posedge top.crg_dramsync_clk)
+    begin
+      if (top.crg_dramsync_rst == 1'b0)
+        begin
+          assert ($time - last_dramsync_tick == 10) else $error("dramsync isn't running at 100Mhz"); 
+        end
+
+      last_dramsync_tick = $time;
+    end
+
+  time last_sync2x_tick;
+  always @(posedge top.crg_sync2x_clk)
+    begin
+      if (top.crg_dramsync_rst == 1'b0)
+        begin
+          assert ($time - last_sync2x_tick == 5) else $error("sync2x isn't running at 200Mhz"); 
+        end
+
+      last_sync2x_tick = $time;
     end
 endmodule
