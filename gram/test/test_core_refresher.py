@@ -53,9 +53,7 @@ class RefreshPostponerTestCase(FHDLTestCase):
 
             runSimulation(m, process, "test_refreshpostponer.vcd")
 
-        generic_test(1)
-        generic_test(5)
-        generic_test(10)
+        [generic_test(_) for _ in [1, 5, 10]]
 
     def test_req_not_stuck(self):
         def generic_test(delay):
@@ -77,6 +75,4 @@ class RefreshPostponerTestCase(FHDLTestCase):
 
             runSimulation(m, process, "test_refreshpostponer.vcd")
 
-        generic_test(1)
-        generic_test(5)
-        generic_test(10)
+        [generic_test(_) for _ in [1, 5, 10]]
