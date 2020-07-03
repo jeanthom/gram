@@ -120,7 +120,7 @@ class PhaseInjectorTestCase(FHDLTestCase):
 class DFIInjectorTestCase(FHDLTestCase):
     def generate_dfiinjector(self):
         csrhost = CSRHost()
-        dut = DFIInjector(csrhost.bank, 14, 3, 1, 16, nphases=1)
+        dut = DFIInjector(csrhost.bank, addressbits=14, bankbits=3, nranks=1, databits=16, nphases=1)
         csrhost.init_bridge()
         m = Module()
         m.submodules += csrhost
@@ -139,5 +139,33 @@ class DFIInjectorTestCase(FHDLTestCase):
             yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, 0, sel=0xF)
             yield
             self.assertFalse((yield dut.master.phases[0].cke[0]))
+
+        runSimulation(m, process, "test_dfiinjector.vcd")
+
+    def test_odt(self):
+        m, dut, csrhost = self.generate_dfiinjector()
+
+        def process():
+            yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, (1 << 2), sel=0xF)
+            yield
+            self.assertTrue((yield dut.master.phases[0].odt[0]))
+
+            yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, 0, sel=0xF)
+            yield
+            self.assertFalse((yield dut.master.phases[0].odt[0]))
+
+        runSimulation(m, process, "test_dfiinjector.vcd")
+
+    def test_reset(self):
+        m, dut, csrhost = self.generate_dfiinjector()
+
+        def process():
+            yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, (1 << 3), sel=0xF)
+            yield
+            self.assertTrue((yield dut.master.phases[0].reset_n))
+
+            yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, 0, sel=0xF)
+            yield
+            self.assertFalse((yield dut.master.phases[0].reset_n))
 
         runSimulation(m, process, "test_dfiinjector.vcd")
