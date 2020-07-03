@@ -4,7 +4,11 @@ set -e
 LIB_DIR=/usr/local/diamond/3.11_x64/ispfpga/verilog/data/ecp5u
 
 python simcrg.py
-yosys simcrg.ys
+if [[ -z "${YOSYS}" ]]; then
+  $YOSYS simcrg.ys
+else
+  yosys simcrg.ys
+fi
 cp ${LIB_DIR}/DDRDLLA.v DDRDLLA.v
 patch DDRDLLA.v < DDRDLLA.patch
 iverilog -Wall -g2012 -s simcrgtb -o simcrg simcrgtb.sv build_simcrg/top.v dram_model/ddr3.v ${LIB_DIR}/ECLKSYNCB.v ${LIB_DIR}/EHXPLLL.v ${LIB_DIR}/PUR.v ${LIB_DIR}/GSR.v \
