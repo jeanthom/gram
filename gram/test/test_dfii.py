@@ -51,6 +51,8 @@ class PhaseInjectorTestCase(FHDLTestCase):
             self.assertTrue((yield dfi.phases[0].we_n))
             self.assertTrue((yield dfi.phases[0].act_n))
             self.assertFalse((yield dfi.phases[0].wrdata_mask))
+            self.assertFalse((yield dfi.phases[0].rddata_en))
+            self.assertFalse((yield dfi.phases[0].wrdata_en))
 
         runSimulation(m, process, "test_phaseinjector.vcd")
 
