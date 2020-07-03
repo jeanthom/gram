@@ -5,6 +5,7 @@ simsoc
 # nMigen generated files
 build/
 build_simsoc/
+build_simcrg/
 
 # Simulation output
 *.vcd
