@@ -32,10 +32,12 @@ class PLL(Elaboratable):
     def elaborate(self, platform):
         clkfb = Signal()
         pll = Instance("EHXPLLL",
-                       p_CLKOP_FPHASE=0,
-                       p_CLKOP_CPHASE=1,
                        p_OUTDIVIDER_MUXA='DIVA',
+                       p_OUTDIVIDER_MUXB='DIVB',
                        p_CLKOP_ENABLE='ENABLED',
+                       p_CLKOS_ENABLE='ENABLED',
+                       p_CLKOS2_ENABLE='DISABLED',
+                       p_CLKOS3_ENABLE='DISABLED',
                        p_CLKOP_DIV=self.CLKOP_DIV,
                        p_CLKOS_DIV=self.CLKOS_DIV,
                        p_CLKOS2_DIV=self.CLKOS2_DIV,
@@ -43,13 +45,18 @@ class PLL(Elaboratable):
                        p_CLKFB_DIV=self.CLKFB_DIV,
                        p_CLKI_DIV=self.CLKI_DIV,
                        p_FEEDBK_PATH='INT_OP',
-                       #p_FREQUENCY_PIN_CLKOP='200',
+                       p_CLKOP_TRIM_POL="FALLING",
+                       p_CLKOP_TRIM_DELAY=0,
+                       p_CLKOS_TRIM_POL="FALLING",
+                       p_CLKOS_TRIM_DELAY=0,
+                       p_CLKOP_CPHASE=2,
+                       p_CLKOS_CPHASE=23,
                        i_CLKI=self.clkin,
                        i_CLKFB=clkfb,
                        i_RST=0,
                        i_STDBY=0,
-                       i_PHASESEL0=1,
-                       i_PHASESEL1=1,
+                       i_PHASESEL0=0,
+                       i_PHASESEL1=0,
                        i_PHASEDIR=0,
                        i_PHASESTEP=0,
                        i_PHASELOADREG=0,
@@ -110,11 +117,11 @@ class ECPIX5CRG(Elaboratable):
 
         # Generating sync2x (200Mhz) and init (25Mhz) from clk100
         cd_sync2x = ClockDomain("sync2x", local=False)
-        cd_sync2x_unbuf = ClockDomain("sync2x_unbuf", local=True, reset_less=True)
+        cd_sync2x_unbuf = ClockDomain("sync2x_unbuf", local=False, reset_less=True)
         cd_init = ClockDomain("init", local=False)
         cd_sync = ClockDomain("sync", local=False)
         cd_dramsync = ClockDomain("dramsync", local=False)
-        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=2, CLK2_DIV=16, CLK3_DIV=4,
+        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=1, CLK2_DIV=4, CLK3_DIV=4,
             clkout1=ClockSignal("sync2x_unbuf"), clkout2=ClockSignal("init"))
         m.submodules += Instance("ECLKSYNCB",
                 i_ECLKI = ClockSignal("sync2x_unbuf"),
@@ -129,7 +136,7 @@ class ECPIX5CRG(Elaboratable):
         m.d.comb += ResetSignal("sync").eq(~pll.lock|~pod_done)
         m.d.comb += ResetSignal("dramsync").eq(~pll.lock|~pod_done)
 
-        # Generating sync (100Mhz) from sync2x
+        # # Generating sync (100Mhz) from sync2x
         
         m.submodules += Instance("CLKDIVF",
             p_DIV="2.0",
