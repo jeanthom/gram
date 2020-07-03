@@ -114,3 +114,28 @@ class PhaseInjectorTestCase(FHDLTestCase):
             self.assertEqual((yield pc.cnt), 2)
 
         runSimulation(m, process, "test_phaseinjector.vcd")
+
+class DFIInjectorTestCase(FHDLTestCase):
+    def generate_dfiinjector(self):
+        csrhost = CSRHost()
+        dut = DFIInjector(csrhost.bank, 14, 3, 1, 16, nphases=1)
+        csrhost.init_bridge()
+        m = Module()
+        m.submodules += csrhost
+        m.submodules += dut
+
+        return (m, dut, csrhost)
+
+    def test_cke(self):
+        m, dut, csrhost = self.generate_dfiinjector()
+
+        def process():
+            yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, (1 << 1), sel=0xF)
+            yield
+            self.assertTrue((yield dut.master.phases[0].cke[0]))
+
+            yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, 0, sel=0xF)
+            yield
+            self.assertFalse((yield dut.master.phases[0].cke[0]))
+
+        runSimulation(m, process, "test_dfiinjector.vcd")
