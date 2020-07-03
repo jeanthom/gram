@@ -2,7 +2,7 @@ from nmigen import *
 from nmigen.hdl.ast import Past
 from nmigen.asserts import Assert, Assume
 
-from gram.core.refresher import RefreshExecuter, RefreshPostponer
+from gram.core.refresher import RefreshExecuter, RefreshPostponer, Refresher
 from gram.compat import *
 from utils import *
 
@@ -76,3 +76,34 @@ class RefreshPostponerTestCase(FHDLTestCase):
             runSimulation(m, process, "test_refreshpostponer.vcd")
 
         [generic_test(_) for _ in [1, 5, 10]]
+
+class RefresherTestCase(FHDLTestCase):
+    class Obj:
+        pass
+
+    settings = Obj()
+    settings.with_refresh = True
+    settings.refresh_zqcs_freq = 1e0
+    settings.timing = Obj()
+    settings.timing.tREFI = 64
+    settings.timing.tRP   = 1
+    settings.timing.tRFC  = 2
+    settings.timing.tZQCS = 64
+    settings.geom = Obj()
+    settings.geom.addressbits = 16
+    settings.geom.bankbits    = 3
+    settings.phy = Obj()
+    settings.phy.nranks = 1
+
+    def test_init(self):
+        def generic_test(postponing):
+            m = Module()
+            m.submodules.dut = dut = Refresher(self.settings, 100e6, postponing)
+
+            def process():
+                self.assertFalse((yield dut.cmd.valid))
+
+            runSimulation(m, process, "test_refresher.vcd")
+
+        [generic_test(_) for _ in [1, 2, 4, 8]]
+
