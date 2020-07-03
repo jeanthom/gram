@@ -61,12 +61,9 @@ class DFIInjector(Elaboratable):
     def __init__(self, csr_bank, addressbits, bankbits, nranks, databits, nphases=1):
         self._nranks = nranks
 
-        self._inti = dfi.Interface(
-            addressbits, bankbits, nranks, databits, nphases)
-        self.slave = dfi.Interface(
-            addressbits, bankbits, nranks, databits, nphases)
-        self.master = dfi.Interface(
-            addressbits, bankbits, nranks, databits, nphases)
+        self._inti = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
+        self.slave = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
+        self.master = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
 
         self._control = csr_bank.csr(4, "w")  # sel, cke, odt, reset_n
 
