@@ -174,7 +174,7 @@ class RefreshPostponer(Elaboratable):
 
     def __init__(self, postponing=1):
         self.req_i = Signal()
-        self.req_o = Signal(reset=0)
+        self.req_o = Signal()
         self._postponing = postponing
 
     def elaborate(self, platform):
