@@ -160,6 +160,11 @@ module simsoctb;
       wishbone_write(32'h00009000 >> 2, 8'h01); // DFII_CONTROL_SEL
       #2000;
 
+      // Write
+      wishbone_write(32'h10000000 >> 2, 32'h12345678);
+      #10000;
+      wishbone_write(32'h10000100 >> 2, 32'h00000000);
+      #10000;
       wishbone_read(32'h10000000 >> 2, tmp);
     end
 
