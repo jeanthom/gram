@@ -65,7 +65,7 @@ class DFIInjector(Elaboratable):
         self.slave = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
         self.master = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
 
-        self._control = csr_bank.csr(4, "w")  # sel, cke, odt, reset_n
+        self._control = csr_bank.csr(4, "w")  # sel, clk_en, odt, reset_n
 
         self._phases = []
         for n, phase in enumerate(self._inti.phases):
@@ -83,7 +83,7 @@ class DFIInjector(Elaboratable):
             m.d.comb += self._inti.connect(self.master)
 
         for i in range(self._nranks):
-            m.d.comb += [phase.cke[i].eq(self._control.w_data[1])
+            m.d.comb += [phase.clk_en[i].eq(self._control.w_data[1])
                          for phase in self._inti.phases]
             m.d.comb += [phase.odt[i].eq(self._control.w_data[2])
                          for phase in self._inti.phases if hasattr(phase, "odt")]
