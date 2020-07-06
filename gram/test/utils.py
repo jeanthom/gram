@@ -92,7 +92,6 @@ class FHDLTestCase(unittest.TestCase):
         """).format(
             mode=mode,
             depth=depth,
-            script=script,
             rtlil=rtlil.convert(Fragment.get(spec, platform="formal"))
         )
         with subprocess.Popen([require_tool("sby"), "-f", "-d", spec_name],
