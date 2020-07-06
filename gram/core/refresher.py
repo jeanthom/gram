@@ -7,6 +7,7 @@
 
 from nmigen import *
 from nmigen.utils import log2_int
+from nmigen.asserts import Assert, Assume
 
 from gram.core.multiplexer import *
 from gram.compat import Timeline
@@ -113,17 +114,41 @@ class RefreshSequencer(Elaboratable):
             self.we.eq(executer.we),
         ]
 
+        countEqZero = Signal(reset=(self._postponing <= 1))
+        countDiffZero = Signal(reset=(self._postponing > 1))
+
         count = Signal(range(self._postponing), reset=self._postponing-1)
         with m.If(self.start):
-            m.d.sync += count.eq(count.reset)
+            m.d.sync += [
+                count.eq(count.reset),
+                countEqZero.eq(self._postponing <= 1),
+                countDiffZero.eq(self._postponing > 1),
+            ]
         with m.Elif(executer.done):
             with m.If(count != 0):
                 m.d.sync += count.eq(count-1)
 
+            with m.If(count == 1):
+                m.d.sync += [
+                    countEqZero.eq(1),
+                    countDiffZero.eq(0),
+                ]
+            with m.Else():
+                m.d.sync += [
+                    countEqZero.eq(0),
+                    countDiffZero.eq(1),
+                ]
+
         m.d.comb += [
-            executer.start.eq(self.start | (count != 0)),
-            self.done.eq(executer.done & (count == 0)),
+            executer.start.eq(self.start | countDiffZero),
+            self.done.eq(executer.done & countEqZero),
         ]
+
+        if platform == "formal":
+            m.d.comb += [
+                Assert(countEqZero.implies(count == 0)),
+                Assert(countDiffZero.implies(count != 0))
+            ]
 
         return m
 
