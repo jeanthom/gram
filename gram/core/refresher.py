@@ -164,7 +164,7 @@ class RefreshTimer(Elaboratable):
     def __init__(self, trefi):
         self.wait = Signal()
         self.done = Signal()
-        self.count = Signal(range(trefi))
+        self.count = Signal(range(trefi), reset=trefi-1)
         self._trefi = trefi
 
     def elaborate(self, platform):
@@ -173,18 +173,20 @@ class RefreshTimer(Elaboratable):
         trefi = self._trefi
 
         done = Signal()
-        count = Signal(range(trefi), reset=trefi-1)
 
-        with m.If(self.wait & ~self.done):
-            m.d.sync += count.eq(count-1)
+        with m.If(self.wait & (self.count != 0)):
+            m.d.sync += self.count.eq(self.count-1)
+
+            with m.If(self.count == 1):
+                m.d.sync += self.done.eq(1)
         with m.Else():
-            m.d.sync += count.eq(count.reset)
+            m.d.sync += [
+                self.count.eq(self.count.reset),
+                self.done.eq(0),
+            ]
 
-        m.d.comb += [
-            done.eq(count == 0),
-            self.done.eq(done),
-            self.count.eq(count)
-        ]
+        if platform == "formal":
+            m.d.comb += Assert(self.done.implies(self.count == 0))
 
         return m
 

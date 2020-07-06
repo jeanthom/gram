@@ -2,7 +2,7 @@ from nmigen import *
 from nmigen.hdl.ast import Past
 from nmigen.asserts import Assert, Assume
 
-from gram.core.refresher import RefreshExecuter, RefreshSequencer, RefreshPostponer, Refresher
+from gram.core.refresher import RefreshExecuter, RefreshSequencer, RefreshTimer, RefreshPostponer, Refresher
 from gram.compat import *
 from utils import *
 
@@ -30,6 +30,14 @@ class RefreshSequencerTestCase(FHDLTestCase):
     def test_formal(self):
         dut = RefreshSequencer(abits=14, babits=3, trp=5, trfc=5, postponing=1)
         self.assertFormal(dut, mode="bmc", depth=4)
+
+class RefreshTimerTestCase(FHDLTestCase):
+    def test_formal(self):
+        def generic_test(tREFI):
+            dut = RefreshTimer(tREFI)
+            self.assertFormal(dut, mode="bmc", depth=4)
+        
+        [generic_test(_) for _ in [1, 5, 10]]
 
 class RefreshPostponerTestCase(FHDLTestCase):
     def test_init(self):
