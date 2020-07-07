@@ -5,7 +5,7 @@ from nmigen import *
 __ALL__ = ["ECPIX5CRG"]
 
 class PLL(Elaboratable):
-    def __init__(self, clkin, clksel=Signal(shape=2, reset=2), clkout1=Signal(), clkout2=Signal(), clkout3=Signal(), clkout4=Signal(), lock=Signal(), CLKI_DIV=1, CLKFB_DIV=1, CLK1_DIV=3, CLK2_DIV=4, CLK3_DIV=5, CLK4_DIV=6):
+    def __init__(self, clkin, clksel=Signal(shape=2, reset=2), clkout1=Signal(), clkout2=Signal(), clkout3=Signal(), clkout4=Signal(), lock=Signal(), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=3, CLK2_DIV=24):
         self.clkin = clkin
         self.clkout1 = clkout1
         self.clkout2 = clkout2
@@ -17,8 +17,6 @@ class PLL(Elaboratable):
         self.CLKFB_DIV = CLKFB_DIV
         self.CLKOP_DIV = CLK1_DIV
         self.CLKOS_DIV = CLK2_DIV
-        self.CLKOS2_DIV = CLK3_DIV
-        self.CLKOS3_DIV = CLK4_DIV
         self.ports = [
             self.clkin,
             self.clkout1,
@@ -40,8 +38,6 @@ class PLL(Elaboratable):
                        p_CLKOS3_ENABLE='DISABLED',
                        p_CLKOP_DIV=self.CLKOP_DIV,
                        p_CLKOS_DIV=self.CLKOS_DIV,
-                       p_CLKOS2_DIV=self.CLKOS2_DIV,
-                       p_CLKOS3_DIV=self.CLKOS3_DIV,
                        p_CLKFB_DIV=self.CLKFB_DIV,
                        p_CLKI_DIV=self.CLKI_DIV,
                        p_FEEDBK_PATH='INT_OP',
@@ -121,7 +117,7 @@ class ECPIX5CRG(Elaboratable):
         cd_init = ClockDomain("init", local=False)
         cd_sync = ClockDomain("sync", local=False)
         cd_dramsync = ClockDomain("dramsync", local=False)
-        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=1, CLK2_DIV=4, CLK3_DIV=4,
+        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=1, CLK2_DIV=4,
             clkout1=ClockSignal("sync2x_unbuf"), clkout2=ClockSignal("init"))
         m.submodules += Instance("ECLKSYNCB",
                 i_ECLKI = ClockSignal("sync2x_unbuf"),
