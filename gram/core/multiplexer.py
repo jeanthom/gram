@@ -65,12 +65,10 @@ class _CommandChooser(Elaboratable):
         valids = Signal(n)
         for i, request in enumerate(self._requests):
             is_act_cmd = request.ras & ~request.cas & ~request.we
-            command = request.is_cmd & self.want_cmds & (
-                ~is_act_cmd | self.want_activates)
+            command = request.is_cmd & self.want_cmds & (~is_act_cmd | self.want_activates)
             read = request.is_read == self.want_reads
             write = request.is_write == self.want_writes
-            m.d.comb += valids[i].eq(request.valid &
-                                     (command | (read & write)))
+            m.d.comb += valids[i].eq(request.valid & (command | (read & write)))
 
         arbiter = RoundRobin(n)
         m.submodules += arbiter
@@ -284,21 +282,18 @@ class Multiplexer(Elaboratable):
 
         # tRRD timing (Row to Row delay) -----------------------------------------------------------
         m.submodules.trrdcon = trrdcon = tXXDController(settings.timing.tRRD)
-        m.d.comb += trrdcon.valid.eq(choose_cmd.accept()
-                                     & choose_cmd.activate())
+        m.d.comb += trrdcon.valid.eq(choose_cmd.accept() & choose_cmd.activate())
 
         # tFAW timing (Four Activate Window) -------------------------------------------------------
         m.submodules.tfawcon = tfawcon = tFAWController(settings.timing.tFAW)
-        m.d.comb += tfawcon.valid.eq(choose_cmd.accept()
-                                     & choose_cmd.activate())
+        m.d.comb += tfawcon.valid.eq(choose_cmd.accept() & choose_cmd.activate())
 
         # RAS control ------------------------------------------------------------------------------
         m.d.comb += ras_allowed.eq(trrdcon.ready & tfawcon.ready)
 
         # tCCD timing (Column to Column delay) -----------------------------------------------------
         m.submodules.tccdcon = tccdcon = tXXDController(settings.timing.tCCD)
-        m.d.comb += tccdcon.valid.eq(choose_req.accept()
-                                     & (choose_req.write() | choose_req.read()))
+        m.d.comb += tccdcon.valid.eq(choose_req.accept() & (choose_req.write() | choose_req.read()))
 
         # CAS control ------------------------------------------------------------------------------
         m.d.comb += cas_allowed.eq(tccdcon.ready)
