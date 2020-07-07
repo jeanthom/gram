@@ -209,7 +209,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      i_D3=dfi.phases[1].bank[i],
                                      o_Q=self.pads.ba.o[i]
                                      )
-        controls = ["ras_n", "cas_n", "we_n", "cke", "odt"]
+        controls = ["ras_n", "cas_n", "we_n", "clk_en", "odt"]
         if hasattr(self.pads, "reset_n"):
             controls.append("reset_n")
         if hasattr(self.pads, "cs_n"):
