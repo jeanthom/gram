@@ -170,10 +170,8 @@ class BankMachine(Elaboratable):
         m.d.comb += trccon.valid.eq(self.cmd.valid & self.cmd.ready & row_open)
 
         # tRAS (activate-precharge) controller -----------------------------------------------------
-        m.submodules.trascon = trascon = tXXDController(
-            self.settings.timing.tRAS)
-        m.d.comb += trascon.valid.eq(self.cmd.valid &
-                                     self.cmd.ready & row_open)
+        m.submodules.trascon = trascon = tXXDController(self.settings.timing.tRAS)
+        m.d.comb += trascon.valid.eq(self.cmd.valid & self.cmd.ready & row_open)
 
         # Auto Precharge generation ----------------------------------------------------------------
         # generate auto precharge when current and next cmds are to different rows
