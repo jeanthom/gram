@@ -143,11 +143,10 @@ class _Steerer(Elaboratable):
     """
 
     def __init__(self, commands, dfi):
+        assert len(commands) == 4
         self._commands = commands
         self._dfi = dfi
-        ncmd = len(commands)
-        nph = len(dfi.phases)
-        self.sel = [Signal(range(ncmd)) for i in range(nph)]
+        self.sel = [Signal(range(len(commands))) for i in range(len(dfi.phases))]
 
     def elaborate(self, platform):
         m = Module()
