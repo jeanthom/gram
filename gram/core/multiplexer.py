@@ -192,12 +192,9 @@ class _Steerer(Elaboratable):
 
             m.d.sync += [
                 phase.address.eq(Array(cmd.a for cmd in commands)[sel]),
-                phase.cas_n.eq(~Array(valid_and(cmd, "cas")
-                                      for cmd in commands)[sel]),
-                phase.ras_n.eq(~Array(valid_and(cmd, "ras")
-                                      for cmd in commands)[sel]),
-                phase.we_n.eq(~Array(valid_and(cmd, "we")
-                                     for cmd in commands)[sel])
+                phase.cas_n.eq(~Array(valid_and(cmd, "cas") for cmd in commands)[sel]),
+                phase.ras_n.eq(~Array(valid_and(cmd, "ras") for cmd in commands)[sel]),
+                phase.we_n.eq(~Array(valid_and(cmd, "we") for cmd in commands)[sel])
             ]
 
             rddata_ens = Array(valid_and(cmd, "is_read") for cmd in commands)
