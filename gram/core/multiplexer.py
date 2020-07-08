@@ -11,6 +11,7 @@ from functools import reduce
 from operator import or_, and_
 
 from nmigen import *
+from nmigen.asserts import Assert, Assume
 
 from gram.common import *
 import gram.stream as stream
@@ -211,21 +212,30 @@ class _Steerer(Elaboratable):
 class _AntiStarvation(Elaboratable):
     def __init__(self, timeout):
         self.en = Signal()
-        self.max_time = Signal()
+        self.max_time = Signal(reset=1)
+        self._timeout = timeout
 
     def elaborate(self, platform):
         m = Module()
 
-        if timeout > 0:
-            t = timeout - 1
-            time = Signal(range(t+1))
-            m.d.comb += max_time.eq(time == 0)
-            with m.If(~en):
-                m.d.sync += time.eq(t)
-            with m.Elif(~max_time):
-                m.d.sync += time.eq(time - 1)
+        if self._timeout > 0:
+            time = Signal(range(self._timeout))
+            with m.If(~self.en):
+                m.d.sync += time.eq(self._timeout-1)
+                with m.If(time == 1):
+                    m.d.sync += self.max_time.eq(1)
+                with m.Else():
+                    m.d.sync += self.max_time.eq(0)
+            with m.Elif(time != 0):
+                m.d.sync += [
+                    time.eq(time-1),
+                    self.max_time.eq(0),
+                ]
         else:
-            m.d.comb += max_time.eq(0)
+            m.d.comb += self.max_time.eq(0)
+
+        if platform == "formal" and self._timeout > 0:
+            m.d.comb += Assert(self.max_time.implies(time == 0))
 
         return m
 
