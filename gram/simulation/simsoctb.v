@@ -71,7 +71,7 @@ module simsoctb;
     .ddr3_0__dq__io(dram_dq),
     .ddr3_0__dqs__io(dram_dqs),
     .ddr3_0__clk__io(dram_ck),
-    .ddr3_0__cke__io(dram_cke),
+    .ddr3_0__clk_en__io(dram_cke),
     .ddr3_0__we_n__io(dram_we_n),
     .ddr3_0__ras_n__io(dram_ras_n),
     .ddr3_0__cas_n__io(dram_cas_n),
