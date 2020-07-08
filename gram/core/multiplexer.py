@@ -209,8 +209,26 @@ class _Steerer(Elaboratable):
 
         return m
 
-# Multiplexer --------------------------------------------------------------------------------------
+class _AntiStarvation(Elaboratable):
+    def __init__(self, timeout):
+        self.en = Signal()
+        self.max_time = Signal()
 
+    def elaborate(self, platform):
+        m = Module()
+
+        if timeout > 0:
+            t = timeout - 1
+            time = Signal(range(t+1))
+            m.d.comb += max_time.eq(time == 0)
+            with m.If(~en):
+                m.d.sync += time.eq(t)
+            with m.Elif(~max_time):
+                m.d.sync += time.eq(time - 1)
+        else:
+            m.d.comb += max_time.eq(0)
+
+        return m
 
 class Multiplexer(Elaboratable):
     """Multplexes requets from BankMachines to DFI
@@ -317,24 +335,13 @@ class Multiplexer(Elaboratable):
         ]
 
         # Anti Starvation --------------------------------------------------------------------------
+        m.submodules.read_antistarvation = read_antistarvation = _AntiStarvation(settings.read_time)
+        read_time_en = read_antistarvation.en
+        max_read_time = read_antistarvation.max_time
 
-        def anti_starvation(timeout):
-            en = Signal()
-            max_time = Signal()
-            if timeout:
-                t = timeout - 1
-                time = Signal(range(t+1))
-                m.d.comb += max_time.eq(time == 0)
-                with m.If(~en):
-                    m.d.sync += time.eq(t)
-                with m.Elif(~max_time):
-                    m.d.sync += time.eq(time - 1)
-            else:
-                m.d.comb += max_time.eq(0)
-            return en, max_time
-
-        read_time_en,   max_read_time = anti_starvation(settings.read_time)
-        write_time_en, max_write_time = anti_starvation(settings.write_time)
+        m.submodules.write_antistarvation = write_antistarvation = _AntiStarvation(settings.write_time)
+        write_time_en = write_antistarvation.en
+        max_write_time = write_antistarvation.max_time
 
         # Refresh ----------------------------------------------------------------------------------
         m.d.comb += [bm.refresh_req.eq(refresher.cmd.valid)
