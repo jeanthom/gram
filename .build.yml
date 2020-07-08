@@ -23,19 +23,52 @@ packages:
   - autoconf
   - gperf
   - libyaml-devel
+  - gmp-devel
 sources:
   - https://git.sr.ht/~macbook/gram
 tasks:
   - install-python-packages: |
-      pip install yowasp-yosys git+git://github.com/nmigen/nmigen.git git+git://github.com/nmigen/nmigen-boards.git git+git://github.com/nmigen/nmigen-stdio.git git+git://github.com/nmigen/nmigen-soc.git git+git://github.com/lambdaconcept/lambdasoc.git --user
+      pip install git+git://github.com/nmigen/nmigen.git git+git://github.com/nmigen/nmigen-boards.git git+git://github.com/nmigen/nmigen-stdio.git git+git://github.com/nmigen/nmigen-soc.git git+git://github.com/lambdaconcept/lambdasoc.git --user
+  - install-yosys: |
+      cd /tmp
+      git clone https://github.com/YosysHQ/yosys yosys
+      cd yosys
+      make config-gcc
+      make -j$(nproc)
+      sudo make install
+      rm -rf /tmp/yosys
+  - install-symbiyosys: |
+      cd /tmp
+      git clone https://github.com/YosysHQ/SymbiYosys.git SymbiYosys
+      cd SymbiYosys
+      sudo make install
+      rm -rf /tmp/SymbiYosys
+  - install-yices2: |
+      cd /tmp
+      git clone https://github.com/SRI-CSL/yices2.git yices2
+      cd yices2
+      autoconf
+      ./configure
+      make -j$(nproc)
+      sudo make install
+      rm -rf /tmp/yices2
+  - install-z3: |
+      git clone https://github.com/Z3Prover/z3.git z3
+      cd z3
+      python scripts/mk_make.py
+      cd build
+      make -j$(nproc)
+      sudo make install
+      rm -rf /tmp/z3
   - install-icarus-verilog: |
       cd /tmp
-      git clone git://github.com/steveicarus/iverilog.git
+      git clone git://github.com/steveicarus/iverilog.git iverilog
       cd iverilog
       autoconf
       ./configure
       make -j$(nproc)
       sudo make install
+      rm -rf /tmp/iverilog
   - install-gram: |
       cd ~/gram
       python setup.py install --user
