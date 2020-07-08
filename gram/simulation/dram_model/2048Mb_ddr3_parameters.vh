@@ -1,3 +1,6 @@
+`define x16
+`define sg125
+
 /****************************************************************************************
 *
 *   Disclaimer   This software code and all associated documentation, comments or other 
