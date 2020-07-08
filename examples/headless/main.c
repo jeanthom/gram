@@ -94,6 +94,7 @@ int serial_setup(const char *devname, int baudrate) {
 int main(int argc, char *argv[]) {
 	struct gramCtx ctx;
 	int serial_port, baudrate = 0;
+	uint32_t read_value, expected_value;
 
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s port baudrate\n", argv[0]);
@@ -115,10 +116,21 @@ int main(int argc, char *argv[]) {
 	printf("done\n");
 
 	printf("memtest... \n");
-	uint32_t *ddr = 0x10000000;
-	for (size_t i = 0; i < 1000; i++) {
-		gram_write(&ctx, &(ddr[i]), 0x12345678);
-		printf("%p = %08x\n", &(ddr[i]), gram_read(&ctx, &(ddr[i])));
+	volatile uint32_t *ddr = 0x10000000;
+
+	printf("Writing data sequence...");
+	for (size_t i = 0; i < 100; i++) {
+		gram_write(&ctx, &(ddr[i]), 0x12345678 + (1 << 10*i)%0x100000000);
+	}
+	printf("done\n");
+
+	for (size_t i = 0; i < 100; i++) {
+		read_value = gram_read(&ctx, &(ddr[i]));
+		expected_value = 0x12345678 + (1 << 10*i)%0x100000000;
+		printf("%p = %08x\n", &(ddr[i]), read_value);
+		if (read_value != expected_value) {
+			printf("/!\\ DID NOT MATCH EXPECTED VALUE (%08x)\n", expected_value);
+		}
 	}
 
 	close(serial_port);
