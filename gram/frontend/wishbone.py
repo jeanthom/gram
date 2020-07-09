@@ -17,6 +17,7 @@ class gramWishbone(Peripheral, Elaboratable):
 
         self.dw = data_width
         self._port = core.crossbar.get_native_port()
+        #self._port = core.crossbar.get_port(data_width=8, mode="read")
 
         dram_size = core.size//4
         dram_addr_width = log2_int(dram_size)
@@ -57,7 +58,7 @@ class gramWishbone(Peripheral, Elaboratable):
                 ]
                 with m.If(self._port.cmd.valid & self._port.cmd.ready):
                     m.d.sync += count.eq(count+1)
-                    with m.If(count == (ratio-1)):
+                    with m.If(count == (max(ratio, 2)-1)):
                         m.d.sync += count.eq(0)
                         with m.If(self.bus.we):
                             m.next = "Wait-Write"
