@@ -7,6 +7,7 @@
 # - add multirank support.
 
 from nmigen import *
+from nmigen.asserts import Assert, Assume
 from nmigen.utils import log2_int
 
 from gram.common import burst_lengths
