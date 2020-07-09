@@ -115,35 +115,6 @@ class PHYPadsCombiner:
         else:
             return getattr(self.groups[self.sel], name)
 
-# BitSlip ------------------------------------------------------------------------------------------
-
-
-class BitSlip(Elaboratable):
-    def __init__(self, dw, rst=None, slp=None, cycles=1):
-        self.i = Signal(dw)
-        self.o = Signal(dw)
-        self.rst = Signal() if rst is None else rst
-        self.slp = Signal() if slp is None else slp
-        self._cycles = cycles
-
-    def elaborate(self, platform):
-        m = Module()
-
-        value = Signal(range(self._cycles*dw))
-        with m.If(self.slp):
-            m.d.sync += value.eq(value+1)
-        with m.Elif(self.rst):
-            m.d.sync += value.eq(0)
-
-        r = Signal((self._cycles+1)*dw, reset_less=True)
-        m.d.sync += r.eq(Cat(r[dw:], self.i))
-        cases = {}
-        for i in range(self._cycles*dw):
-            cases[i] = self.o.eq(r[i:dw+i])
-        m.d.comb += Case(value, cases)
-
-        return m
-
 # DQS Pattern --------------------------------------------------------------------------------------
 
 
