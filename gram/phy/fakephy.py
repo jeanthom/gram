@@ -341,11 +341,11 @@ class DFITimingsChecker(Elaboratable):
 
                         # act_curr points to newest ACT timestamp
                         #Display("[%016dps] tRRD violation on bank %0d", ps, i)
-                        m.d.sync += Assert(!(md_recv & (ps < (act_ps[act_curr] + self.timings["tRRD"]))))
+                        m.d.sync += Assert(~(md_recv & (ps < (act_ps[act_curr] + self.timings["tRRD"]))))
 
                         # act_next points to the oldest ACT timestamp
                         #Display("[%016dps] tFAW violation on bank %0d", ps, i)
-                        m.d.sync += Assert(!(cmd_recv & (ps < (act_ps[act_next] + self.timings["tFAW"]))))
+                        m.d.sync += Assert(~(cmd_recv & (ps < (act_ps[act_next] + self.timings["tFAW"]))))
 
                         # Save ACT timestamp in a circular buffer
                         with m.If(cmd_recv):
@@ -376,7 +376,7 @@ class DFITimingsChecker(Elaboratable):
             ]
 
         #Display("[%016dps] tREFI violation (64ms period): %0d", ps, ref_ps_diff)
-        m.d.sync += Assert(!((ref_ps_mod == 0) & (ref_ps_diff > 0)))
+        m.d.sync += Assert(~((ref_ps_mod == 0) & (ref_ps_diff > 0)))
 
         # Report any refresh periods longer than tREFI
         # TODO: find a way to bring back logging
