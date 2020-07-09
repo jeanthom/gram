@@ -1,6 +1,7 @@
 # This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
 from nmigen import *
+from nmigen.asserts import Assert, Assume
 from nmigen_soc import wishbone, memory
 from nmigen.lib.cdc import ResetSynchronizer
 
@@ -99,7 +100,55 @@ class SocTestCase(FHDLTestCase):
         m.submodules += soc
 
         def process():
-            #res = yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 16384)
-            yield
+            yield from wb_write(soc.bus, 0x0, 0xE, 0xF) # DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
+            yield from wb_write(soc.bus, 0xC >> 2, 0x0, 0xF)
+            yield from wb_write(soc.bus, 0x10 >> 2, 0x0, 0xF)
+            yield from wb_write(soc.bus, 0x0, 0xC, 0xF)
+
+            yield from wb_write(soc.bus, 0x0, 0xE, 0xF)
+
+            # MR2
+            yield from wb_write(soc.bus, 0xC >> 2, 0x200, 0xF)
+            yield from wb_write(soc.bus, 0x10 >> 2, 0x2, 0xF)
+            yield from wb_write(soc.bus, 0x4 >> 2, 0xF, 0xF)
+            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
+
+            # MR3
+            yield from wb_write(soc.bus, 0xC >> 2, 0x0, 0xF)
+            yield from wb_write(soc.bus, 0x10 >> 2, 0x3, 0xF)
+            yield from wb_write(soc.bus, 0x4 >> 2, 0xF, 0xF)
+            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
+
+            # MR1
+            yield from wb_write(soc.bus, 0xC >> 2, 0x6, 0xF)
+            yield from wb_write(soc.bus, 0x10 >> 2, 0x1, 0xF)
+            yield from wb_write(soc.bus, 0x4 >> 2, 0xF, 0xF)
+            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
+
+            # MR0
+            yield from wb_write(soc.bus, 0xC >> 2, 0x320, 0xF)
+            yield from wb_write(soc.bus, 0x10 >> 2, 0x0, 0xF)
+            yield from wb_write(soc.bus, 0x4 >> 2, 0xF, 0xF)
+            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
+
+            for i in range(200):
+                yield
+
+            # ZQ
+            yield from wb_write(soc.bus, 0xC >> 2, 0x400, 0xF)
+            yield from wb_write(soc.bus, 0x10 >> 2, 0x0, 0xF)
+            yield from wb_write(soc.bus, 0x4 >> 2, 0x3, 0xF)
+            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
+
+            for i in range(200):
+                yield
+
+            yield from wb_write(soc.bus, 0, 0x1, 0xF)
+
+            for i in range(2000):
+                yield
+
+            res = yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 16384)
+            self.assertEqual(res, 0xDEADBEEF)
 
         runSimulation(m, process, "test_soc.vcd")
