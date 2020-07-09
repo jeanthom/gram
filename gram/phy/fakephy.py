@@ -7,7 +7,6 @@
 # - add multirank support.
 
 from nmigen import *
-from nmigen.asserts import Assert, Assume
 from nmigen.utils import log2_int
 
 from gram.common import burst_lengths
@@ -24,6 +23,9 @@ SDRAM_VERBOSE_STD = 1
 SDRAM_VERBOSE_DBG = 2
 
 def Display(*args):
+    return Signal().eq(0)
+
+def Assert(*args):
     return Signal().eq(0)
 
 # Bank Model ---------------------------------------------------------------------------------------
