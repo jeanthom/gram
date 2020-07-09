@@ -321,16 +321,11 @@ class DFITimingsChecker(Elaboratable):
                     m.d.comb += cmd_recv.eq(((phase.bank == i) | all_banks) & (state == curr.enc))
 
                     # Checking rules from self.rules
-                    # TODO: find a way to bring back logging
-                    # for _, prev in self.cmds.items():
-                    #     for rule in self.rules:
-                    #         if rule.prev == prev.name and rule.curr == curr.name:
-                    #             self.sync += [
-                    #                 If(cmd_recv & (last_cmd[i] == prev.enc) &
-                    #                    (ps < (last_cmd_ps[i][prev.idx] + rule.delay)),
-                    #                     Display("[%016dps] {} violation on bank %0d".format(rule.name), ps, i)
-                    #                 )
-                    #             ]
+                    for _, prev in self.cmds.items():
+                        for rule in self.rules:
+                            if rule.prev == prev.name and rule.curr == curr.name:
+                                # Display("[%016dps] {} violation on bank %0d".format(rule.name), ps, i)
+                                m.d.sync += Assert(~(cmd_recv & (last_cmd[i] == prev.enc) & (ps < (last_cmd_ps[i][prev.idx] + rule.delay))))
 
                     # Save command timestamp in an array
                     with m.If(cmd_recv):
@@ -345,20 +340,12 @@ class DFITimingsChecker(Elaboratable):
                         m.d.comb += act_next.eq(act_curr+1)
 
                         # act_curr points to newest ACT timestamp
-                        # TODO: find a way to bring back logging
-                        # self.sync += [
-                        #     If(cmd_recv & (ps < (act_ps[act_curr] + self.timings["tRRD"])),
-                        #         Display("[%016dps] tRRD violation on bank %0d", ps, i)
-                        #     )
-                        # ]
+                        #Display("[%016dps] tRRD violation on bank %0d", ps, i)
+                        m.d.sync += Assert(!(md_recv & (ps < (act_ps[act_curr] + self.timings["tRRD"]))))
 
                         # act_next points to the oldest ACT timestamp
-                        # TODO: find a way to bring back logging
-                        # self.sync += [
-                        #     If(cmd_recv & (ps < (act_ps[act_next] + self.timings["tFAW"])),
-                        #         Display("[%016dps] tFAW violation on bank %0d", ps, i)
-                        #     )
-                        # ]
+                        #Display("[%016dps] tFAW violation on bank %0d", ps, i)
+                        m.d.sync += Assert(!(cmd_recv & (ps < (act_ps[act_next] + self.timings["tFAW"]))))
 
                         # Save ACT timestamp in a circular buffer
                         with m.If(cmd_recv):
@@ -388,12 +375,8 @@ class DFITimingsChecker(Elaboratable):
                 ref_ps_diff.eq(ref_ps_diff - curr_diff),
             ]
 
-        # TODO: find a way to bring back logging
-        # self.sync += [
-        #     If((ref_ps_mod == 0) & (ref_ps_diff > 0),
-        #         Display("[%016dps] tREFI violation (64ms period): %0d", ps, ref_ps_diff)
-        #     )
-        # ]
+        #Display("[%016dps] tREFI violation (64ms period): %0d", ps, ref_ps_diff)
+        m.d.sync += Assert(!((ref_ps_mod == 0) & (ref_ps_diff > 0)))
 
         # Report any refresh periods longer than tREFI
         # TODO: find a way to bring back logging
