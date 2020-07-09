@@ -127,10 +127,11 @@ int main(int argc, char *argv[]) {
 	for (size_t i = 0; i < 100; i++) {
 		read_value = gram_read(&ctx, &(ddr[i]));
 		expected_value = 0x12345678 + (1 << 10*i)%0x100000000;
-		printf("%p = %08x\n", &(ddr[i]), read_value);
+		printf("%p = %08x", &(ddr[i]), read_value);
 		if (read_value != expected_value) {
-			printf("/!\\ DID NOT MATCH EXPECTED VALUE (%08x)\n", expected_value);
+			printf(" /!\\ DID NOT MATCH EXPECTED VALUE (%08x)", expected_value);
 		}
+		printf("\n");
 	}
 
 	close(serial_port);
