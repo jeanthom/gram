@@ -29,10 +29,12 @@ sources:
 tasks:
   - install-python-packages: |
       pip install git+git://github.com/nmigen/nmigen.git git+git://github.com/nmigen/nmigen-boards.git git+git://github.com/nmigen/nmigen-stdio.git git+git://github.com/nmigen/nmigen-soc.git git+git://github.com/lambdaconcept/lambdasoc.git --user
+      pip list
   - install-yosys: |
       cd /tmp
       git clone https://github.com/YosysHQ/yosys yosys
       cd yosys
+      echo "Yosys Git hash: $(git rev-parse HEAD)"
       make config-gcc
       make -j$(nproc)
       sudo make install
@@ -41,12 +43,14 @@ tasks:
       cd /tmp
       git clone https://github.com/YosysHQ/SymbiYosys.git SymbiYosys
       cd SymbiYosys
+      echo "SymbiYosys Git hash: $(git rev-parse HEAD)"
       sudo make install
       rm -rf /tmp/SymbiYosys
   - install-yices2: |
       cd /tmp
       git clone https://github.com/SRI-CSL/yices2.git yices2
       cd yices2
+      echo "Yices2 Git hash: $(git rev-parse HEAD)"
       autoconf
       ./configure
       make -j$(nproc)
@@ -55,6 +59,7 @@ tasks:
   - install-z3: |
       git clone https://github.com/Z3Prover/z3.git z3
       cd z3
+      echo "z3 Git hash: $(git rev-parse HEAD)"
       python scripts/mk_make.py
       cd build
       make -j$(nproc)
@@ -64,6 +69,7 @@ tasks:
       cd /tmp
       git clone git://github.com/steveicarus/iverilog.git iverilog
       cd iverilog
+      echo "Icarus Verilog Git hash: $(git rev-parse HEAD)"
       autoconf
       ./configure
       make -j$(nproc)
