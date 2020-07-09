@@ -109,7 +109,7 @@ class ECPIX5CRG(Elaboratable):
         pod_done = Signal()
         with m.If(podcnt != 0):
             m.d.rawclk += podcnt.eq(podcnt-1)
-        m.d.comb += pod_done.eq(podcnt == 0)
+        m.d.rawclk += pod_done.eq(podcnt == 0)
 
         # Generating sync2x (200Mhz) and init (25Mhz) from clk100
         cd_sync2x = ClockDomain("sync2x", local=False)
