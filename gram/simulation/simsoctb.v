@@ -149,14 +149,14 @@ module simsoctb;
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
       wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
-      #2000;
+      #6000; // tDLLK
 
       // ZQ calibration
-      wishbone_write(32'h0000900c >> 2, 32'h400); // p0 address
+      wishbone_write(32'h0000900c >> 2, 32'h400); // p0 address (A10=1)
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009004 >> 2, 8'h03); // WE|CS
       wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
-      #2000;
+      #6000; // tZQinit
 
       // Hardware control
       wishbone_write(32'h00009000 >> 2, 8'h01); // DFII_CONTROL_SEL
