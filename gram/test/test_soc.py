@@ -92,7 +92,52 @@ class DDR3SoC(SoC, Elaboratable):
         return m
 
 class SocTestCase(FHDLTestCase):
-    def test_soc(self):
+    def init_seq(bus):
+        yield from wb_write(bus, 0x0, 0xE, 0xF) # DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
+        yield from wb_write(bus, 0xC >> 2, 0x0, 0xF)
+        yield from wb_write(bus, 0x10 >> 2, 0x0, 0xF)
+        yield from wb_write(bus, 0x0, 0xC, 0xF)
+        yield from wb_write(bus, 0x0, 0xE, 0xF)
+
+        # MR2
+        yield from wb_write(bus, 0xC >> 2, 0x200, 0xF)
+        yield from wb_write(bus, 0x10 >> 2, 0x2, 0xF)
+        yield from wb_write(bus, 0x4 >> 2, 0xF, 0xF)
+        yield from wb_write(bus, 0x8 >> 2, 0x1, 0xF)
+
+        # MR3
+        yield from wb_write(bus, 0xC >> 2, 0x0, 0xF)
+        yield from wb_write(bus, 0x10 >> 2, 0x3, 0xF)
+        yield from wb_write(bus, 0x4 >> 2, 0xF, 0xF)
+        yield from wb_write(bus, 0x8 >> 2, 0x1, 0xF)
+
+        # MR1
+        yield from wb_write(bus, 0xC >> 2, 0x6, 0xF)
+        yield from wb_write(bus, 0x10 >> 2, 0x1, 0xF)
+        yield from wb_write(bus, 0x4 >> 2, 0xF, 0xF)
+        yield from wb_write(bus, 0x8 >> 2, 0x1, 0xF)
+
+        # MR0
+        yield from wb_write(bus, 0xC >> 2, 0x320, 0xF)
+        yield from wb_write(bus, 0x10 >> 2, 0x0, 0xF)
+        yield from wb_write(bus, 0x4 >> 2, 0xF, 0xF)
+        yield from wb_write(bus, 0x8 >> 2, 0x1, 0xF)
+        for i in range(200):
+            yield
+
+        # ZQ
+        yield from wb_write(bus, 0xC >> 2, 0x400, 0xF)
+        yield from wb_write(bus, 0x10 >> 2, 0x0, 0xF)
+        yield from wb_write(bus, 0x4 >> 2, 0x3, 0xF)
+        yield from wb_write(bus, 0x8 >> 2, 0x1, 0xF)
+        for i in range(200):
+            yield
+
+        yield from wb_write(bus, 0, 0x1, 0xF)
+        for i in range(2000):
+            yield
+
+    def test_multiple_reads(self):
         m = Module()
         soc = DDR3SoC(clk_freq=100e6,
             dramcore_addr=0x00000000,
@@ -100,53 +145,7 @@ class SocTestCase(FHDLTestCase):
         m.submodules += soc
 
         def process():
-            yield from wb_write(soc.bus, 0x0, 0xE, 0xF) # DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
-            yield from wb_write(soc.bus, 0xC >> 2, 0x0, 0xF)
-            yield from wb_write(soc.bus, 0x10 >> 2, 0x0, 0xF)
-            yield from wb_write(soc.bus, 0x0, 0xC, 0xF)
-
-            yield from wb_write(soc.bus, 0x0, 0xE, 0xF)
-
-            # MR2
-            yield from wb_write(soc.bus, 0xC >> 2, 0x200, 0xF)
-            yield from wb_write(soc.bus, 0x10 >> 2, 0x2, 0xF)
-            yield from wb_write(soc.bus, 0x4 >> 2, 0xF, 0xF)
-            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
-
-            # MR3
-            yield from wb_write(soc.bus, 0xC >> 2, 0x0, 0xF)
-            yield from wb_write(soc.bus, 0x10 >> 2, 0x3, 0xF)
-            yield from wb_write(soc.bus, 0x4 >> 2, 0xF, 0xF)
-            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
-
-            # MR1
-            yield from wb_write(soc.bus, 0xC >> 2, 0x6, 0xF)
-            yield from wb_write(soc.bus, 0x10 >> 2, 0x1, 0xF)
-            yield from wb_write(soc.bus, 0x4 >> 2, 0xF, 0xF)
-            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
-
-            # MR0
-            yield from wb_write(soc.bus, 0xC >> 2, 0x320, 0xF)
-            yield from wb_write(soc.bus, 0x10 >> 2, 0x0, 0xF)
-            yield from wb_write(soc.bus, 0x4 >> 2, 0xF, 0xF)
-            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
-
-            for i in range(200):
-                yield
-
-            # ZQ
-            yield from wb_write(soc.bus, 0xC >> 2, 0x400, 0xF)
-            yield from wb_write(soc.bus, 0x10 >> 2, 0x0, 0xF)
-            yield from wb_write(soc.bus, 0x4 >> 2, 0x3, 0xF)
-            yield from wb_write(soc.bus, 0x8 >> 2, 0x1, 0xF)
-
-            for i in range(200):
-                yield
-
-            yield from wb_write(soc.bus, 0, 0x1, 0xF)
-
-            for i in range(2000):
-                yield
+            yield from SocTestCase.init_seq(soc.bus)
 
             yield from wb_write(soc.bus, 0x10000000 >> 2, 0xACAB2020, 0xF, 128)
             yield
@@ -154,7 +153,28 @@ class SocTestCase(FHDLTestCase):
             # Check for data persistence
             for i in range(10):
                 res = yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 128)
+                yield
                 self.assertEqual(res, 0xACAB2020)
-            
+
+        runSimulation(m, process, "test_soc.vcd")
+
+    def test_interleaved_read_write(self):
+        m = Module()
+        soc = DDR3SoC(clk_freq=100e6,
+            dramcore_addr=0x00000000,
+            ddr_addr=0x10000000)
+        m.submodules += soc
+
+        def process():
+            yield from SocTestCase.init_seq(soc.bus)
+
+            yield from wb_write(soc.bus, 0x10000000 >> 2, 0xF00DFACE, 0xF, 128)
+            yield from wb_write(soc.bus, 0x10000004 >> 2, 0x12345678, 0xF, 128)
+
+            res = yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 128)
+            self.assertEqual(res, 0xF00DFACE)
+
+            res = yield from wb_read(soc.bus, 0x10000004 >> 2, 0xF, 128)
+            self.assertEqual(res, 0x12345678)
 
         runSimulation(m, process, "test_soc.vcd")
