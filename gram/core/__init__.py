@@ -39,8 +39,7 @@ class gramCore(Peripheral, Elaboratable):
             **self._kwargs)
 
         # Size in bytes
-        self.size = 2**geom_settings.bankbits * \
-            2**geom_settings.rowbits * 2**geom_settings.colbits
+        self.size = 2**geom_settings.bankbits * 2**geom_settings.rowbits * 2**geom_settings.colbits
 
         self.crossbar = gramCrossbar(self.controller.interface)
 
