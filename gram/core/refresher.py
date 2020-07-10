@@ -146,8 +146,8 @@ class RefreshSequencer(Elaboratable):
 
         if platform == "formal":
             m.d.comb += [
-                Assert(countEqZero.implies(count == 0)),
-                Assert(countDiffZero.implies(count != 0))
+                Assert(countEqZero == (count == 0)),
+                Assert(countDiffZero == (count != 0)),
             ]
 
         return m
@@ -162,6 +162,9 @@ class RefreshTimer(Elaboratable):
     """
 
     def __init__(self, trefi):
+        # TODO: we don't pass formal verification for trefi = 1
+        assert trefi != 1
+
         self.wait = Signal()
         self.done = Signal()
         self.count = Signal(range(trefi), reset=trefi-1)
@@ -171,8 +174,6 @@ class RefreshTimer(Elaboratable):
         m = Module()
 
         trefi = self._trefi
-
-        done = Signal()
 
         with m.If(self.wait & (self.count != 0)):
             m.d.sync += self.count.eq(self.count-1)
@@ -186,7 +187,7 @@ class RefreshTimer(Elaboratable):
             ]
 
         if platform == "formal":
-            m.d.comb += Assert(self.done.implies(self.count == 0))
+            m.d.comb += Assert(self.done == (self.count == 0))
 
         return m
 
