@@ -1,5 +1,7 @@
 # This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
+import random
+
 from nmigen import *
 from nmigen.asserts import Assert, Assume
 from nmigen_soc import wishbone, memory
@@ -184,3 +186,75 @@ class SocTestCase(FHDLTestCase):
             self.assertEqual(res, 0xCAFE1000)
 
         runSimulation(m, process, "test_soc_interleaved_read_write.vcd")
+
+    def test_sequential_reads(self):
+        m = Module()
+        soc = DDR3SoC(clk_freq=100e6,
+            dramcore_addr=0x00000000,
+            ddr_addr=0x10000000)
+        m.submodules += soc
+
+        def process():
+            yield from SocTestCase.init_seq(soc.bus)
+
+            # Should read from same row/col/bank
+            yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 128)
+            yield from wb_read(soc.bus, 0x10000004 >> 2, 0xF, 128)
+            yield from wb_read(soc.bus, 0x10000008 >> 2, 0xF, 128)
+            yield from wb_read(soc.bus, 0x1000000C >> 2, 0xF, 128)
+
+            # Should read from a different row
+            yield from wb_read(soc.bus, 0x10000010 >> 2, 0xF, 128)
+            yield from wb_read(soc.bus, 0x10000014 >> 2, 0xF, 128)
+            yield from wb_read(soc.bus, 0x10000018 >> 2, 0xF, 128)
+            yield from wb_read(soc.bus, 0x1000001C >> 2, 0xF, 128)
+
+        runSimulation(m, process, "test_soc_sequential_reads.vcd")
+
+    def test_random_memtest(self):
+        m = Module()
+        soc = DDR3SoC(clk_freq=100e6,
+            dramcore_addr=0x00000000,
+            ddr_addr=0x10000000)
+        m.submodules += soc
+
+        def process():
+            yield from SocTestCase.init_seq(soc.bus)
+
+            n = 100
+
+            memtest_values = []
+            for i in range(n):
+                memtest_values.append(random.randint(0, 0xFFFFFFFF))
+
+            # Write
+            for i in range(n):
+                yield from wb_write(soc.bus, 0x10000000 >> 2 + i, memtest_values[i], 0xF, 256)
+
+            # Read
+            for i in range(n):
+                self.assertEqual(memtest_values[i], (yield from wb_read(soc.bus, 0x10000000 >> 2 + i, 0xF, 256)))
+
+        runSimulation(m, process, "test_soc_random_memtest.vcd")
+
+    def test_continuous_memtest(self):
+        m = Module()
+        soc = DDR3SoC(clk_freq=100e6,
+            dramcore_addr=0x00000000,
+            ddr_addr=0x10000000)
+        m.submodules += soc
+
+        def process():
+            yield from SocTestCase.init_seq(soc.bus)
+
+            n = 100
+
+            # Write
+            for i in range(n):
+                yield from wb_write(soc.bus, 0x10000000 >> 2 + i, 0xFACE0000 | i, 0xF, 256)
+
+            # Read
+            for i in range(n):
+                self.assertEqual(0xFACE0000 | i, (yield from wb_read(soc.bus, 0x10000000 >> 2 + i, 0xF, 256)))
+
+        runSimulation(m, process, "test_soc_continuous_memtest.vcd")
