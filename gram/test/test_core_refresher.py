@@ -36,8 +36,7 @@ class RefreshTimerTestCase(FHDLTestCase):
         def generic_test(tREFI):
             dut = RefreshTimer(tREFI)
             self.assertFormal(dut, mode="bmc", depth=4)
-        
-        [generic_test(_) for _ in [1, 5, 10]]
+        [generic_test(_) for _ in [2, 5, 10]]
 
 class RefreshPostponerTestCase(FHDLTestCase):
     def test_init(self):
