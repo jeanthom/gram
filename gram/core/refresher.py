@@ -340,8 +340,7 @@ class Refresher(Elaboratable):
         ]
 
         # Refresh Sequencer ------------------------------------------------------------------------
-        sequencer = RefreshSequencer(
-            self._abits, self._babits, settings.timing.tRP, settings.timing.tRFC, self._postponing)
+        sequencer = RefreshSequencer(self._abits, self._babits, settings.timing.tRP, settings.timing.tRFC, self._postponing)
         m.submodules.sequencer = sequencer
 
         if settings.timing.tZQCS is not None:
@@ -353,8 +352,7 @@ class Refresher(Elaboratable):
             m.d.comb += wants_zqcs.eq(zqcs_timer.done)
 
             # ZQCS Executer ------------------------------------------------------------------------
-            zqcs_executer = ZQCSExecuter(
-                self._abits, self._babits, settings.timing.tRP, settings.timing.tZQCS)
+            zqcs_executer = ZQCSExecuter(self._abits, self._babits, settings.timing.tRP, settings.timing.tZQCS)
             m.submodules.zqs_executer = zqcs_executer
             m.d.comb += zqcs_timer.wait.eq(~zqcs_executer.done)
 

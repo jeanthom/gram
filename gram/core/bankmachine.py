@@ -129,8 +129,7 @@ class BankMachine(Elaboratable):
                              cmd_buffer.source.valid),
         ]
 
-        slicer = _AddressSlicer(
-            self.settings.geom.colbits, self._address_align)
+        slicer = _AddressSlicer(self.settings.geom.colbits, self._address_align)
 
         # Row tracking -----------------------------------------------------------------------------
         row = Signal(self.settings.geom.rowbits)

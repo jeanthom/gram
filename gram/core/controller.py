@@ -75,10 +75,10 @@ class gramController(Elaboratable):
         nbanks = 2**self.settings.geom.bankbits
 
         # Refresher --------------------------------------------------------------------------------
-        m.submodules.refresher = self.settings.refresh_cls(self.settings,
-                                                           clk_freq=self._clk_freq,
-                                                           zqcs_freq=self.settings.refresh_zqcs_freq,
-                                                           postponing=self.settings.refresh_postponing)
+        m.submodules.refresher = Refresher(self.settings,
+            clk_freq=self._clk_freq,
+            zqcs_freq=self.settings.refresh_zqcs_freq,
+            postponing=self.settings.refresh_postponing)
 
         # Bank Machines ----------------------------------------------------------------------------
         bank_machines = []
