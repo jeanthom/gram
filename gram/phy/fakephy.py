@@ -542,7 +542,7 @@ class FakePHY(Elaboratable):
                 refresh_mode = self.module.timing_settings.fine_refresh_mode,
                 memtype      = self.settings.memtype,
                 verbose      = self.verbosity > SDRAM_VERBOSE_DBG)
-            m.submodules += timing_checker
+            m.submodules.timing_checker = timing_checker
 
         # Bank init data ---------------------------------------------------------------------------
         bank_init  = [None for i in range(nbanks)]
