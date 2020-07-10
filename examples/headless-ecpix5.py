@@ -35,19 +35,19 @@ class DDR3SoC(SoC, Elaboratable):
         self.ub = UARTBridge(divisor=868, pins=platform.request("uart", 0))
         self._arbiter.add(self.ub.bus)
 
-        self.ddrphy = ECP5DDRPHY(platform.request("ddr3", 0))
+        self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"})))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
         ddrmodule = MT41K256M16(platform.default_clk_frequency, "1:2")
 
-        self.dramcore = gramCore(
+        self.dramcore = DomainRenamer("dramsync")(gramCore(
             phy=self.ddrphy,
             geom_settings=ddrmodule.geom_settings,
             timing_settings=ddrmodule.timing_settings,
             clk_freq=platform.default_clk_frequency))
         self._decoder.add(self.dramcore.bus, addr=dramcore_addr)
 
-        self.drambone = gramWishbone(self.dramcore)
+        self.drambone = DomainRenamer("dramsync")(gramWishbone(self.dramcore))
         self._decoder.add(self.drambone.bus, addr=ddr_addr)
 
         self.memory_map = self._decoder.bus.memory_map
