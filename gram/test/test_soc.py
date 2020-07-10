@@ -229,11 +229,11 @@ class SocTestCase(FHDLTestCase):
 
             # Write
             for i in range(n):
-                yield from wb_write(soc.bus, 0x10000000 >> 2 + i, memtest_values[i], 0xF, 256)
+                yield from wb_write(soc.bus, (0x10000000 >> 2) + i, memtest_values[i], 0xF, 256)
 
             # Read
             for i in range(n):
-                self.assertEqual(memtest_values[i], (yield from wb_read(soc.bus, 0x10000000 >> 2 + i, 0xF, 256)))
+                self.assertEqual(memtest_values[i], (yield from wb_read(soc.bus, (0x10000000 >> 2) + i, 0xF, 256)))
 
         runSimulation(m, process, "test_soc_random_memtest.vcd")
 
@@ -251,10 +251,10 @@ class SocTestCase(FHDLTestCase):
 
             # Write
             for i in range(n):
-                yield from wb_write(soc.bus, 0x10000000 >> 2 + i, 0xFACE0000 | i, 0xF, 256)
+                yield from wb_write(soc.bus, (0x10000000 >> 2) + i, 0xFACE0000 | i, 0xF, 256)
 
             # Read
             for i in range(n):
-                self.assertEqual(0xFACE0000 | i, (yield from wb_read(soc.bus, 0x10000000 >> 2 + i, 0xF, 256)))
+                self.assertEqual(0xFACE0000 | i, (yield from wb_read(soc.bus, (0x10000000 >> 2) + i, 0xF, 256)))
 
         runSimulation(m, process, "test_soc_continuous_memtest.vcd")
