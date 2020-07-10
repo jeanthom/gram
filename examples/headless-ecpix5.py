@@ -22,7 +22,7 @@ from uartbridge import UARTBridge
 from crg import *
 
 class DDR3SoC(SoC, Elaboratable):
-    def __init__(self, *, clk_freq,
+    def __init__(self, *,
                  ddrphy_addr, dramcore_addr,
                  ddr_addr):
         self._arbiter = wishbone.Arbiter(addr_width=30, data_width=32, granularity=8,
@@ -44,7 +44,7 @@ class DDR3SoC(SoC, Elaboratable):
             phy=self.ddrphy,
             geom_settings=ddrmodule.geom_settings,
             timing_settings=ddrmodule.timing_settings,
-            clk_freq=clk_freq)
+            clk_freq=platform.default_clk_frequency))
         self._decoder.add(self.dramcore.bus, addr=dramcore_addr)
 
         self.drambone = gramWishbone(self.dramcore)
@@ -52,7 +52,7 @@ class DDR3SoC(SoC, Elaboratable):
 
         self.memory_map = self._decoder.bus.memory_map
 
-        self.clk_freq = clk_freq
+        self.clk_freq = platform.default_clk_frequency
 
     def elaborate(self, platform):
         m = Module()
@@ -77,8 +77,7 @@ class DDR3SoC(SoC, Elaboratable):
 if __name__ == "__main__":
     platform = ECPIX585Platform()
 
-    soc = DDR3SoC(clk_freq=int(platform.default_clk_frequency),
-        ddrphy_addr=0x00008000, dramcore_addr=0x00009000,
+    soc = DDR3SoC(ddrphy_addr=0x00008000, dramcore_addr=0x00009000,
         ddr_addr=0x10000000)
 
     soc.build(do_build=True)
