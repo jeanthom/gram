@@ -185,7 +185,7 @@ class DDR3SoC(SoC, Elaboratable):
         self.ddrphy = ECP5DDRPHY(platform.request("ddr3", 0))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
-        ddrmodule = MT41K256M16(clk_freq, "1:4")
+        ddrmodule = MT41K256M16(platform.default_clk_frequency, "1:2")
 
         self.dramcore = gramCore(
             phy=self.ddrphy,
