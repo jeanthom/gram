@@ -112,7 +112,9 @@ module simsoctb;
   initial
     begin
       uart_rx <= 1'b1;
+      $display("[%t] Starting POR",$time);
       #700000; // POR is ~700us
+      $display("[%t] POR complete",$time);
 
       // Software control
       wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
