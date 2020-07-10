@@ -17,7 +17,7 @@ from gram.phy.ecp5ddrphy import ECP5DDRPHY
 from gram.modules import MT41K256M16
 from gram.frontend.wishbone import gramWishbone
 
-from customecpix5 import ECPIX5Platform
+from ecpix5_85 import ECPIX585Platform
 from uartbridge import UARTBridge
 from crg import *
 
@@ -75,7 +75,7 @@ class DDR3SoC(SoC, Elaboratable):
 
 
 if __name__ == "__main__":
-    platform = ECPIX5Platform()
+    platform = ECPIX585Platform()
 
     soc = DDR3SoC(clk_freq=int(platform.default_clk_frequency),
         ddrphy_addr=0x00008000, dramcore_addr=0x00009000,
