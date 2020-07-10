@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
 	struct gramCtx ctx;
 	int serial_port, baudrate = 0;
 	uint32_t read_value, expected_value;
+	const int kDumpWidth = 8;
 
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s port baudrate\n", argv[0]);
@@ -124,14 +125,25 @@ int main(int argc, char *argv[]) {
 	}
 	printf("done\n");
 
-	for (size_t i = 0; i < 100; i++) {
+	printf("Reading data sequence...\n");
+	for (size_t i = 0; i < 256; i++) {
+		if ((i % kDumpWidth) == 0) {
+			printf("%08x | ", (uint32_t)&(ddr[i]));
+		}
+
 		read_value = gram_read(&ctx, &(ddr[i]));
 		expected_value = 0x12345678 + (1 << 10*i)%0x100000000;
-		printf("%p = %08x", &(ddr[i]), read_value);
 		if (read_value != expected_value) {
-			printf(" /!\\ DID NOT MATCH EXPECTED VALUE (%08x)", expected_value);
+			printf("\033[0;31m%08x\033[0m", read_value);
+		} else {
+			printf("\033[0;32m%08x\033[0m", read_value);
 		}
-		printf("\n");
+		
+		if ((i % kDumpWidth) == kDumpWidth-1) {
+			printf("\n");
+		} else {
+			printf(" ");
+		}
 	}
 
 	close(serial_port);
