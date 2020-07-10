@@ -156,7 +156,7 @@ class SocTestCase(FHDLTestCase):
                 yield
                 self.assertEqual(res, 0xACAB2020)
 
-        runSimulation(m, process, "test_soc.vcd")
+        runSimulation(m, process, "test_soc_multiple_reads.vcd")
 
     def test_interleaved_read_write(self):
         m = Module()
@@ -177,4 +177,4 @@ class SocTestCase(FHDLTestCase):
             res = yield from wb_read(soc.bus, 0x10000004 >> 2, 0xF, 128)
             self.assertEqual(res, 0x12345678)
 
-        runSimulation(m, process, "test_soc.vcd")
+        runSimulation(m, process, "test_soc_interleaved_read_write.vcd")
