@@ -73,37 +73,36 @@ class BankModel(Elaboratable):
                 row.eq(self.activate_row),
             ]
 
-        bank_mem_len   = nrows*ncols//(burst_length*self.nphases)
-        # mem            = Memory(width=data_width, depth=bank_mem_len, init=init)
-        # write_port     = mem.get_port(write_capable=True, we_granularity=we_granularity)
-        # read_port      = mem.get_port(async_read=True)
-        # m.submodules += mem, read_port, write_port
+        bank_mem_len = nrows*ncols//(burst_length*self.nphases)
+        mem = Memory(width=data_width, depth=100, init=init)
+        write_port = mem.write_port(granularity=we_granularity)
+        read_port = mem.read_port(domain="comb")
+        m.submodules += read_port, write_port
 
         wraddr         = Signal(range(bank_mem_len))
         rdaddr         = Signal(range(bank_mem_len))
 
         m.d.comb += [
-            wraddr.eq((row*ncols | self.write_col)[log2_int(burst_length*self.nphases):]),
-            rdaddr.eq((row*ncols | self.read_col)[log2_int(burst_length*self.nphases):]),
+            wraddr.eq((row*ncols | self.write_col)[log2_int(burst_length*self.nphases):] % 100),
+            rdaddr.eq((row*ncols | self.read_col)[log2_int(burst_length*self.nphases):] % 100),
         ]
 
         with m.If(active):
-            # m.d.comb += [
-            #     write_port.adr.eq(wraddr),
-            #     write_port.dat_w.eq(self.write_data),
-            # ]
+            m.d.comb += [
+                write_port.addr.eq(wraddr % 100),
+                write_port.data.eq(self.write_data),
+            ]
 
-            # with m.If(we_granularity):
-            #     m.d.comb += write_port.we.eq(Replicate(self.write, data_width//8) & ~self.write_mask)
-            # with m.Else():
-            #     m.d.comb += write_port.we.eq(self.write)
+            with m.If(we_granularity):
+                m.d.comb += write_port.en.eq(Repl(self.write, data_width//8) & ~self.write_mask)
+            with m.Else():
+                m.d.comb += write_port.en.eq(self.write)
 
             with m.If(self.read):
-                # m.d.comb += [
-                #     read_port.adr.eq(rdaddr),
-                #     self.read_data.eq(read_port.dat_r),
-                # ]
-                m.d.comb += self.read_data.eq(0xDEADBEEF)
+                m.d.comb += [
+                    read_port.addr.eq(rdaddr),
+                    self.read_data.eq(read_port.data),
+                ]
 
         return m
 

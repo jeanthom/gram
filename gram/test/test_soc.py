@@ -148,7 +148,13 @@ class SocTestCase(FHDLTestCase):
             for i in range(2000):
                 yield
 
-            res = yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 16384)
-            self.assertEqual(res, 0xDEADBEEF)
+            yield from wb_write(soc.bus, 0x10000000 >> 2, 0xACAB2020, 0xF, 128)
+            yield
+
+            # Check for data persistence
+            for i in range(10):
+                res = yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 128)
+                self.assertEqual(res, 0xACAB2020)
+            
 
         runSimulation(m, process, "test_soc.vcd")
