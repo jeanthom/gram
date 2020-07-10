@@ -170,11 +170,17 @@ class SocTestCase(FHDLTestCase):
 
             yield from wb_write(soc.bus, 0x10000000 >> 2, 0xF00DFACE, 0xF, 128)
             yield from wb_write(soc.bus, 0x10000004 >> 2, 0x12345678, 0xF, 128)
+            yield from wb_write(soc.bus, 0x10000008 >> 2, 0x00BA0BAB, 0xF, 128)
 
             res = yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 128)
             self.assertEqual(res, 0xF00DFACE)
 
+            yield from wb_write(soc.bus, 0x10000008 >> 2, 0xCAFE1000, 0xF, 128)
+
             res = yield from wb_read(soc.bus, 0x10000004 >> 2, 0xF, 128)
             self.assertEqual(res, 0x12345678)
+
+            res = yield from wb_read(soc.bus, 0x10000008 >> 2, 0xF, 128)
+            self.assertEqual(res, 0xCAFE1000)
 
         runSimulation(m, process, "test_soc_interleaved_read_write.vcd")
