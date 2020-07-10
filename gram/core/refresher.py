@@ -44,7 +44,7 @@ class RefreshExecuter(Elaboratable):
         trp = self._trp
         trfc = self._trfc
 
-        tl = Timeline([
+        m.submodules.timeline = tl = Timeline([
             # Precharge All
             (0, [
                 self.a.eq(2**10),
@@ -71,7 +71,6 @@ class RefreshExecuter(Elaboratable):
                 self.done.eq(1),
             ]),
         ])
-        m.submodules += tl
         m.d.comb += tl.trigger.eq(self.start)
 
         return m
@@ -104,8 +103,7 @@ class RefreshSequencer(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        executer = RefreshExecuter(self._abits, self._babits, self._trp, self._trfc)
-        m.submodules += executer
+        m.submodules.executer = executer = RefreshExecuter(self._abits, self._babits, self._trp, self._trfc)
         m.d.comb += [
             self.a.eq(executer.a),
             self.ba.eq(executer.ba),
@@ -257,7 +255,7 @@ class ZQCSExecuter(Elaboratable):
         trp = self._trp
         tzqcs = self._tzqcs
 
-        tl = Timeline([
+        m.submodules.timeline = tl = Timeline([
             # Precharge All
             (0, [
                 self.a.eq(2**10),
@@ -286,7 +284,6 @@ class ZQCSExecuter(Elaboratable):
                 self.done.eq(1)
             ]),
         ])
-        m.submodules += tl
         m.d.comb += tl.trigger.eq(self.start)
 
         return m

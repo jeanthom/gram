@@ -71,8 +71,7 @@ class _CommandChooser(Elaboratable):
             write = request.is_write == self.want_writes
             m.d.comb += valids[i].eq(request.valid & (command | (read & write)))
 
-        arbiter = RoundRobin(n)
-        m.submodules += arbiter
+        m.submodules.arbiter = arbiter = RoundRobin(n)
         choices = Array(valids[i] for i in range(n))
         m.d.comb += [
             arbiter.request.eq(valids),
@@ -304,8 +303,7 @@ class Multiplexer(Elaboratable):
                                         log2_int(len(bank_machines))))
         # nop must be 1st
         commands = [nop, choose_cmd.cmd, choose_req.cmd, refresher.cmd]
-        steerer = _Steerer(commands, dfi)
-        m.submodules += steerer
+        m.submodules.steerer = steerer = _Steerer(commands, dfi)
 
         # tRRD timing (Row to Row delay) -----------------------------------------------------------
         m.submodules.trrdcon = trrdcon = tXXDController(settings.timing.tRRD)
