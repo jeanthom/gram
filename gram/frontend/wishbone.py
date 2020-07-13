@@ -17,7 +17,6 @@ class gramWishbone(Peripheral, Elaboratable):
 
         self.dw = data_width
         self._port = core.crossbar.get_native_port()
-        #self._port = core.crossbar.get_port(data_width=8, mode="read")
 
         dram_size = core.size//4
         dram_addr_width = log2_int(dram_size)
@@ -36,34 +35,46 @@ class gramWishbone(Peripheral, Elaboratable):
         # Write datapath
         m.d.comb += [
             self._port.wdata.valid.eq(self.bus.cyc & self.bus.stb & self.bus.we),
-            self._port.wdata.data.eq(self.bus.dat_w),
-            self._port.wdata.we.eq(self.bus.sel),
         ]
+
+        with m.Switch(self.bus.adr & 0b11):
+            for i in range(4):
+                with m.Case(i):
+                    with m.If(self.bus.sel):
+                        m.d.comb += self._port.wdata.we.eq(0xF << (4*i))
+                    with m.Else():
+                        m.d.comb += self._port.wdata.we.eq(0)
+
+        with m.Switch(self.bus.adr & 0b11):
+            for i in range(4):
+                with m.Case(i):
+                    m.d.comb += self._port.wdata.data.eq(self.bus.dat_w << (32*i))
 
         # Read datapath
         m.d.comb += [
-            self.bus.dat_r.eq(self._port.rdata.data),
             self._port.rdata.ready.eq(1),
         ]
 
+        with m.Switch(self.bus.adr & 0b11):
+            for i in range(4):
+                with m.Case(i):
+                    m.d.comb += self.bus.dat_r.eq(self._port.rdata.data >> (32*i))
+
         adr_offset = 0
-        ratio = self.dw//2**int(log2(len(self._port.wdata.data)))
-        count = Signal(range(max(ratio, 2)))
+
         with m.FSM():
             with m.State("Send-Cmd"):
                 m.d.comb += [
                     self._port.cmd.valid.eq(self.bus.cyc & self.bus.stb),
                     self._port.cmd.we.eq(self.bus.we),
-                    self._port.cmd.addr.eq(self.bus.adr*ratio + count - adr_offset),
+                    self._port.cmd.addr.eq(self.bus.adr >> 2),
                 ]
+
                 with m.If(self._port.cmd.valid & self._port.cmd.ready):
-                    m.d.sync += count.eq(count+1)
-                    with m.If(count == (max(ratio, 2)-1)):
-                        m.d.sync += count.eq(0)
-                        with m.If(self.bus.we):
-                            m.next = "Wait-Write"
-                        with m.Else():
-                            m.next = "Wait-Read"
+                    with m.If(self.bus.we):
+                        m.next = "Wait-Write"
+                    with m.Else():
+                        m.next = "Wait-Read"
 
             with m.State("Wait-Read"):
                 with m.If(self._port.rdata.valid):
