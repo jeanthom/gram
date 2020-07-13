@@ -133,10 +133,13 @@ int main(int argc, char *argv[]) {
 
 		read_value = gram_read(&ctx, &(ddr[i]));
 		expected_value = 0x12345678 + (1 << 10*i)%0x100000000;
-		if (read_value != expected_value) {
-			printf("\033[0;31m%08x\033[0m", read_value);
-		} else {
-			printf("\033[0;32m%08x\033[0m", read_value);
+
+		for (int j = 3; j >= 0; j--) {
+			if (((uint8_t*)(&read_value))[j] != ((uint8_t*)(&expected_value))[j]) {
+				printf("\033[0;31m%02x\033[0m", ((uint8_t*)(&read_value))[j]);
+			} else {
+				printf("\033[0;32m%02x\033[0m", ((uint8_t*)(&read_value))[j]);
+			}
 		}
 		
 		if ((i % kDumpWidth) == kDumpWidth-1) {
