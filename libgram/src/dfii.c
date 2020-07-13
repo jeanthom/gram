@@ -81,11 +81,11 @@ void dfii_initseq(struct gramCtx *ctx) {
 	dfii_set_p0_address(ctx, 0x320);
 	dfii_set_p0_baddress(ctx, 0);
 	dfii_p0_command(ctx, DFII_COMMAND_RAS|DFII_COMMAND_CAS|DFII_COMMAND_WE|DFII_COMMAND_CS);
-	cdelay(200);
+	cdelay(600);
 
 	/* ZQ Calibration */
 	dfii_set_p0_address(ctx, 0x400);
 	dfii_set_p0_baddress(ctx, 0);
 	dfii_p0_command(ctx, DFII_COMMAND_WE|DFII_COMMAND_CS);
-	cdelay(200);
+	cdelay(600);
 }

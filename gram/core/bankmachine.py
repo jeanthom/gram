@@ -18,6 +18,24 @@ __ALL__ = ["BankMachine"]
 
 # AddressSlicer ------------------------------------------------------------------------------------
 
+class _AddressSlicerWIP(Elaboratable):
+    def __init__(self, addrbits, colbits, address_align):
+        self._address_align = address_align
+        self._split = colbits - address_align
+        
+        self.address = Signal(addrbits)
+        self.row = Signal(addrbits-self._split)
+        self.col = Signal(address_align+self._split)
+
+    def elaborate(self, platform):
+        m = Module()
+
+        m.d.comb += [
+            self.row.eq(self.address[self._split:]),
+            self.col.eq(Cat(Repl(0, self._address_align), self.address[:self._split]))
+        ]
+
+        return m
 
 class _AddressSlicer:
     """Helper for extracting row/col from address
@@ -130,6 +148,15 @@ class BankMachine(Elaboratable):
         ]
 
         slicer = _AddressSlicer(self.settings.geom.colbits, self._address_align)
+
+        m.submodules.lookahead_slicer = lookahead_slicer = _AddressSlicerWIP(len(cmd_buffer_lookahead.source.addr),
+            self.settings.geom.colbits, self._address_align)
+        m.submodules.current_slicer = current_slicer = _AddressSlicerWIP(len(cmd_buffer.source.addr),
+            self.settings.geom.colbits, self._address_align)
+        m.d.comb += [
+            current_slicer.address.eq(cmd_buffer.source.addr),
+            lookahead_slicer.address.eq(cmd_buffer_lookahead.source.addr),
+        ]
 
         # Row tracking -----------------------------------------------------------------------------
         row = Signal(self.settings.geom.rowbits)
