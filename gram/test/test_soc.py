@@ -216,7 +216,7 @@ class SocTestCase(FHDLTestCase):
         def process():
             yield from SocTestCase.init_seq(soc.bus)
 
-            n = 100
+            n = 64
 
             memtest_values = []
             for i in range(n):
@@ -242,7 +242,7 @@ class SocTestCase(FHDLTestCase):
         def process():
             yield from SocTestCase.init_seq(soc.bus)
 
-            n = 100
+            n = 128
 
             # Write
             for i in range(n):
