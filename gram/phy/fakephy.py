@@ -74,7 +74,7 @@ class BankModel(Elaboratable):
             ]
 
         bank_mem_len = nrows*ncols//(burst_length*self.nphases)
-        mem = Memory(width=data_width, depth=100, init=init)
+        mem = Memory(width=data_width, depth=1024, init=init)
         write_port = mem.write_port(granularity=we_granularity)
         read_port = mem.read_port(domain="comb")
         m.submodules += read_port, write_port
@@ -83,13 +83,13 @@ class BankModel(Elaboratable):
         rdaddr         = Signal(range(bank_mem_len))
 
         m.d.comb += [
-            wraddr.eq((row*ncols | self.write_col)[log2_int(burst_length*self.nphases):] % 100),
-            rdaddr.eq((row*ncols | self.read_col)[log2_int(burst_length*self.nphases):] % 100),
+            wraddr.eq((row*ncols | self.write_col)[log2_int(burst_length*self.nphases):] % mem.depth),
+            rdaddr.eq((row*ncols | self.read_col)[log2_int(burst_length*self.nphases):] % mem.depth),
         ]
 
         with m.If(active):
             m.d.comb += [
-                write_port.addr.eq(wraddr % 100),
+                write_port.addr.eq(wraddr),
                 write_port.data.eq(self.write_data),
             ]
 
