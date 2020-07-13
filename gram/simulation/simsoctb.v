@@ -113,7 +113,7 @@ module simsoctb;
     begin
       uart_rx <= 1'b1;
       $display("[%t] Starting POR",$time);
-      #700000; // POR is ~700us
+      #100; // POR is ~700us
       $display("[%t] POR complete",$time);
 
       // Software control
@@ -124,7 +124,7 @@ module simsoctb;
       wishbone_write(32'h00009000 >> 2, 8'h0C); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N
       #500000;
       wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
-      #500000;
+      #100000;
 
       // Set MR2
       wishbone_write(32'h0000900c >> 2, 32'h200); // p0 address
@@ -160,6 +160,9 @@ module simsoctb;
 
       // Hardware control
       wishbone_write(32'h00009000 >> 2, 8'h01); // DFII_CONTROL_SEL
+      #2000;
+
+      wishbone_read(32'h10000000 >> 2, tmp);
       #2000;
 
       // Write
@@ -212,14 +215,14 @@ module simsoctb;
 
     begin
       uart_rx <= 1'b0;
-      #8680;
+      #2170;
       for (i = 0; i < 8; i = i + 1)
         begin
           uart_rx <= data[i];
-          #8680;
+          #2170;
         end
       uart_rx <= 1'b1;
-      #8680;
+      #2170;
     end
   endtask
 
@@ -235,10 +238,10 @@ module simsoctb;
 
       for (i = 0; i < 8; i = i+1)
         begin
-          #8680 data[i] <= uart_tx;
+          #2170 data[i] <= uart_tx;
         end
 
-      #8680;
+      #2170;
     end
   endtask
 endmodule

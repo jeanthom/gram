@@ -26,13 +26,13 @@ class DDR3SoC(SoC, Elaboratable):
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
 
-        self.ub = UARTBridge(divisor=868, pins=platform.request("uart", 0))
+        self.ub = UARTBridge(divisor=217, pins=platform.request("uart", 0))
         self._arbiter.add(self.ub.bus)
 
         self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"})))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
-        ddrmodule = MT41K256M16(clk_freq, "1:4")
+        ddrmodule = MT41K256M16(clk_freq, "1:2")
 
         self.dramcore = DomainRenamer("dramsync")(gramCore(
             phy=self.ddrphy,
