@@ -1,3 +1,4 @@
+#nmigen: UnusedElaboratable=no
 from nmigen import *
 from nmigen.hdl.ast import Past
 from nmigen.asserts import Assert, Assume
