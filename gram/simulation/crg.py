@@ -105,7 +105,7 @@ class ECPIX5CRG(Elaboratable):
         ]
 
         # Power-on delay (655us)
-        podcnt = Signal(16, reset=2**16-1)
+        podcnt = Signal(3, reset=2**3-1)
         pod_done = Signal()
         with m.If(podcnt != 0):
             m.d.rawclk += podcnt.eq(podcnt-1)
