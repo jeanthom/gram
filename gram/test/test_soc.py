@@ -58,7 +58,7 @@ class DDR3SoC(SoC, Elaboratable):
             write_latency=cwl_sys_latency
         )
 
-        ddrmodule = MT41K256M16(clk_freq, "1:4")
+        ddrmodule = MT41K256M16(clk_freq, "1:2")
         self.ddrphy = FakePHY(module=ddrmodule,
             settings=physettings,
             verbosity=SDRAM_VERBOSE_DBG)
