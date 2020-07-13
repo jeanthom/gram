@@ -22,13 +22,10 @@ from utils import *
 class DDR3SoC(SoC, Elaboratable):
     def __init__(self, *, clk_freq, dramcore_addr,
                  ddr_addr):
-        self._arbiter = wishbone.Arbiter(addr_width=30, data_width=32, granularity=8,
-                                         features={"cti", "bte"})
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
 
         self.bus = wishbone.Interface(addr_width=30, data_width=32, granularity=32)
-        self._arbiter.add(self.bus)
 
         tck = 2/(2*2*100e6)
         nphases = 2
@@ -80,15 +77,13 @@ class DDR3SoC(SoC, Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        m.submodules.arbiter = self._arbiter
-
         m.submodules.decoder = self._decoder
         m.submodules.ddrphy = self.ddrphy
         m.submodules.dramcore = self.dramcore
         m.submodules.drambone = self.drambone
 
         m.d.comb += [
-            self._arbiter.bus.connect(self._decoder.bus),
+            self.bus.connect(self._decoder.bus),
         ]
 
         return m
