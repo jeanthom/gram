@@ -3,8 +3,6 @@
 # This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 # License: BSD
 
-"""LiteDRAM BankMachine (Rows/Columns management)."""
-
 import math
 
 from nmigen import *
@@ -16,9 +14,7 @@ import gram.stream as stream
 
 __ALL__ = ["BankMachine"]
 
-# AddressSlicer ------------------------------------------------------------------------------------
-
-class _AddressSlicerWIP(Elaboratable):
+class _AddressSlicer(Elaboratable):
     def __init__(self, addrbits, colbits, address_align):
         self._address_align = address_align
         self._split = colbits - address_align
@@ -36,28 +32,6 @@ class _AddressSlicerWIP(Elaboratable):
         ]
 
         return m
-
-class _AddressSlicer:
-    """Helper for extracting row/col from address
-
-    Column occupies lower bits of the address, row - higher bits. Address has
-    a forced alignment, so column does not contain alignment bits.
-    """
-
-    def __init__(self, colbits, address_align):
-        self.colbits = colbits
-        self.address_align = address_align
-
-    def row(self, address):
-        split = self.colbits - self.address_align
-        return address[split:]
-
-    def col(self, address):
-        split = self.colbits - self.address_align
-        return Cat(Repl(0, self.address_align), address[:split])
-
-# BankMachine --------------------------------------------------------------------------------------
-
 
 class BankMachine(Elaboratable):
     """Converts requests from ports into DRAM commands
@@ -147,11 +121,9 @@ class BankMachine(Elaboratable):
                              cmd_buffer.source.valid),
         ]
 
-        slicer = _AddressSlicer(self.settings.geom.colbits, self._address_align)
-
-        m.submodules.lookahead_slicer = lookahead_slicer = _AddressSlicerWIP(len(cmd_buffer_lookahead.source.addr),
+        m.submodules.lookahead_slicer = lookahead_slicer = _AddressSlicer(len(cmd_buffer_lookahead.source.addr),
             self.settings.geom.colbits, self._address_align)
-        m.submodules.current_slicer = current_slicer = _AddressSlicerWIP(len(cmd_buffer.source.addr),
+        m.submodules.current_slicer = current_slicer = _AddressSlicer(len(cmd_buffer.source.addr),
             self.settings.geom.colbits, self._address_align)
         m.d.comb += [
             current_slicer.address.eq(cmd_buffer.source.addr),
@@ -164,23 +136,22 @@ class BankMachine(Elaboratable):
         row_hit = Signal()
         row_open = Signal()
         row_close = Signal()
-        m.d.comb += row_hit.eq(row == slicer.row(cmd_buffer.source.addr))
+        m.d.comb += row_hit.eq(row == current_slicer.row)
         with m.If(row_close):
             m.d.sync += row_opened.eq(0)
         with m.Elif(row_open):
             m.d.sync += [
                 row_opened.eq(1),
-                row.eq(slicer.row(cmd_buffer.source.addr)),
+                row.eq(current_slicer.row),
             ]
 
         # Address generation -----------------------------------------------------------------------
         row_col_n_addr_sel = Signal()
         m.d.comb += self.cmd.ba.eq(self._n)
         with m.If(row_col_n_addr_sel):
-            m.d.comb += self.cmd.a.eq(slicer.row(cmd_buffer.source.addr))
+            m.d.comb += self.cmd.a.eq(current_slicer.row)
         with m.Else():
-            m.d.comb += self.cmd.a.eq((auto_precharge << 10)
-                                      | slicer.col(cmd_buffer.source.addr))
+            m.d.comb += self.cmd.a.eq((auto_precharge << 10) | current_slicer.col)
 
         # tWTP (write-to-precharge) controller -----------------------------------------------------
         write_latency = math.ceil(
@@ -203,7 +174,7 @@ class BankMachine(Elaboratable):
         # generate auto precharge when current and next cmds are to different rows
         if self.settings.with_auto_precharge:
             with m.If(cmd_buffer_lookahead.source.valid & cmd_buffer.source.valid):
-                with m.If(slicer.row(cmd_buffer_lookahead.source.addr) != slicer.row(cmd_buffer.source.addr)):
+                with m.If(lookahead_slicer.row != current_slicer.row):
                     m.d.comb += auto_precharge.eq(row_close == 0)
 
         # Control and command generation FSM -------------------------------------------------------
