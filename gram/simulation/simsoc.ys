@@ -18,4 +18,7 @@ flatten \arbiter
 flatten \sysclk
 opt -fine -full
 clean
+opt
+clean
 write_verilog -norename build_simsoc/top.v
+stat
