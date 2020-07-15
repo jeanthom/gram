@@ -16,5 +16,8 @@
 
 void dfii_setsw(struct gramCtx *ctx, bool software_control);
 void dfii_initseq(struct gramCtx *ctx);
+void dfii_set_p0_address(struct gramCtx *ctx, uint32_t val);
+void dfii_set_p0_baddress(struct gramCtx *ctx, uint32_t val);
+void dfii_p0_command(struct gramCtx *ctx, uint32_t cmd);
 
 #endif /* DFII_H */
