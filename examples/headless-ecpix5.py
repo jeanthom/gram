@@ -25,15 +25,12 @@ class DDR3SoC(SoC, Elaboratable):
     def __init__(self, *,
                  ddrphy_addr, dramcore_addr,
                  ddr_addr):
-        self._arbiter = wishbone.Arbiter(addr_width=30, data_width=32, granularity=8,
-                                         features={"cti", "bte"})
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
 
         self.crg = ECPIX5CRG()
 
         self.ub = UARTBridge(divisor=868, pins=platform.request("uart", 0))
-        self._arbiter.add(self.ub.bus)
 
         self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"})))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
@@ -58,8 +55,7 @@ class DDR3SoC(SoC, Elaboratable):
         m = Module()
 
         m.submodules.sysclk = self.crg
-
-        m.submodules.arbiter = self._arbiter
+        
         m.submodules.ub = self.ub
 
         m.submodules.decoder = self._decoder
@@ -68,7 +64,7 @@ class DDR3SoC(SoC, Elaboratable):
         m.submodules.drambone = self.drambone
 
         m.d.comb += [
-            self._arbiter.bus.connect(self._decoder.bus),
+            self.ub.bus.connect(self._decoder.bus),
         ]
 
         return m
