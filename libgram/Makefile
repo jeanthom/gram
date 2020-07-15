@@ -1,4 +1,4 @@
-OBJS := src/init.o src/memtest.o src/dfii.o
+OBJS := src/init.o src/memtest.o src/dfii.o src/calibration.o
 
 TRIPLE := riscv64-unknown-elf-
 
