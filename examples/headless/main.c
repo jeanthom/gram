@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #include <fcntl.h>
 #include <errno.h>
@@ -95,7 +96,9 @@ int main(int argc, char *argv[]) {
 	struct gramCtx ctx;
 	int serial_port, baudrate = 0;
 	uint32_t read_value, expected_value;
+	uint32_t pattern[128];
 	const int kDumpWidth = 8;
+	size_t i;
 
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s port baudrate\n", argv[0]);
@@ -116,23 +119,28 @@ int main(int argc, char *argv[]) {
 	gram_init(&ctx, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
 	printf("done\n");
 
+	srand(time(NULL));
+	for (i = 0; i < 128; i++) {
+		pattern[i] = rand();
+	}
+
 	printf("memtest... \n");
-	volatile uint32_t *ddr = 0x10000000;
+	volatile uint32_t ddr_base = 0x10000000;
 
 	printf("Writing data sequence...");
-	for (size_t i = 0; i < 100; i++) {
-		gram_write(&ctx, &(ddr[i]), 0x12345678 + (1 << 10*i)%0x100000000);
+	for (i = 0; i < 128; i++) {
+		gram_write(&ctx, ddr_base+4*i, pattern[i]);
 	}
 	printf("done\n");
 
 	printf("Reading data sequence...\n");
-	for (size_t i = 0; i < 256; i++) {
+	for (i = 0; i < 128; i++) {
 		if ((i % kDumpWidth) == 0) {
-			printf("%08x | ", (uint32_t)&(ddr[i]));
+			printf("%08x | ", ddr_base+4*i);
 		}
 
-		read_value = gram_read(&ctx, &(ddr[i]));
-		expected_value = 0x12345678 + (1 << 10*i)%0x100000000;
+		read_value = gram_read(&ctx, ddr_base+4*i);
+		expected_value = pattern[i];
 
 		for (int j = 3; j >= 0; j--) {
 			if (((uint8_t*)(&read_value))[j] != ((uint8_t*)(&expected_value))[j]) {
