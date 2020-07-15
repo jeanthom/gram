@@ -114,7 +114,7 @@ module simsoctb;
     begin
       uart_rx <= 1'b1;
       $display("[%t] Starting POR",$time);
-      #100; // POR is ~700us
+      #1000; // POR is ~700us
       $display("[%t] POR complete",$time);
 
       // Software control
@@ -216,14 +216,14 @@ module simsoctb;
 
     begin
       uart_rx <= 1'b0;
-      #2170;
+      #50;
       for (i = 0; i < 8; i = i + 1)
         begin
           uart_rx <= data[i];
-          #2170;
+          #50;
         end
       uart_rx <= 1'b1;
-      #2170;
+      #50;
     end
   endtask
 
@@ -239,10 +239,10 @@ module simsoctb;
 
       for (i = 0; i < 8; i = i+1)
         begin
-          #2170 data[i] <= uart_tx;
+          #50 data[i] <= uart_tx;
         end
 
-      #2170;
+      #50;
     end
   endtask
 endmodule
