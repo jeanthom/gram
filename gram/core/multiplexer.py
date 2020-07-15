@@ -234,7 +234,7 @@ class _AntiStarvation(Elaboratable):
             m.d.comb += self.max_time.eq(0)
 
         if platform == "formal" and self._timeout > 0:
-            m.d.comb += Assert(~(self.max_time ^ (time == 0)))
+            m.d.comb += Assert(self.max_time == (time == 0))
 
         return m
 
