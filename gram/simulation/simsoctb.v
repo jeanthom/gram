@@ -103,6 +103,7 @@ module simsoctb;
       $dumpvars(0, uart_rx);
       $dumpvars(0, uart_tx);
       $dumpvars(0, simsoctop);
+      $dumpvars(0, ram_chip);
 
       #simticks $finish;
     end
