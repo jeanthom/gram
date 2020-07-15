@@ -22,12 +22,12 @@ module simsoctb;
 
   // Generate 100 Mhz clock
   always 
-  begin
-    clkin = 1'b1; 
-    #5;
-    clkin = 1'b0;
-    #5;
-  end
+    begin
+      clkin = 1'b1;
+      #5;
+      clkin = 1'b0;
+      #5;
+    end
 
   // UART
   reg uart_rx;
@@ -47,9 +47,10 @@ module simsoctb;
   wire [1:0] dram_dm;
   wire dram_odt;
   wire [1:0] dram_tdqs_n;
+  reg dram_rst;
 
   ddr3 ram_chip (
-    .rst_n(1'b1),
+    .rst_n(~dram_rst),
     .ck(dram_ck),
     .ck_n(~dram_ck),
     .cke(dram_cke),
@@ -113,17 +114,16 @@ module simsoctb;
   initial
     begin
       uart_rx <= 1'b1;
-      $display("[%t] Starting POR",$time);
-      #1000; // POR is ~700us
-      $display("[%t] POR complete",$time);
+      dram_rst = 1;
+      #200000; // Wait for RESET
 
       // Software control
-      wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
+      dram_rst = 0;
 
       wishbone_write(32'h0000900c >> 2, 32'h0); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009000 >> 2, 8'h0C); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N
-      #500000;
+      #501000;
       wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
       #100000;
 
@@ -147,6 +147,10 @@ module simsoctb;
 
       // Set MR0
       wishbone_write(32'h0000900c >> 2, 32'h320); // p0 address
+      wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
+      wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
+      wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
+      wishbone_write(32'h0000900c >> 2, 32'h220); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
       wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
