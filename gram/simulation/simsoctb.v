@@ -23,9 +23,9 @@ module simsoctb;
   // Generate 100 Mhz clock
   always 
     begin
-      clkin = 1'b1;
+      clkin = 1;
       #5;
-      clkin = 1'b0;
+      clkin = 0;
       #5;
     end
 
@@ -49,7 +49,9 @@ module simsoctb;
   wire [1:0] dram_tdqs_n;
   reg dram_rst;
 
-  ddr3 ram_chip (
+  ddr3 #(
+    .check_strict_timing(0)
+  ) ram_chip (
     .rst_n(~dram_rst),
     .ck(dram_ck),
     .ck_n(~dram_ck),
@@ -67,6 +69,7 @@ module simsoctb;
     .tdqs_n(dram_tdqs_n),
     .odt(dram_odt)
   );
+  //defparam ram_chip.
   
   top simsoctop (
     .ddr3_0__dq__io(dram_dq),
@@ -115,37 +118,48 @@ module simsoctb;
     begin
       uart_rx <= 1'b1;
       dram_rst = 1;
-      #200000; // Wait for RESET
+      #350; // Wait for RESET and POR
 
       // Software control
       dram_rst = 0;
 
+      #10;
+
+      $display("Release RESET_N");
       wishbone_write(32'h0000900c >> 2, 32'h0); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009000 >> 2, 8'h0C); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N
-      #501000;
+      $display("Enable CKE");
       wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
-      #100000;
+      if (dram_cke != 1)
+        begin
+          $display("CKE activation failure");
+          $finish;
+        end
 
       // Set MR2
+      $display("Set MR2");
       wishbone_write(32'h0000900c >> 2, 32'h200); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h2); // p0 baddress
       wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
       wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
 
       // Set MR3
+      $display("Set MR3");
       wishbone_write(32'h0000900c >> 2, 32'h0); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h3); // p0 baddress
       wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
       wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
 
       // Set MR1
+      $display("Set MR1");
       wishbone_write(32'h0000900c >> 2, 32'h6); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h1); // p0 baddress
       wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
       wishbone_write(32'h00009008 >> 2, 8'h01); // Command issue strobe
 
       // Set MR0
+      $display("Set MR0");
       wishbone_write(32'h0000900c >> 2, 32'h320); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009004 >> 2, 8'h0F); // RAS|CAS|WE|CS
@@ -157,6 +171,7 @@ module simsoctb;
       #6000; // tDLLK
 
       // ZQ calibration
+      $display("Start ZQ calibration");
       wishbone_write(32'h0000900c >> 2, 32'h400); // p0 address (A10=1)
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009004 >> 2, 8'h03); // WE|CS
@@ -193,6 +208,7 @@ module simsoctb;
       uart_send(value[23:16]);
       uart_send(value[15:8]);
       uart_send(value[7:0]);
+      #100;
     end
   endtask
 
@@ -219,14 +235,14 @@ module simsoctb;
     integer i;
 
     begin
-      uart_rx <= 1'b0;
+      uart_rx = 0;
       #50;
       for (i = 0; i < 8; i = i + 1)
         begin
           uart_rx <= data[i];
           #50;
         end
-      uart_rx <= 1'b1;
+      uart_rx = 1;
       #50;
     end
   endtask
@@ -243,7 +259,7 @@ module simsoctb;
 
       for (i = 0; i < 8; i = i+1)
         begin
-          #50 data[i] <= uart_tx;
+          #50 data[i] = uart_tx;
         end
 
       #50;
