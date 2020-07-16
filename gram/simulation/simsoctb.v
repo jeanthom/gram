@@ -183,7 +183,7 @@ module simsoctb;
       #2000;
 
       wishbone_read(32'h10000000 >> 2, tmp);
-      #2000;
+      #2000 assert_equal_32(tmp, 32'hFACECA8C);
 
       // Write
       wishbone_write(32'h10000000 >> 2, 32'h12345678);
@@ -263,6 +263,19 @@ module simsoctb;
         end
 
       #50;
+    end
+  endtask
+
+  task assert_equal_32;
+    input [31:0] inA;
+    input [31:0] inB;
+
+    begin
+      if (inA != inB)
+        begin
+          $display("%m at %t: Assertion failed (32-bit) equality: %08x != %08x", $time, inA, inB);
+          $finish;
+        end
     end
   endtask
 endmodule
