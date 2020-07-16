@@ -45,10 +45,7 @@ class PLL(Elaboratable):
                        p_CLKOP_TRIM_DELAY=0,
                        p_CLKOS_TRIM_POL="FALLING",
                        p_CLKOS_TRIM_DELAY=0,
-                       p_CLKOP_CPHASE=2,
-                       p_CLKOS_CPHASE=23,
                        i_CLKI=self.clkin,
-                       i_CLKFB=clkfb,
                        i_RST=0,
                        i_STDBY=0,
                        i_PHASESEL0=0,
@@ -69,14 +66,6 @@ class PLL(Elaboratable):
                        )
         m = Module()
         m.submodules += pll
-        with m.If(self.clksel == 0):
-            m.d.comb += clkfb.eq(self.clkout1)
-        with m.Elif(self.clksel == 1):
-            m.d.comb += clkfb.eq(self.clkout2)
-        with m.Elif(self.clksel == 2):
-            m.d.comb += clkfb.eq(self.clkout3)
-        with m.Else():
-            m.d.comb += clkfb.eq(self.clkout4)
         return m
 
 
@@ -109,7 +98,7 @@ class ECPIX5CRG(Elaboratable):
         pod_done = Signal()
         with m.If(podcnt != 0):
             m.d.rawclk += podcnt.eq(podcnt-1)
-        m.d.comb += pod_done.eq(podcnt == 0)
+        m.d.rawclk += pod_done.eq(podcnt == 0)
 
         # Generating sync2x (200Mhz) and init (25Mhz) from clk100
         cd_sync2x = ClockDomain("sync2x", local=False)
