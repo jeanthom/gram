@@ -101,11 +101,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self._burstdet_clr = bank.csr(1, "rw")
         self._burstdet_seen = bank.csr(databits//8, "r")
 
-        self._zero_ev = self.event(mode="rise")
-
         self._bridge = self.bridge(data_width=32, granularity=8, alignment=2)
         self.bus = self._bridge.bus
-        self.irq = self._bridge.irq
 
         addressbits = len(self.pads.a.o)
         bankbits = len(self.pads.ba.o)
