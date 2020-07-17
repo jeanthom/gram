@@ -82,7 +82,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
     def __init__(self, pads, sys_clk_freq=100e6):
         super().__init__(name="phy")
 
-        #self.pads = PHYPadsCombiner(pads)
         self.pads = pads
         self._sys_clk_freq = sys_clk_freq
 
