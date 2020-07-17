@@ -169,14 +169,16 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         rddata_en = Signal(self.settings.read_latency)
 
         # Clock --------------------------------------------------------------------------------
+        m.d.comb += [
+            self.pads.clk.o_clk.eq(ClockSignal("dramsync")),
+            self.pads.clk.o_fclk.eq(ClockSignal("sync2x")),
+        ]
         for i in range(len(self.pads.clk.o0)):
             m.d.comb += [
-                self.pads.clk.o_clk[i].eq(ClockSignal("dramsync")),
-                self.pads.clk.o_fclk[i].eq(ClockSignal("sync2x")),
                 self.pads.clk.o0[i].eq(0),
                 self.pads.clk.o1[i].eq(1),
                 self.pads.clk.o2[i].eq(0),
-                self.pads.clk.o3[i].eq(1)
+                self.pads.clk.o3[i].eq(1),
             ]
 
         # Addresses and Commands ---------------------------------------------------------------
