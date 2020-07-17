@@ -105,7 +105,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self.bus = self._bridge.bus
 
         addressbits = len(self.pads.a.o0)
-        bankbits = len(self.pads.ba.o)
+        bankbits = len(self.pads.ba.o0)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
         databits = len(self.pads.dq.io)
         self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
@@ -147,7 +147,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         databits = len(self.pads.dq.io)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
         addressbits = len(self.pads.a.o0)
-        bankbits = len(self.pads.ba.o)
+        bankbits = len(self.pads.ba.o0)
 
         # Init -------------------------------------------------------------------------------------
         m.submodules.init = init = ECP5DDRPHYInit()
@@ -183,6 +183,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         m.d.comb += [
             self.pads.a.o_clk.eq(ClockSignal("dramsync")),
             self.pads.a.o_fclk.eq(ClockSignal("sync2x")),
+            self.pads.ba.o_clk.eq(ClockSignal("dramsync")),
+            self.pads.ba.o_fclk.eq(ClockSignal("sync2x")),
         ]
         for i in range(addressbits):
             m.d.comb += [
@@ -192,16 +194,13 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 self.pads.a.o3[i].eq(dfi.phases[1].address[i]),
             ]
         for i in range(bankbits):
-            m.submodules += Instance("ODDRX2F",
-                                     i_RST=ResetSignal("dramsync"),
-                                     i_ECLK=ClockSignal("sync2x"),
-                                     i_SCLK=ClockSignal(),
-                                     i_D0=dfi.phases[0].bank[i],
-                                     i_D1=dfi.phases[0].bank[i],
-                                     i_D2=dfi.phases[1].bank[i],
-                                     i_D3=dfi.phases[1].bank[i],
-                                     o_Q=self.pads.ba.o[i]
-                                     )
+            m.d.comb += [
+                self.pads.ba.o0[i].eq(dfi.phases[0].bank[i]),
+                self.pads.ba.o1[i].eq(dfi.phases[0].bank[i]),
+                self.pads.ba.o2[i].eq(dfi.phases[1].bank[i]),
+                self.pads.ba.o3[i].eq(dfi.phases[1].bank[i]),
+            ]
+
         controls = ["ras_n", "cas_n", "we_n", "clk_en", "odt"]
         if hasattr(self.pads, "reset_n"):
             controls.append("reset_n")
