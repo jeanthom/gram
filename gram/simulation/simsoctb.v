@@ -183,7 +183,13 @@ module simsoctb;
       #2000;
 
       wishbone_read(32'h10000000 >> 2, tmp);
-      #2000 assert_equal_32(tmp, 32'hFACECA8C);
+      assert_equal_32(tmp, 32'hFACECA8C);
+      wishbone_read(32'h10000004 >> 2, tmp);
+      assert_equal_32(tmp, 32'h0A0A0A0A);
+      wishbone_read(32'h10000008 >> 2, tmp);
+      assert_equal_32(tmp, 32'hFAAFFEEF);
+      wishbone_read(32'h1000000C >> 2, tmp);
+      assert_equal_32(tmp, 32'h12345678);
 
       // Write
       wishbone_write(32'h10000000 >> 2, 32'h12345678);
@@ -191,6 +197,9 @@ module simsoctb;
       wishbone_write(32'h10000100 >> 2, 32'h00000000);
       #10000;
       wishbone_read(32'h10000000 >> 2, tmp);
+      assert_equal_32(tmp, 32'h12345678);
+
+      $finish;
     end
 
   task wishbone_write;
