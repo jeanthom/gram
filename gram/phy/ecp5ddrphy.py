@@ -254,7 +254,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             with m.Switch(dqs_bitslip):
                 for j, b in enumerate(range(-2, 2)):
                     with m.Case(j):
-                        m.d.sync += dqs_read.eq(rddata_en[cl_sys_latency + b:cl_sys_latency + b + 2] != 0)
+                        m.d.sync += dqs_read.eq(1)
 
             m.submodules += Instance("DQSBUFM",
                                      p_DQS_LI_DEL_ADJ="MINUS",
@@ -450,7 +450,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 ]
                 m.d.sync += dq_i_data[:4].eq(dq_i_data[4:])
                 m.d.sync += dq_i_data[4:].eq(_dq_i_data)
-                m.d.comb += [
+                m.d.sync += [
                     dfi.phases[0].rddata[0*databits+j].eq(dq_i_data[0]),
                     dfi.phases[0].rddata[1*databits+j].eq(dq_i_data[1]),
                     dfi.phases[0].rddata[2*databits+j].eq(dq_i_data[2]),
