@@ -491,8 +491,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # The read data valid is asserted for 1 sys_clk cycle when the data is available on the DFI
         # interface, the latency is the sum of the ODDRX2DQA, CAS, IDDRX2DQA latencies.
         rddata_en_last = Signal.like(rddata_en)
-        m.d.comb += rddata_en.eq(
-            Cat(dfi.phases[self.settings.rdphase].rddata_en, rddata_en_last))
+        m.d.comb += rddata_en.eq(Cat(dfi.phases[self.settings.rdphase].rddata_en, rddata_en_last))
         m.d.sync += rddata_en_last.eq(rddata_en)
         m.d.sync += [phase.rddata_valid.eq(rddata_en[-1])
                      for phase in dfi.phases]
