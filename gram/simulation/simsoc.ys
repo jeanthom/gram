@@ -7,8 +7,8 @@ proc_init
 proc_arst
 proc_dlatch
 proc_dff
-proc_rmdead
 proc_mux
+proc_rmdead
 proc_clean
 pmuxtree
 memory_collect
