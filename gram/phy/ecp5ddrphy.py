@@ -104,7 +104,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self._bridge = self.bridge(data_width=32, granularity=8, alignment=2)
         self.bus = self._bridge.bus
 
-        addressbits = len(self.pads.a.o)
+        addressbits = len(self.pads.a.o0)
         bankbits = len(self.pads.ba.o)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
         databits = len(self.pads.dq.io)
@@ -115,8 +115,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         nphases = 2
         databits = len(self.pads.dq.io)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
-        addressbits = len(self.pads.a.o)
-        bankbits = len(self.pads.ba.o)
         cl, cwl = get_cl_cw("DDR3", tck)
         cl_sys_latency = get_sys_latency(nphases, cl)
         cwl_sys_latency = get_sys_latency(nphases, cwl)
@@ -148,7 +146,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         nphases = 2
         databits = len(self.pads.dq.io)
         nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
-        addressbits = len(self.pads.a.o)
+        addressbits = len(self.pads.a.o0)
         bankbits = len(self.pads.ba.o)
 
         # Init -------------------------------------------------------------------------------------
@@ -182,17 +180,17 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             ]
 
         # Addresses and Commands ---------------------------------------------------------------
+        m.d.comb += [
+            self.pads.a.o_clk.eq(ClockSignal("dramsync")),
+            self.pads.a.o_fclk.eq(ClockSignal("sync2x")),
+        ]
         for i in range(addressbits):
-            m.submodules += Instance("ODDRX2F",
-                                     i_RST=ResetSignal("dramsync"),
-                                     i_ECLK=ClockSignal("sync2x"),
-                                     i_SCLK=ClockSignal(),
-                                     i_D0=dfi.phases[0].address[i],
-                                     i_D1=dfi.phases[0].address[i],
-                                     i_D2=dfi.phases[1].address[i],
-                                     i_D3=dfi.phases[1].address[i],
-                                     o_Q=self.pads.a.o[i]
-                                     )
+            m.d.comb += [
+                self.pads.a.o0[i].eq(dfi.phases[0].address[i]),
+                self.pads.a.o1[i].eq(dfi.phases[0].address[i]),
+                self.pads.a.o2[i].eq(dfi.phases[1].address[i]),
+                self.pads.a.o3[i].eq(dfi.phases[1].address[i]),
+            ]
         for i in range(bankbits):
             m.submodules += Instance("ODDRX2F",
                                      i_RST=ResetSignal("dramsync"),
