@@ -340,7 +340,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             m.submodules += Instance("ODDRX2DQA",
                                      i_RST=ResetSignal("dramsync"),
                                      i_ECLK=ClockSignal("sync2x"),
-                                     i_SCLK=ClockSignal("sync"),
+                                     i_SCLK=ClockSignal("dramsync"),
                                      i_DQSW270=dqsw270,
                                      i_D0=dm_o_data_muxed[0],
                                      i_D1=dm_o_data_muxed[1],
