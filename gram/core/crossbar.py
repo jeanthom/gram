@@ -83,49 +83,6 @@ class gramCrossbar(Elaboratable):
         self.masters.append(port)
         return port
 
-    def get_port(self, mode="both", data_width=None, clock_domain="sync", reverse=False):
-        if data_width is None:
-            # use internal data_width when no width adaptation is requested
-            data_width = self.controller.data_width
-
-        # Crossbar port ----------------------------------------------------------------------------
-        port = gramNativePort(
-            mode=mode,
-            address_width=self.rca_bits + self.bank_bits - self.rank_bits,
-            data_width=self.controller.data_width,
-            clock_domain="sync",
-            id=len(self.masters))
-        self.masters.append(port)
-
-        # Clock domain crossing --------------------------------------------------------------------
-        if clock_domain != "sync":
-            new_port = gramNativePort(
-                mode=mode,
-                address_width=port.address_width,
-                data_width=port.data_width,
-                clock_domain=clock_domain,
-                id=port.id)
-            self._pending_submodules.append(gramNativePortCDC(new_port, port))
-            port = new_port
-
-        # Data width convertion --------------------------------------------------------------------
-        if data_width != self.controller.data_width:
-            if data_width > self.controller.data_width:
-                addr_shift = -log2_int(data_width//self.controller.data_width)
-            else:
-                addr_shift = log2_int(self.controller.data_width//data_width)
-            new_port = gramNativePort(
-                mode=mode,
-                address_width=port.address_width + addr_shift,
-                data_width=data_width,
-                clock_domain=clock_domain,
-                id=port.id)
-            self._pending_submodules.append(DomainRenamer(clock_domain)(
-                gramNativePortConverter(new_port, port, reverse)))
-            port = new_port
-
-        return port
-
     def elaborate(self, platform):
         m = Module()
 
