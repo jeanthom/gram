@@ -47,6 +47,13 @@ void dfii_p0_command(struct gramCtx *ctx, uint32_t cmd) {
 #endif
 }
 
+/* Set MRx register */
+static void dfii_set_mr(struct gramCtx *ctx, uint8_t mr, uint16_t val) {
+	dfii_set_p0_address(ctx, val);
+	dfii_set_p0_baddress(ctx, mr);
+	dfii_p0_command(ctx, DFII_COMMAND_RAS|DFII_COMMAND_CAS|DFII_COMMAND_WE|DFII_COMMAND_CS);
+}
+
 /* TODO: those values are hardcoded for ECPIX-5's RAM */
 /* Should add the capacity to generate MRx from RAM spec */
 void dfii_initseq(struct gramCtx *ctx) {
@@ -63,24 +70,18 @@ void dfii_initseq(struct gramCtx *ctx) {
 	cdelay(10000);
 
 	/* Load Mode Register 2, CWL=5 */
-	dfii_set_p0_address(ctx, 0x200);
-	dfii_set_p0_baddress(ctx, 2);
-	dfii_p0_command(ctx, DFII_COMMAND_RAS|DFII_COMMAND_CAS|DFII_COMMAND_WE|DFII_COMMAND_CS);
+	dfii_set_mr(ctx, 2, 0x200);
 
 	/* Load Mode Register 3 */
-	dfii_set_p0_address(ctx, 0x0);
-	dfii_set_p0_baddress(ctx, 3);
-	dfii_p0_command(ctx, DFII_COMMAND_RAS|DFII_COMMAND_CAS|DFII_COMMAND_WE|DFII_COMMAND_CS);
+	dfii_set_mr(ctx, 3, 0x0);
 
 	/* Load Mode Register 1 */
-	dfii_set_p0_address(ctx, 0x6);
-	dfii_set_p0_baddress(ctx, 1);
-	dfii_p0_command(ctx, DFII_COMMAND_RAS|DFII_COMMAND_CAS|DFII_COMMAND_WE|DFII_COMMAND_CS);
+	dfii_set_mr(ctx, 1, 0x6);
 
 	/* Load Mode Register 0, CL=6, BL=8 */
-	dfii_set_p0_address(ctx, 0x320);
-	dfii_set_p0_baddress(ctx, 0);
-	dfii_p0_command(ctx, DFII_COMMAND_RAS|DFII_COMMAND_CAS|DFII_COMMAND_WE|DFII_COMMAND_CS);
+	dfii_set_mr(ctx, 0, 0x320);
+	cdelay(100);
+	dfii_set_mr(ctx, 0, 0x220);
 	cdelay(600);
 
 	/* ZQ Calibration */
