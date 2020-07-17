@@ -170,7 +170,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
         # Clock --------------------------------------------------------------------------------
         for i in range(len(self.pads.clk.o)):
-            sd_clk_se = Signal()
             m.submodules += Instance("ODDRX2F",
                                      i_RST=ResetSignal("dramsync"),
                                      i_ECLK=ClockSignal("sync2x"),
