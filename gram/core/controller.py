@@ -89,7 +89,7 @@ class gramController(Elaboratable):
                                        nranks=nranks,
                                        settings=self.settings)
             bank_machines.append(bank_machine)
-            m.submodules += bank_machine
+            setattr(m.submodules, "bankmachine"+str(n), bank_machine)
             m.d.comb += getattr(self.interface, "bank" +
                                 str(n)).connect(bank_machine.req)
 
