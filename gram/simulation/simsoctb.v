@@ -40,8 +40,8 @@ module simsoctb;
   wire dram_ras_n;
   wire dram_cas_n;
   wire [15:0] dram_dq;
-  wire [1:0] dram_dqs;
-  wire [1:0] dram_dqs_n;
+  inout wire [1:0] dram_dqs;
+  inout wire [1:0] dram_dqs_n;
   wire [13:0] dram_a;
   wire [2:0] dram_ba;
   wire [1:0] dram_dm;
@@ -69,6 +69,9 @@ module simsoctb;
     .tdqs_n(dram_tdqs_n),
     .odt(dram_odt)
   );
+
+  assign dram_dqs_n = (dram_dqs != 2'hz) ? ~dram_dqs : 2'hz;
+
   //defparam ram_chip.
   
   top simsoctop (
