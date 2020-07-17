@@ -1084,6 +1084,10 @@ module ddr3 (
         reg [COL_BITS-1:0] col;
         reg group;
         begin
+            if (cmd != NOP) begin
+                $display("[%t] cmd_task %s", $time, cmd_string[cmd]);
+            end
+
             // tRFC max check
             if (!er_trfc_max && !in_self_refresh) begin
                 if ($time - tm_refresh > TRFC_MAX && check_strict_timing) begin
