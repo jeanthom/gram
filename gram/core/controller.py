@@ -83,15 +83,12 @@ class gramController(Elaboratable):
         # Bank Machines ----------------------------------------------------------------------------
         bank_machines = []
         for n in range(nranks*nbanks):
-            bank_machine = BankMachine(n,
-                                       address_width=self.interface.address_width,
-                                       address_align=self._address_align,
-                                       nranks=nranks,
-                                       settings=self.settings)
+            bank_machine = BankMachine(n, address_width=self.interface.address_width,
+                address_align=self._address_align,
+                nranks=nranks, settings=self.settings)
             bank_machines.append(bank_machine)
             setattr(m.submodules, "bankmachine"+str(n), bank_machine)
-            m.d.comb += getattr(self.interface, "bank" +
-                                str(n)).connect(bank_machine.req)
+            m.d.comb += getattr(self.interface, "bank" + str(n)).connect(bank_machine.req)
 
         # Multiplexer ------------------------------------------------------------------------------
         m.submodules.multiplexer = Multiplexer(

@@ -113,12 +113,9 @@ class BankMachine(Elaboratable):
             self.req.ready.eq(cmd_buffer_lookahead.sink.ready),
             cmd_buffer_lookahead.sink.payload.we.eq(self.req.we),
             cmd_buffer_lookahead.sink.payload.addr.eq(self.req.addr),
-
             cmd_buffer_lookahead.source.connect(cmd_buffer.sink),
-            cmd_buffer.source.ready.eq(
-                self.req.wdata_ready | self.req.rdata_valid),
-            self.req.lock.eq(cmd_buffer_lookahead.source.valid |
-                             cmd_buffer.source.valid),
+            cmd_buffer.source.ready.eq(self.req.wdata_ready | self.req.rdata_valid),
+            self.req.lock.eq(cmd_buffer_lookahead.source.valid | cmd_buffer.source.valid),
         ]
 
         m.submodules.lookahead_slicer = lookahead_slicer = _AddressSlicer(len(cmd_buffer_lookahead.source.addr),
@@ -154,13 +151,10 @@ class BankMachine(Elaboratable):
             m.d.comb += self.cmd.a.eq((auto_precharge << 10) | current_slicer.col)
 
         # tWTP (write-to-precharge) controller -----------------------------------------------------
-        write_latency = math.ceil(
-            self.settings.phy.cwl / self.settings.phy.nphases)
-        precharge_time = write_latency + self.settings.timing.tWR + \
-            self.settings.timing.tCCD  # AL=0
+        write_latency = math.ceil(self.settings.phy.cwl / self.settings.phy.nphases)
+        precharge_time = write_latency + self.settings.timing.tWR + self.settings.timing.tCCD  # AL=0
         m.submodules.twtpcon = twtpcon = tXXDController(precharge_time)
-        m.d.comb += twtpcon.valid.eq(self.cmd.valid &
-                                     self.cmd.ready & self.cmd.is_write)
+        m.d.comb += twtpcon.valid.eq(self.cmd.valid & self.cmd.ready & self.cmd.is_write)
 
         # tRC (activate-activate) controller -------------------------------------------------------
         m.submodules.trccon = trccon = tXXDController(self.settings.timing.tRC)
