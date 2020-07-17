@@ -11,7 +11,6 @@ from nmigen import *
 
 from gram.common import *
 from gram.core.controller import *
-from gram.frontend.adaptation import *
 from gram.compat import RoundRobin
 import gram.stream as stream
 
