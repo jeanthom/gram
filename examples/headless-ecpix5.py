@@ -32,7 +32,9 @@ class DDR3SoC(SoC, Elaboratable):
 
         self.ub = UARTBridge(divisor=868, pins=platform.request("uart", 0))
 
-        self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"})))
+        ddr_pins = platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"},
+            xdr={"clk":4})
+        self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(ddr_pins))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
         ddrmodule = MT41K256M16(platform.default_clk_frequency, "1:2")
