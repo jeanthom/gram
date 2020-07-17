@@ -45,10 +45,7 @@ class PLL(Elaboratable):
                        p_CLKOP_TRIM_DELAY=0,
                        p_CLKOS_TRIM_POL="FALLING",
                        p_CLKOS_TRIM_DELAY=0,
-                       p_CLKOP_CPHASE=2,
-                       p_CLKOS_CPHASE=23,
                        i_CLKI=self.clkin,
-                       i_CLKFB=clkfb,
                        i_RST=0,
                        i_STDBY=0,
                        i_PHASESEL0=0,
@@ -69,14 +66,6 @@ class PLL(Elaboratable):
                        )
         m = Module()
         m.submodules += pll
-        with m.If(self.clksel == 0):
-            m.d.comb += clkfb.eq(self.clkout1)
-        with m.Elif(self.clksel == 1):
-            m.d.comb += clkfb.eq(self.clkout2)
-        with m.Elif(self.clksel == 2):
-            m.d.comb += clkfb.eq(self.clkout3)
-        with m.Else():
-            m.d.comb += clkfb.eq(self.clkout4)
         return m
 
 
@@ -117,7 +106,7 @@ class ECPIX5CRG(Elaboratable):
         cd_init = ClockDomain("init", local=False)
         cd_sync = ClockDomain("sync", local=False)
         cd_dramsync = ClockDomain("dramsync", local=False)
-        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=1, CLK2_DIV=4,
+        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), CLKI_DIV=1, CLKFB_DIV=2, CLK1_DIV=3, CLK2_DIV=24,
             clkout1=ClockSignal("sync2x_unbuf"), clkout2=ClockSignal("init"))
         m.submodules += Instance("ECLKSYNCB",
                 i_ECLKI = ClockSignal("sync2x_unbuf"),
