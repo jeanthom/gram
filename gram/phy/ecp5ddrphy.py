@@ -204,17 +204,17 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         if hasattr(self.pads, "cs_n"):
             controls.append("cs_n")
         for name in controls:
-            for i in range(len(getattr(self.pads, name))):
-                m.submodules += Instance("ODDRX2F",
-                                         i_RST=ResetSignal("dramsync"),
-                                         i_ECLK=ClockSignal("sync2x"),
-                                         i_SCLK=ClockSignal(),
-                                         i_D0=getattr(dfi.phases[0], name)[i],
-                                         i_D1=getattr(dfi.phases[0], name)[i],
-                                         i_D2=getattr(dfi.phases[1], name)[i],
-                                         i_D3=getattr(dfi.phases[1], name)[i],
-                                         o_Q=getattr(self.pads, name).o[i]
-                                         )
+            m.d.comb += [
+                getattr(self.pads, name).o_clk.eq(ClockSignal("dramsync")),
+                getattr(self.pads, name).o_fclk.eq(ClockSignal("sync2x")),
+            ]
+            for i in range(len(getattr(self.pads, name).o0)):
+                m.d.comb += [
+                    getattr(self.pads, name).o0[i].eq(getattr(dfi.phases[0], name)[i]),
+                    getattr(self.pads, name).o1[i].eq(getattr(dfi.phases[0], name)[i]),
+                    getattr(self.pads, name).o2[i].eq(getattr(dfi.phases[1], name)[i]),
+                    getattr(self.pads, name).o3[i].eq(getattr(dfi.phases[1], name)[i]),
+                ]
 
         # DQ ---------------------------------------------------------------------------------------
         dq_oe = Signal()
