@@ -145,9 +145,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.io)
-        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
-        addressbits = len(self.pads.a.o0)
-        bankbits = len(self.pads.ba.o0)
 
         # Init -------------------------------------------------------------------------------------
         m.submodules.init = init = ECP5DDRPHYInit()
@@ -186,14 +183,14 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             self.pads.ba.o_clk.eq(ClockSignal("dramsync")),
             self.pads.ba.o_fclk.eq(ClockSignal("sync2x")),
         ]
-        for i in range(addressbits):
+        for i in range(len(self.pads.a.o0)):
             m.d.comb += [
                 self.pads.a.o0[i].eq(dfi.phases[0].address[i]),
                 self.pads.a.o1[i].eq(dfi.phases[0].address[i]),
                 self.pads.a.o2[i].eq(dfi.phases[1].address[i]),
                 self.pads.a.o3[i].eq(dfi.phases[1].address[i]),
             ]
-        for i in range(bankbits):
+        for i in range(len(self.pads.ba.o0)):
             m.d.comb += [
                 self.pads.ba.o0[i].eq(dfi.phases[0].bank[i]),
                 self.pads.ba.o1[i].eq(dfi.phases[0].bank[i]),
