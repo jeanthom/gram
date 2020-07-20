@@ -6,7 +6,7 @@
 #define DFII_CONTROL_SEL (1 << 0)
 #define DFII_CONTROL_CKE (1 << 1)
 #define DFII_CONTROL_ODT (1 << 2)
-#define DFII_CONTROL_RESET_N (1 << 3)
+#define DFII_CONTROL_RESET (1 << 3)
 
 #define DFII_COMMAND_CS (1 << 0)
 #define DFII_COMMAND_WE (1 << 1)

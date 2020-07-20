@@ -46,10 +46,10 @@ class PhaseInjectorTestCase(FHDLTestCase):
         m, dfi, csrhost = self.generate_phaseinjector()
 
         def process():
-            self.assertTrue((yield dfi.phases[0].cas_n))
-            self.assertTrue((yield dfi.phases[0].ras_n))
-            self.assertTrue((yield dfi.phases[0].we_n))
-            self.assertTrue((yield dfi.phases[0].act_n))
+            self.assertFalse((yield dfi.phases[0].cas))
+            self.assertFalse((yield dfi.phases[0].ras))
+            self.assertFalse((yield dfi.phases[0].we))
+            self.assertFalse((yield dfi.phases[0].act))
             self.assertFalse((yield dfi.phases[0].wrdata_mask))
             self.assertFalse((yield dfi.phases[0].rddata_en))
             self.assertFalse((yield dfi.phases[0].wrdata_en))
@@ -162,10 +162,10 @@ class DFIInjectorTestCase(FHDLTestCase):
         def process():
             yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, (1 << 3), sel=0xF)
             yield
-            self.assertTrue((yield dut.master.phases[0].reset_n))
+            self.assertTrue((yield dut.master.phases[0].reset))
 
             yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, 0, sel=0xF)
             yield
-            self.assertFalse((yield dut.master.phases[0].reset_n))
+            self.assertFalse((yield dut.master.phases[0].reset))
 
         runSimulation(m, process, "test_dfiinjector.vcd")

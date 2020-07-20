@@ -15,9 +15,9 @@ static void dfii_setcontrol(struct gramCtx *ctx, uint8_t val) {
 
 void dfii_setsw(struct gramCtx *ctx, bool software_control) {
 	if (software_control) {
-		dfii_setcontrol(ctx, DFII_CONTROL_CKE|DFII_CONTROL_ODT|DFII_CONTROL_RESET_N);
+		dfii_setcontrol(ctx, DFII_CONTROL_CKE|DFII_CONTROL_ODT);
 	} else {
-		dfii_setcontrol(ctx, DFII_CONTROL_SEL);
+		dfii_setcontrol(ctx, DFII_CONTROL_SEL|DFII_CONTROL_RESET);
 	}
 }
 
@@ -60,13 +60,13 @@ void dfii_initseq(struct gramCtx *ctx) {
 	/* Release reset */
 	dfii_set_p0_address(ctx, 0x0);
 	dfii_set_p0_baddress(ctx, 0);
-	dfii_setcontrol(ctx, DFII_CONTROL_ODT|DFII_CONTROL_RESET_N);
+	dfii_setcontrol(ctx, DFII_CONTROL_ODT);
 	cdelay(50000);
 
 	/* Bring CKE high */
 	dfii_set_p0_address(ctx, 0x0);
 	dfii_set_p0_baddress(ctx, 0);
-	dfii_setcontrol(ctx, DFII_CONTROL_CKE|DFII_CONTROL_ODT|DFII_CONTROL_RESET_N);
+	dfii_setcontrol(ctx, DFII_CONTROL_CKE|DFII_CONTROL_ODT);
 	cdelay(10000);
 
 	/* Load Mode Register 2, CWL=5 */

@@ -129,16 +129,16 @@ class DFIPhaseModel(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        with m.If(~self.phase.cs_n & ~self.phase.ras_n & self.phase.cas_n):
+        with m.If(self.phase.cs & self.phase.ras & ~self.phase.cas):
             m.d.comb += [
-                self.activate.eq(self.phase.we_n),
-                self.precharge.eq(~self.phase.we_n),
+                self.activate.eq(~self.phase.we),
+                self.precharge.eq(self.phase.we),
             ]
 
-        with m.If(~self.phase.cs_n & self.phase.ras_n & ~self.phase.cas_n):
+        with m.If(self.phase.cs & ~self.phase.ras & self.phase.cas):
             m.d.comb += [
-                self.write.eq(~self.phase.we_n),
-                self.read.eq(self.phase.we_n),
+                self.write.eq(self.phase.we),
+                self.read.eq(~self.phase.we),
             ]
 
         return m
@@ -163,12 +163,12 @@ class TimingRule:
 class DFITimingsChecker(Elaboratable):
     CMDS = [
         # Name, cs & ras & cas & we value
-        ("PRE",  "0010"), # Precharge
-        ("REF",  "0001"), # Self refresh
-        ("ACT",  "0011"), # Activate
-        ("RD",   "0101"), # Read
-        ("WR",   "0100"), # Write
-        ("ZQCS", "0110"), # ZQCS
+        ("PRE",  "1101"), # Precharge
+        ("REF",  "1110"), # Self refresh
+        ("ACT",  "1100"), # Activate
+        ("RD",   "1010"), # Read
+        ("WR",   "1011"), # Write
+        ("ZQCS", "1001"), # ZQCS
     ]
 
     RULES = [
@@ -291,7 +291,7 @@ class DFITimingsChecker(Elaboratable):
             ps = Signal().like(cnt)
             m.d.comb += ps.eq((cnt + np)*int(self.timings["tCK"]))
             state = Signal(4)
-            m.d.comb += state.eq(Cat(phase.we_n, phase.cas_n, phase.ras_n, phase.cs_n))
+            m.d.comb += state.eq(Cat(phase.we, phase.cas, phase.ras, phase.cs))
             all_banks = Signal()
 
             m.d.comb += all_banks.eq(

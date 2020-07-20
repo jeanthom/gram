@@ -106,7 +106,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
         addressbits = len(self.pads.a.o0)
         bankbits = len(self.pads.ba.o0)
-        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
+        nranks = 1 if not hasattr(self.pads, "cs") else len(self.pads.cs.o0)
         databits = len(self.pads.dq.io)
         self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
 
@@ -114,7 +114,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.io)
-        nranks = 1 if not hasattr(self.pads, "cs_n") else len(self.pads.cs_n.o)
+        nranks = 1 if not hasattr(self.pads, "cs") else len(self.pads.cs.o0)
         cl, cwl = get_cl_cw("DDR3", tck)
         cl_sys_latency = get_sys_latency(nphases, cl)
         cwl_sys_latency = get_sys_latency(nphases, cwl)
@@ -198,11 +198,11 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 self.pads.ba.o3[i].eq(dfi.phases[1].bank[i]),
             ]
 
-        controls = ["ras_n", "cas_n", "we_n", "clk_en", "odt"]
-        if hasattr(self.pads, "reset_n"):
-            controls.append("reset_n")
-        if hasattr(self.pads, "cs_n"):
-            controls.append("cs_n")
+        controls = ["ras", "cas", "we", "clk_en", "odt"]
+        if hasattr(self.pads, "reset"):
+            controls.append("reset")
+        if hasattr(self.pads, "cs"):
+            controls.append("cs")
         for name in controls:
             m.d.comb += [
                 getattr(self.pads, name).o_clk.eq(ClockSignal("dramsync")),

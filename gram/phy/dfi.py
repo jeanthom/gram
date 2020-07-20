@@ -12,14 +12,14 @@ def phase_description(addressbits, bankbits, nranks, databits):
         # cmd description
         ("address", addressbits, DIR_FANOUT),
         ("bank", bankbits, DIR_FANOUT),
-        ("cas_n", 1, DIR_FANOUT),
-        ("cs_n", nranks, DIR_FANOUT),
-        ("ras_n", 1, DIR_FANOUT),
-        ("we_n", 1, DIR_FANOUT),
+        ("cas", 1, DIR_FANOUT),
+        ("cs", nranks, DIR_FANOUT),
+        ("ras", 1, DIR_FANOUT),
+        ("we", 1, DIR_FANOUT),
         ("clk_en", nranks, DIR_FANOUT),
         ("odt", nranks, DIR_FANOUT),
-        ("reset_n", 1, DIR_FANOUT),
-        ("act_n", 1, DIR_FANOUT),
+        ("reset", 1, DIR_FANOUT),
+        ("act", 1, DIR_FANOUT),
         # wrdata description
         ("wrdata", databits, DIR_FANOUT),
         ("wrdata_en", 1, DIR_FANOUT),
@@ -38,11 +38,7 @@ class Interface:
             p = Record(phase_description(
                 addressbits, bankbits, nranks, databits))
             self.phases += [p]
-            p.cas_n.reset = 1
-            p.cs_n.reset = (2**nranks-1)
-            p.ras_n.reset = 1
-            p.we_n.reset = 1
-            p.act_n.reset = 1
+            p.reset.reset = 1
 
     def connect(self, target):
         if not isinstance(target, Interface):

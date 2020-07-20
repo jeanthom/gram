@@ -36,17 +36,17 @@ class PhaseInjector(Elaboratable):
 
         with m.If(self._command_issue.w_stb):
             m.d.comb += [
-                self._phase.cs_n.eq(Repl(value=~self._command.w_data[0], count=len(self._phase.cs_n))),
-                self._phase.we_n.eq(~self._command.w_data[1]),
-                self._phase.cas_n.eq(~self._command.w_data[2]),
-                self._phase.ras_n.eq(~self._command.w_data[3]),
+                self._phase.cs.eq(Repl(value=self._command.w_data[0], count=len(self._phase.cs))),
+                self._phase.we.eq(self._command.w_data[1]),
+                self._phase.cas.eq(self._command.w_data[2]),
+                self._phase.ras.eq(self._command.w_data[3]),
             ]
         with m.Else():
             m.d.comb += [
-                self._phase.cs_n.eq(Repl(value=1, count=len(self._phase.cs_n))),
-                self._phase.we_n.eq(1),
-                self._phase.cas_n.eq(1),
-                self._phase.ras_n.eq(1),
+                self._phase.cs.eq(Repl(value=0, count=len(self._phase.cs))),
+                self._phase.we.eq(0),
+                self._phase.cas.eq(0),
+                self._phase.ras.eq(0),
             ]
 
         with m.If(self._phase.rddata_valid):
@@ -65,7 +65,7 @@ class DFIInjector(Elaboratable):
         self.slave = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
         self.master = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
 
-        self._control = csr_bank.csr(4, "w")  # sel, clk_en, odt, reset_n
+        self._control = csr_bank.csr(4, "w")  # sel, clk_en, odt, reset
 
         self._phases = []
         for n, phase in enumerate(self._inti.phases):
@@ -87,7 +87,7 @@ class DFIInjector(Elaboratable):
                          for phase in self._inti.phases]
             m.d.comb += [phase.odt[i].eq(self._control.w_data[2])
                          for phase in self._inti.phases if hasattr(phase, "odt")]
-        m.d.comb += [phase.reset_n.eq(self._control.w_data[3])
-                     for phase in self._inti.phases if hasattr(phase, "reset_n")]
+        m.d.comb += [phase.reset.eq(self._control.w_data[3])
+                     for phase in self._inti.phases if hasattr(phase, "reset")]
 
         return m

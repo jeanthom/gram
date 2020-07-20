@@ -161,10 +161,10 @@ class _Steerer(Elaboratable):
                 return cmd.valid & cmd.ready & getattr(cmd, attr)
 
         for i, (phase, sel) in enumerate(zip(dfi.phases, self.sel)):
-            nranks = len(phase.cs_n)
+            nranks = len(phase.cs)
             rankbits = log2_int(nranks)
-            if hasattr(phase, "reset_n"):
-                m.d.comb += phase.reset_n.eq(1)
+            if hasattr(phase, "reset"):
+                m.d.comb += phase.reset.eq(0)
             m.d.comb += phase.clk_en.eq(Repl(Signal(reset=1), nranks))
             if hasattr(phase, "odt"):
                 # FIXME: add dynamic drive for multi-rank (will be needed for high frequencies)
@@ -176,24 +176,24 @@ class _Steerer(Elaboratable):
                     (Array(cmd.ba[-rankbits:] for cmd in commands)[sel]))
                 if i == 0:  # Select all ranks on refresh.
                     with m.If(sel == STEER_REFRESH):
-                        m.d.sync += phase.cs_n.eq(0)
+                        m.d.sync += phase.cs.eq(1)
                     with m.Else():
-                        m.d.sync += phase.cs_n.eq(~rank_decoder.o)
+                        m.d.sync += phase.cs.eq(rank_decoder.o)
                 else:
-                    m.d.sync += phase.cs_n.eq(~rank_decoder.o)
+                    m.d.sync += phase.cs.eq(rank_decoder.o)
                 m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits]
                                                 for cmd in commands)[sel])
             else:
                 m.d.sync += [
-                    phase.cs_n.eq(0),
+                    phase.cs.eq(1),
                     phase.bank.eq(Array(cmd.ba[:] for cmd in commands)[sel]),
                 ]
 
             m.d.sync += [
                 phase.address.eq(Array(cmd.a for cmd in commands)[sel]),
-                phase.cas_n.eq(~Array(valid_and(cmd, "cas") for cmd in commands)[sel]),
-                phase.ras_n.eq(~Array(valid_and(cmd, "ras") for cmd in commands)[sel]),
-                phase.we_n.eq(~Array(valid_and(cmd, "we") for cmd in commands)[sel])
+                phase.cas.eq(Array(valid_and(cmd, "cas") for cmd in commands)[sel]),
+                phase.ras.eq(Array(valid_and(cmd, "ras") for cmd in commands)[sel]),
+                phase.we.eq(Array(valid_and(cmd, "we") for cmd in commands)[sel])
             ]
 
             rddata_ens = Array(valid_and(cmd, "is_read") for cmd in commands)
