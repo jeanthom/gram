@@ -60,37 +60,6 @@ def get_sys_phases(nphases, sys_latency, cas_latency):
     cmd_phase = (dat_phase - 1) % nphases
     return cmd_phase, dat_phase
 
-class DQSPattern(Elaboratable):
-    def __init__(self, preamble=Signal(), postamble=Signal(), wlevel_en=0, wlevel_strobe=0, register=False):
-        self.preamble = preamble
-        self.postamble = postamble
-        self.o = Signal(8)
-        self._wlevel_en = wlevel_en
-        self._wlevel_strobe = wlevel_strobe
-        self._register = register
-
-    def elaborate(self, platform):
-        m = Module()
-
-        with m.If(self.preamble):
-            m.d.comb += self.o.eq(0b00010101)
-        with m.Elif(self.postamble):
-            m.d.comb += self.o.eq(0b01010100)
-        with m.Elif(self._wlevel_en):
-            with m.If(self._wlevel_strobe):
-                m.d.comb += self.o.eq(0b00000001)
-            with m.Else():
-                m.d.comb += self.o.eq(0b00000000)
-        with m.Else():
-            m.d.comb += self.o.eq(0b01010101)
-
-        if self._register:
-            o = Signal.like(self.o)
-            m.d.sync += o.eq(self.o)
-            self.o = o
-
-        return m
-
 # Settings -----------------------------------------------------------------------------------------
 
 
