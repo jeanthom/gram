@@ -81,3 +81,4 @@ tasks:
   - run-tests: |
       cd ~/gram
       contrib/test
+shell: false
