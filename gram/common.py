@@ -59,65 +59,6 @@ def get_sys_phases(nphases, sys_latency, cas_latency):
     cmd_phase = (dat_phase - 1) % nphases
     return cmd_phase, dat_phase
 
-# PHY Pads Transformers ----------------------------------------------------------------------------
-
-
-class PHYPadsReducer:
-    """PHY Pads Reducer
-
-    Reduce DRAM pads to only use specific modules.
-
-    For testing purposes, we often need to use only some of the DRAM modules. PHYPadsReducer allows
-    selecting specific modules and avoid re-definining dram pins in the Platform for this.
-    """
-
-    def __init__(self, pads, modules):
-        self.pads = pads
-        self.modules = modules
-
-    def __getattr__(self, name):
-        if name in ["dq"]:
-            return Array([getattr(self.pads, name)[8*i + j]
-                          for i in self.modules
-                          for j in range(8)])
-        if name in ["dm", "dqs", "dqs_p", "dqs_n"]:
-            return Array([getattr(self.pads, name)[i] for i in self.modules])
-        else:
-            return getattr(self.pads, name)
-
-
-class PHYPadsCombiner:
-    """PHY Pads Combiner
-
-    Combine DRAM pads from fully dissociated chips in a unique DRAM pads structure.
-
-    Most generally, DRAM chips are sharing command/address lines between chips (using a fly-by
-    topology since DDR3). On some boards, the DRAM chips are using separate command/address lines
-    and this combiner can be used to re-create a single pads structure (that will be compatible with
-    LiteDRAM's PHYs) to create a single DRAM controller from multiple fully dissociated DRAMs chips.
-    """
-
-    def __init__(self, pads):
-        if not isinstance(pads, list):
-            self.groups = [pads]
-        else:
-            self.groups = pads
-        self.sel = 0
-
-    def sel_group(self, n):
-        self.sel = n
-
-    def __getattr__(self, name):
-        if name in ["dm", "dq", "dqs", "dqs_p", "dqs_n"]:
-            return Array([getattr(self.groups[j], name)[i]
-                          for i in range(len(getattr(self.groups[0], name)))
-                          for j in range(len(self.groups))])
-        else:
-            return getattr(self.groups[self.sel], name)
-
-# DQS Pattern --------------------------------------------------------------------------------------
-
-
 class DQSPattern(Elaboratable):
     def __init__(self, preamble=None, postamble=None, wlevel_en=0, wlevel_strobe=0, register=False):
         self.preamble = Signal() if preamble is None else preamble
