@@ -451,10 +451,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                              i_ECLK=ClockSignal("sync2x"),
                              i_SCLK=ClockSignal(),
                              i_DQSW270=dqsw270,
-                             i_T0=~(dqs_pattern.preamble | dq_oe |
-                                    dqs_pattern.postamble),
-                             i_T1=~(dqs_pattern.preamble | dq_oe |
-                                    dqs_pattern.postamble),
+                             i_T0=~(dqs_pattern.preamble | dq_oe | dqs_pattern.postamble),
+                             i_T1=~(dqs_pattern.preamble | dq_oe | dqs_pattern.postamble),
                              o_Q=dq_oe_n,
                              ),
                     Instance("BB",
@@ -481,8 +479,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         rddata_en_last = Signal.like(rddata_en)
         m.d.comb += rddata_en.eq(Cat(dfi.phases[self.settings.rdphase].rddata_en, rddata_en_last))
         m.d.sync += rddata_en_last.eq(rddata_en)
-        m.d.sync += [phase.rddata_valid.eq(rddata_en[-1])
-                     for phase in dfi.phases]
+        m.d.sync += [phase.rddata_valid.eq(rddata_en[-1]) for phase in dfi.phases]
 
         # Write Control Path -----------------------------------------------------------------------
         # Creates a shift register of write commands coming from the DFI interface. This shift register
@@ -493,11 +490,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # FIXME: understand +2
         wrdata_en = Signal(cwl_sys_latency + 5)
         wrdata_en_last = Signal.like(wrdata_en)
-        m.d.comb += wrdata_en.eq(
-            Cat(dfi.phases[self.settings.wrphase].wrdata_en, wrdata_en_last))
+        m.d.comb += wrdata_en.eq(Cat(dfi.phases[self.settings.wrphase].wrdata_en, wrdata_en_last))
         m.d.sync += wrdata_en_last.eq(wrdata_en)
-        m.d.comb += dq_oe.eq(wrdata_en[cwl_sys_latency + 2]
-                             | wrdata_en[cwl_sys_latency + 3])
+        m.d.comb += dq_oe.eq(wrdata_en[cwl_sys_latency + 2] | wrdata_en[cwl_sys_latency + 3])
         m.d.comb += bl8_chunk.eq(wrdata_en[cwl_sys_latency + 1])
         m.d.comb += dqs_oe.eq(dq_oe)
 
@@ -505,9 +500,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # Generates DQS Preamble 1 cycle before the first write and Postamble 1 cycle after the last
         # write. During writes, DQS tristate is configured as output for at least 4 sys_clk cycles:
         # 1 for Preamble, 2 for the Write and 1 for the Postamble.
-        m.d.comb += dqs_pattern.preamble.eq(
-            wrdata_en[cwl_sys_latency + 1] & ~wrdata_en[cwl_sys_latency + 2])
-        m.d.comb += dqs_pattern.postamble.eq(
-            wrdata_en[cwl_sys_latency + 4] & ~wrdata_en[cwl_sys_latency + 3])
+        m.d.comb += dqs_pattern.preamble.eq(wrdata_en[cwl_sys_latency + 1] & ~wrdata_en[cwl_sys_latency + 2])
+        m.d.comb += dqs_pattern.postamble.eq(wrdata_en[cwl_sys_latency + 4] & ~wrdata_en[cwl_sys_latency + 3])
 
         return m
