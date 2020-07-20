@@ -10,6 +10,7 @@ from operator import add
 from collections import OrderedDict
 
 from nmigen import *
+from nmigen.asserts import Assert, Assume
 from nmigen.hdl.rec import *
 from nmigen.utils import log2_int
 
@@ -272,6 +273,15 @@ class tXXDController(Elaboratable):
                 m.d.sync += count.eq(count-1)
                 with m.If(count == 1):
                     m.d.sync += self.ready.eq(1)
+
+        if platform == "formal":
+            if self._txxd is not None and self._txxd > 0:
+                hasSeenValid = Signal()
+                with m.If(self.valid):
+                    m.d.sync += hasSeenValid.eq(1)
+
+                m.d.sync += Assert((hasSeenValid & (count == 0)).implies(self.ready == 1))
+
         return m
 
 
