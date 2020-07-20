@@ -298,8 +298,7 @@ class tFAWController(Elaboratable):
             count = Signal(range(max(self._tfaw, 2)))
             window = Signal(self._tfaw)
             m.d.sync += window.eq(Cat(self.valid, window))
-            m.d.comb += count.eq(reduce(add, [window[i]
-                                              for i in range(self._tfaw)]))
+            m.d.comb += count.eq(reduce(add, [window[i] for i in range(self._tfaw)]))
             with m.If(count < 4):
                 with m.If(count == 3):
                     m.d.sync += self.ready.eq(~self.valid)
