@@ -102,6 +102,7 @@ class UARTBridge(Elaboratable):
                     self.bus.stb.eq(1),
                     self.bus.we.eq(0),
                     self.bus.cyc.eq(1),
+                    self.bus.sel.eq(0xF),
                 ]
 
                 with m.If(self.bus.ack):
