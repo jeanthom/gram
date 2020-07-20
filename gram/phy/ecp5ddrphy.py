@@ -380,7 +380,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 dq_i = Signal()
                 dq_oe_n = Signal()
                 dq_i_delayed = Signal()
-                dq_i_data = Signal(8)
+                dq_i_data = Signal(4)
                 dq_o_data = Signal(8)
                 dq_o_data_d = Signal(8)
                 dq_o_data_muxed = Signal(4)
@@ -402,7 +402,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         m.d.sync += dq_o_data_muxed.eq(dq_o_data[:4])
                     with m.Case(1):
                         m.d.sync += dq_o_data_muxed.eq(dq_o_data_d[4:])
-                _dq_i_data = Signal(4)
                 m.submodules += [
                     Instance("ODDRX2DQA",
                              i_RST=ResetSignal("dramsync"),
@@ -435,23 +434,17 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                              i_WRPNTR1=wrpntr[1],
                              i_WRPNTR2=wrpntr[2],
                              i_D=dq_i_delayed,
-                             o_Q0=_dq_i_data[0],
-                             o_Q1=_dq_i_data[1],
-                             o_Q2=_dq_i_data[2],
-                             o_Q3=_dq_i_data[3],
-                             )
+                             o_Q0=dq_i_data[0],
+                             o_Q1=dq_i_data[1],
+                             o_Q2=dq_i_data[2],
+                             o_Q3=dq_i_data[3],
+                             ),
                 ]
-                m.d.sync += dq_i_data[:4].eq(dq_i_data[4:])
-                m.d.sync += dq_i_data[4:].eq(_dq_i_data)
                 m.d.sync += [
-                    dfi.phases[0].rddata[0*databits+j].eq(dq_i_data[0]),
-                    dfi.phases[0].rddata[1*databits+j].eq(dq_i_data[1]),
-                    dfi.phases[0].rddata[2*databits+j].eq(dq_i_data[2]),
-                    dfi.phases[0].rddata[3*databits+j].eq(dq_i_data[3]),
-                    dfi.phases[1].rddata[0*databits+j].eq(dq_i_data[4]),
-                    dfi.phases[1].rddata[1*databits+j].eq(dq_i_data[5]),
-                    dfi.phases[1].rddata[2*databits+j].eq(dq_i_data[6]),
-                    dfi.phases[1].rddata[3*databits+j].eq(dq_i_data[7]),
+                    dfi.phases[1].rddata[j].eq(dq_i_data[0]),
+                    dfi.phases[1].rddata[1*databits+j].eq(dq_i_data[1]),
+                    dfi.phases[1].rddata[2*databits+j].eq(dq_i_data[2]),
+                    dfi.phases[1].rddata[3*databits+j].eq(dq_i_data[3]),
                 ]
                 m.submodules += [
                     Instance("TSHX2DQA",
@@ -472,6 +465,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         io_B=self.pads.dq.io[j]
                         )
                 ]
+            m.d.sync += [
+                dfi.phases[0].rddata.eq(dfi.phases[1].rddata),
+            ]
 
         # Read Control Path ------------------------------------------------------------------------
         # Creates a shift register of read commands coming from the DFI interface. This shift register
