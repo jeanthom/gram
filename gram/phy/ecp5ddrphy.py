@@ -235,7 +235,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                     m.d.sync += rdly.eq(0)
                 with m.Elif(self._rdly_dq_inc.w_stb):
                     m.d.sync += rdly.eq(rdly + 1)
-            datavalid = Signal()
             burstdet = Signal()
             dqs_read = Signal()
             dqs_bitslip = Signal(2)
