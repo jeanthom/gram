@@ -60,9 +60,9 @@ def get_sys_phases(nphases, sys_latency, cas_latency):
     return cmd_phase, dat_phase
 
 class DQSPattern(Elaboratable):
-    def __init__(self, preamble=None, postamble=None, wlevel_en=0, wlevel_strobe=0, register=False):
-        self.preamble = Signal() if preamble is None else preamble
-        self.postamble = Signal() if postamble is None else postamble
+    def __init__(self, preamble=Signal(), postamble=Signal(), wlevel_en=0, wlevel_strobe=0, register=False):
+        self.preamble = preamble
+        self.postamble = postamble
         self.o = Signal(8)
         self._wlevel_en = wlevel_en
         self._wlevel_strobe = wlevel_strobe
