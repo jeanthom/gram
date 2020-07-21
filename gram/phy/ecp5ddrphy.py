@@ -91,15 +91,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # CSR
         bank = self.csr_bank()
 
-        self._dly_sel = bank.csr(databits//8, "rw")
-
-        self._rdly_dq_rst = bank.csr(1, "rw")
-        self._rdly_dq_inc = bank.csr(1, "rw")
-        self._rdly_dq_bitslip_rst = bank.csr(1, "rw")
-        self._rdly_dq_bitslip = bank.csr(1, "rw")
-
-        self._burstdet_clr = bank.csr(1, "rw")
-        self._burstdet_seen = bank.csr(databits//8, "r")
+        self.rdly = []
+        self.rdly += [bank.csr(3, "rw", name="rdly_p0")]
+        self.rdly += [bank.csr(3, "rw", name="rdly_p1")]
 
         self._bridge = self.bridge(data_width=32, granularity=8, alignment=2)
         self.bus = self._bridge.bus
@@ -228,7 +222,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             dqsw = Signal()
             rdpntr = Signal(3)
             wrpntr = Signal(3)
-            rdly = Signal(7)
             burstdet = Signal()
 
             m.submodules += Instance("DQSBUFM",
@@ -252,7 +245,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      i_ECLK=ClockSignal("sync2x"),
                                      i_RST=ResetSignal("dramsync"),
                                      i_DDRDEL=init.delay,
-                                     i_PAUSE=init.pause | self._dly_sel.w_data[i],
+                                     i_PAUSE=init.pause | self.rdly[i].w_stb,
 
                                      # Control
                                      # Assert LOADNs to use DDRDEL control
@@ -266,9 +259,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      # Reads (generate shifted DQS clock for reads)
                                      i_READ0=1,
                                      i_READ1=1,
-                                     i_READCLKSEL0=rdly[0],
-                                     i_READCLKSEL1=rdly[1],
-                                     i_READCLKSEL2=rdly[2],
+                                     i_READCLKSEL0=self.rdly[i].w_data[0],
+                                     i_READCLKSEL1=self.rdly[i].w_data[1],
+                                     i_READCLKSEL2=self.rdly[i].w_data[2],
                                      i_DQSI=dqs_i,
                                      o_DQSR90=dqsr90,
                                      o_RDPNTR0=rdpntr[0],
@@ -283,12 +276,12 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      # Writes (generate shifted ECLK clock for writes)
                                      o_DQSW270=dqsw270,
                                      o_DQSW=dqsw)
-            burstdet_d = Signal()
-            m.d.sync += burstdet_d.eq(burstdet)
-            with m.If(self._burstdet_clr.w_stb):
-                m.d.sync += self._burstdet_seen.r_data[i].eq(0)
-            with m.If(burstdet & ~burstdet_d):
-                m.d.sync += self._burstdet_seen.r_data[i].eq(1)
+            # burstdet_d = Signal()
+            # m.d.sync += burstdet_d.eq(burstdet)
+            # with m.If(self._burstdet_clr.w_stb):
+            #     m.d.sync += self._burstdet_seen.r_data[i].eq(0)
+            # with m.If(burstdet & ~burstdet_d):
+            #     m.d.sync += self._burstdet_seen.r_data[i].eq(1)
 
             # DQS and DM ---------------------------------------------------------------------------
             dm_o_data = Signal(8)
