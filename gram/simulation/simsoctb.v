@@ -195,12 +195,12 @@ module simsoctb;
       assert_equal_32(tmp, 32'h12345678);
 
       // Write
-      wishbone_write(32'h10000000 >> 2, 32'h12345678);
+      wishbone_write(32'h10000000 >> 2, 32'h00BA0BAB);
       #2000;
       wishbone_write(32'h10000100 >> 2, 32'h00000000);
       #2000;
       wishbone_read(32'h10000000 >> 2, tmp);
-      assert_equal_32(tmp, 32'h12345678);
+      assert_equal_32(tmp, 32'h00BA0BAB);
 
       $finish;
     end
