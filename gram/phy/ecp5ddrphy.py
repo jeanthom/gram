@@ -282,8 +282,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
                                      # Writes (generate shifted ECLK clock for writes)
                                      o_DQSW270=dqsw270,
-                                     o_DQSW=dqsw
-                                     )
+                                     o_DQSW=dqsw)
             burstdet_d = Signal()
             m.d.sync += burstdet_d.eq(burstdet)
             with m.If(self._burstdet_clr.w_stb):
@@ -307,22 +306,22 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 dfi.phases[1].wrdata_mask[3*databits//8+i]),
             )
             m.d.sync += dm_o_data_d.eq(dm_o_data)
-            with m.Switch(bl8_chunk):
-                with m.Case(0):
-                    m.d.sync += dm_o_data_muxed.eq(dm_o_data[:4])
-                with m.Case(1):
-                    m.d.sync += dm_o_data_muxed.eq(dm_o_data_d[4:])
+
+            with m.If(bl8_chunk):
+                m.d.sync += dm_o_data_muxed.eq(dm_o_data_d[4:])
+            with m.Else():
+                m.d.sync += dm_o_data_muxed.eq(dm_o_data[:4])
+
             m.submodules += Instance("ODDRX2DQA",
-                                     i_RST=ResetSignal("dramsync"),
-                                     i_ECLK=ClockSignal("sync2x"),
-                                     i_SCLK=ClockSignal("dramsync"),
-                                     i_DQSW270=dqsw270,
-                                     i_D0=dm_o_data_muxed[0],
-                                     i_D1=dm_o_data_muxed[1],
-                                     i_D2=dm_o_data_muxed[2],
-                                     i_D3=dm_o_data_muxed[3],
-                                     o_Q=self.pads.dm.o[i]
-                                     )
+                i_RST=ResetSignal("dramsync"),
+                i_ECLK=ClockSignal("sync2x"),
+                i_SCLK=ClockSignal("dramsync"),
+                i_DQSW270=dqsw270,
+                i_D0=dm_o_data_muxed[0],
+                i_D1=dm_o_data_muxed[1],
+                i_D2=dm_o_data_muxed[2],
+                i_D3=dm_o_data_muxed[3],
+                o_Q=self.pads.dm.o[i])
 
             dqs = Signal()
             dqs_oe_n = Signal()
