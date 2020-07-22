@@ -142,7 +142,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         nphases = 2
         databits = len(self.pads.dq.io)
 
-        burstdet_reg = Signal(databits//8, reset=0xFF)
+        burstdet_reg = Signal(databits//8)
         m.d.comb += self.burstdet.r_data.eq(burstdet_reg)
 
         # Burstdet clear
