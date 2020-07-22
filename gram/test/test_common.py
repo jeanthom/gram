@@ -2,7 +2,7 @@
 from nmigen import *
 from nmigen.hdl.ast import Past
 
-from gram.common import DQSPattern, tXXDController
+from gram.common import tXXDController
 from utils import *
 
 class tXXDControllerTestCase(FHDLTestCase):
