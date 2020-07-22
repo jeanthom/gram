@@ -11,7 +11,7 @@ __ALL__ = ["UARTBridge"]
 class UARTBridge(Elaboratable):
     def __init__(self, divisor, pins):
         self.bus = wishbone.Interface(addr_width=30,
-                                      data_width=32, granularity=32)
+                                      data_width=32, granularity=8)
         self._pins = pins
         self._divisor = divisor
 
