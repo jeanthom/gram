@@ -91,6 +91,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # CSR
         bank = self.csr_bank()
 
+        self.burstdet = bank.csr(databits//8, "rw")
+
         self.rdly = []
         self.rdly += [bank.csr(3, "rw", name="rdly_p0")]
         self.rdly += [bank.csr(3, "rw", name="rdly_p1")]
@@ -139,6 +141,13 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         tck = 2/(2*2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.io)
+
+        burstdet_reg = Signal(databits//8, reset=0xFF)
+        m.d.comb += self.burstdet.r_data.eq(burstdet_reg)
+
+        # Burstdet clear
+        with m.If(self.burstdet.w_stb):
+            m.d.sync += burstdet_reg.eq(0)
 
         # Init -------------------------------------------------------------------------------------
         m.submodules.init = init = ECP5DDRPHYInit()
@@ -276,12 +285,11 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      # Writes (generate shifted ECLK clock for writes)
                                      o_DQSW270=dqsw270,
                                      o_DQSW=dqsw)
-            # burstdet_d = Signal()
-            # m.d.sync += burstdet_d.eq(burstdet)
-            # with m.If(self._burstdet_clr.w_stb):
-            #     m.d.sync += self._burstdet_seen.r_data[i].eq(0)
-            # with m.If(burstdet & ~burstdet_d):
-            #     m.d.sync += self._burstdet_seen.r_data[i].eq(1)
+
+            burstdet_d = Signal()
+            m.d.sync += burstdet_d.eq(burstdet)
+            #with m.If(burstdet):
+                #m.d.sync += burstdet_reg[i].eq(1)
 
             # DQS and DM ---------------------------------------------------------------------------
             dm_o_data = Signal(8)
