@@ -41,11 +41,6 @@ class _ECPIX5Platform(LatticeECP5Platform):
             attrs=Attrs(IO_TYPE="LVCMOS33", PULLMODE="UP")
         ),
 
-        *SPIFlashResources(0,
-            cs="AA2", clk="AE3", miso="AE2", mosi="AD2", wp="AF2", hold="AE1",
-            attrs=Attrs(IO_TYPE="LVCMOS33")
-        ),
-
         Resource("eth_rgmii", 0,
             Subsignal("rst",     PinsN("C13", dir="o")),
             Subsignal("mdio",    Pins("A13", dir="io")),
