@@ -1,77 +1,75 @@
 #include <stdint.h>
+#include <stdio.h>
 
 #include "hw_regs.h"
 #include <gram.h>
 #include "dfii.h"
 #include "helpers.h"
 
-static void set_dly_sel(struct gramCtx *ctx, int sel) {
+static void set_rdly(struct gramCtx *ctx, unsigned int phase, unsigned int rdly) {
 #ifdef GRAM_RW_FUNC
-	gram_write(ctx, &(ctx->phy->dly_sel), sel);
+	if (phase == 0) {
+		gram_write(ctx, &(ctx->phy->rdly_p0), rdly);
+	} else if (phase == 1) {
+		gram_write(ctx, &(ctx->phy->rdly_p1), rdly);
+	}
 #else
-	ctx->phy->dly_sel = sel;
+	if (phase == 0) {
+		ctx->phy->rdly_p0 = rdly;
+	} else if (phase == 1) {
+		ctx->phy->rdly_p1 = rdly;
+	}
 #endif
 }
 
-static void rdly_dq_inc(struct gramCtx *ctx) {
+static void reset_burstdet(struct gramCtx *ctx) {
 #ifdef GRAM_RW_FUNC
-	gram_write(ctx, &(ctx->phy->rdly_dq_inc), 1);
+	gram_write(ctx, &(ctx->phy->burstdet), 0);
 #else
-	ctx->phy->rdly_dq_inc = 1;
+	ctx->phy->burstdet = 0;
 #endif
 }
 
-static void rdly_dq_bitslip_inc(struct gramCtx *ctx) {
+static bool read_burstdet(struct gramCtx *ctx, int phase) {
 #ifdef GRAM_RW_FUNC
-	gram_write(ctx, &(ctx->phy->rdly_dq_bitslip), 1);
+	return gram_read(ctx, &(ctx->phy->burstdet)) & (1 << phase);
 #else
-	ctx->phy->rdly_dq_bitslip = 1;
+	return ctx->phy->burstdet & (1 << phase);
 #endif
-}
-
-static void read_delay_inc(struct gramCtx *ctx, int module) {
-	/* sel module */
-	set_dly_sel(ctx, 1 << module);
-
-	/* inc delay */
-	rdly_dq_inc(ctx);
-
-	/* unsel module */
-	set_dly_sel(ctx, 0);
-
-	/* Sync all DQSBUFM's, By toggling all dly_sel (DQSBUFM.PAUSE) lines. */
-	set_dly_sel(ctx, 0xFF);
-	set_dly_sel(ctx, 0);
-}
-
-static void bitslip_inc(struct gramCtx *ctx, int module) {
-	/* sel module */
-	set_dly_sel(ctx, 1 << module);
-
-	/* inc delay */
-	rdly_dq_bitslip_inc(ctx);
-
-	/* unsel module */
-	set_dly_sel(ctx, 0);
-
-	/* Sync all DQSBUFM's, By toggling all dly_sel (DQSBUFM.PAUSE) lines. */
-	set_dly_sel(ctx, 0xFF);
-	set_dly_sel(ctx, 0);
 }
 
 int gram_calibration_auto(struct gramCtx *ctx) {
+	uint32_t refval[8];
+	size_t i, j, k;
+	int score;
+
 	dfii_setsw(ctx, true);
 
-	// TODO: reset all delays and bitslip
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			/* Generating test pattern */
+			for (k = 0; k < 8; k++) {
+				refval[k] = (0xABCD1234*i*j) & 0xFFFFFFFF;
+			}
 
-	read_delay_inc(ctx, 0);
-	read_delay_inc(ctx, 1);
+			/* Writing to RAM */
+
+			/* Reading from RAM */
+			score = 0;
+			for (k = 0; k < 8; k++) {
+
+			}
+		}
+	}
 
 	dfii_setsw(ctx, false);
 
 	return 0;
 }
 
-void gram_load_calibration(void) {
-
+void gram_load_calibration(struct gramCtx *ctx, struct gramProfile *profile) {
+	dfii_setsw(ctx, true);
+	set_rdly(ctx, 0, profile->rdly_p0);
+	set_rdly(ctx, 1, profile->rdly_p1);
+	dfii_setsw(ctx, false);
 }

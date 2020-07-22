@@ -2,13 +2,9 @@
 #define HW_REGS_H
 
 struct gramPHYRegs {
-	uint32_t dly_sel;
-	uint32_t rdly_dq_rst;
-	uint32_t rdly_dq_inc;
-	uint32_t rdly_dq_bitslip_rst;
-	uint32_t rdly_dq_bitslip;
-	uint32_t burstdet_clr;
-	uint32_t burstdet_seen;
+	uint32_t burstdet;
+	uint32_t rdly_p0;
+	uint32_t rdly_p1;
 } __attribute__((packed));
 
 struct DFII_Phase {

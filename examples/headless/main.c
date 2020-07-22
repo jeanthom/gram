@@ -100,6 +100,8 @@ int main(int argc, char *argv[]) {
 	const int kDumpWidth = 8;
 	size_t i;
 
+	struct gramProfile profile = {0,0};
+
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s port baudrate\n", argv[0]);
 		return EXIT_FAILURE;
@@ -117,6 +119,7 @@ int main(int argc, char *argv[]) {
 
 	printf("gram init... ");
 	gram_init(&ctx, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
+	gram_load_calibration(&ctx, &profile);
 	printf("done\n");
 
 	srand(time(NULL));
