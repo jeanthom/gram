@@ -96,13 +96,15 @@ int main(int argc, char *argv[]) {
 	struct gramCtx ctx;
 	int serial_port, baudrate = 0;
 	uint32_t read_value, expected_value;
-	uint32_t pattern[128];
+	const size_t kPatternSize = 512;
+	uint32_t pattern[kPatternSize];
 	const int kDumpWidth = 8;
 	size_t i;
+	int delay;
 
 	struct gramProfile profile = {0,0};
 
-	if (argc != 3) {
+	if (argc < 3) {
 		fprintf(stderr, "Usage: %s port baudrate\n", argv[0]);
 		return EXIT_FAILURE;
 	}
@@ -123,7 +125,7 @@ int main(int argc, char *argv[]) {
 	printf("done\n");
 
 	srand(time(NULL));
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < kPatternSize; i++) {
 		pattern[i] = rand();
 	}
 
@@ -131,13 +133,21 @@ int main(int argc, char *argv[]) {
 	volatile uint32_t ddr_base = 0x10000000;
 
 	printf("Writing data sequence...");
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < kPatternSize; i++) {
 		gram_write(&ctx, ddr_base+4*i, pattern[i]);
 	}
 	printf("done\n");
 
+	if (argc >= 4) {
+		sscanf(argv[3], "%d", &delay);
+		printf("waiting for %d second(s)...", delay);
+		fflush(stdout);
+		sleep(delay);
+		printf("done\n");
+	}
+
 	printf("Reading data sequence...\n");
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < kPatternSize; i++) {
 		if ((i % kDumpWidth) == 0) {
 			printf("%08x | ", ddr_base+4*i);
 		}
