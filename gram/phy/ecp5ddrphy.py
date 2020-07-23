@@ -310,18 +310,15 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             with m.Else():
                 m.d.sync += dm_o_data_muxed.eq(dm_o_data[:4])
 
-            dm_o_data_muxed_d = Signal(4)
-            m.d.sync += dm_o_data_muxed_d.eq(dm_o_data_muxed)
-
             m.submodules += Instance("ODDRX2DQA",
                 i_RST=ResetSignal("dramsync"),
                 i_ECLK=ClockSignal("sync2x"),
                 i_SCLK=ClockSignal("dramsync"),
                 i_DQSW270=dqsw270,
-                i_D2=dm_o_data_muxed[0],
-                i_D3=dm_o_data_muxed[1],
-                i_D0=dm_o_data_muxed_d[2],
-                i_D1=dm_o_data_muxed_d[3],
+                i_D0=dm_o_data_muxed[0],
+                i_D1=dm_o_data_muxed[1],
+                i_D2=dm_o_data_muxed[2],
+                i_D3=dm_o_data_muxed[3],
                 o_Q=self.pads.dm.o[i])
 
             dqs = Signal()
@@ -379,19 +376,16 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                     with m.Case(1):
                         m.d.sync += dq_o_data_muxed.eq(dq_o_data_d[4:])
 
-                dq_o_data_muxed_d = Signal.like(dq_o_data_muxed)
-                m.d.sync += dq_o_data_muxed_d.eq(dq_o_data_muxed)
-
                 m.submodules += [
                     Instance("ODDRX2DQA",
                         i_RST=ResetSignal("dramsync"),
                         i_ECLK=ClockSignal("sync2x"),
                         i_SCLK=ClockSignal(),
                         i_DQSW270=dqsw270,
-                        i_D0=dq_o_data_muxed_d[2],
-                        i_D1=dq_o_data_muxed_d[3],
-                        i_D2=dq_o_data_muxed[0],
-                        i_D3=dq_o_data_muxed[1],
+                        i_D0=dq_o_data_muxed[0],
+                        i_D1=dq_o_data_muxed[1],
+                        i_D2=dq_o_data_muxed[2],
+                        i_D3=dq_o_data_muxed[3],
                         o_Q=dq_o),
                     Instance("DELAYF",
                         p_DEL_MODE="DQS_ALIGNED_X2",
@@ -465,19 +459,19 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # 2x for DDR, 2x for halfrate) but DDR3 requires a burst of 8 datas (BL8) for best efficiency.
         # Writes are then performed in 2 sys_clk cycles and data needs to be selected for each cycle.
         # FIXME: understand +2
-        wrdata_en = Signal(cwl_sys_latency + 5)
+        wrdata_en = Signal(cwl_sys_latency + 4)
         wrdata_en_last = Signal.like(wrdata_en)
         m.d.comb += wrdata_en.eq(Cat(dfi.phases[self.settings.wrphase].wrdata_en, wrdata_en_last))
         m.d.sync += wrdata_en_last.eq(wrdata_en)
         m.d.comb += dq_oe.eq(wrdata_en[cwl_sys_latency + 1] | wrdata_en[cwl_sys_latency + 2])
         m.d.comb += bl8_chunk.eq(wrdata_en[cwl_sys_latency + 1])
-        m.d.comb += dqs_oe.eq(dq_oe | wrdata_en[cwl_sys_latency + 3])
+        m.d.comb += dqs_oe.eq(dq_oe)
 
         # Write DQS Postamble/Preamble Control Path ------------------------------------------------
         # Generates DQS Preamble 1 cycle before the first write and Postamble 1 cycle after the last
         # write. During writes, DQS tristate is configured as output for at least 4 sys_clk cycles:
         # 1 for Preamble, 2 for the Write and 1 for the Postamble.
         m.d.comb += dqs_preamble.eq(wrdata_en[cwl_sys_latency + 0] & ~wrdata_en[cwl_sys_latency + 1])
-        m.d.comb += dqs_postamble.eq(wrdata_en[cwl_sys_latency + 4] & ~wrdata_en[cwl_sys_latency + 3])
+        m.d.comb += dqs_postamble.eq(wrdata_en[cwl_sys_latency + 3] & ~wrdata_en[cwl_sys_latency + 2])
 
         return m
