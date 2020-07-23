@@ -10,7 +10,7 @@ gram is a [LambdaConcept](https://lambdaconcept.com) project.
 
 nMigen + nMigen-SoC + LambdaSoC
 
-gram requires nMigen "master", as nMigen 0.2 has some nasty bugs that makes it emit buggy RTLIL.
+gram requires nMigen >= 0.3.
 
 ## License
 
