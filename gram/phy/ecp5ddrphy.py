@@ -286,10 +286,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                                      o_DQSW270=dqsw270,
                                      o_DQSW=dqsw)
 
-            burstdet_d = Signal()
-            m.d.sync += burstdet_d.eq(burstdet)
-            #with m.If(burstdet):
-                #m.d.sync += burstdet_reg[i].eq(1)
+            with m.If(burstdet):
+                m.d.sync += burstdet_reg[i].eq(1)
 
             # DQS and DM ---------------------------------------------------------------------------
             dm_o_data = Signal(8)
