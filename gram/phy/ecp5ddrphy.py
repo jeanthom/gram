@@ -40,13 +40,12 @@ class ECP5DDRPHYInit(Elaboratable):
         _lock = Signal()
         delay = Signal()
         m.submodules += Instance("DDRDLLA",
-                                 i_CLK=ClockSignal("sync2x"),
-                                 i_RST=ResetSignal("init"),
-                                 i_UDDCNTLN=~update,
-                                 i_FREEZE=freeze,
-                                 o_DDRDEL=delay,
-                                 o_LOCK=_lock
-                                 )
+            i_CLK=ClockSignal("sync2x"),
+            i_RST=ResetSignal("init"),
+            i_UDDCNTLN=~update,
+            i_FREEZE=freeze,
+            o_DDRDEL=delay,
+            o_LOCK=_lock)
         lock = Signal()
         lock_d = Signal()
         m.submodules += FFSynchronizer(_lock, lock, o_domain="init")
@@ -234,57 +233,57 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             burstdet = Signal()
 
             m.submodules += Instance("DQSBUFM",
-                                     p_DQS_LI_DEL_ADJ="MINUS",
-                                     p_DQS_LI_DEL_VAL=1,
-                                     p_DQS_LO_DEL_ADJ="MINUS",
-                                     p_DQS_LO_DEL_VAL=4,
+                p_DQS_LI_DEL_ADJ="MINUS",
+                p_DQS_LI_DEL_VAL=1,
+                p_DQS_LO_DEL_ADJ="MINUS",
+                p_DQS_LO_DEL_VAL=4,
 
-                                     # Delay
-                                     i_DYNDELAY0=0,
-                                     i_DYNDELAY1=0,
-                                     i_DYNDELAY2=0,
-                                     i_DYNDELAY3=0,
-                                     i_DYNDELAY4=0,
-                                     i_DYNDELAY5=0,
-                                     i_DYNDELAY6=0,
-                                     i_DYNDELAY7=0,
+                # Delay
+                i_DYNDELAY0=0,
+                i_DYNDELAY1=0,
+                i_DYNDELAY2=0,
+                i_DYNDELAY3=0,
+                i_DYNDELAY4=0,
+                i_DYNDELAY5=0,
+                i_DYNDELAY6=0,
+                i_DYNDELAY7=0,
 
-                                     # Clocks / Reset
-                                     i_SCLK=ClockSignal("sync"),
-                                     i_ECLK=ClockSignal("sync2x"),
-                                     i_RST=ResetSignal("dramsync"),
-                                     i_DDRDEL=init.delay,
-                                     i_PAUSE=init.pause | self.rdly[i].w_stb,
+                # Clocks / Reset
+                i_SCLK=ClockSignal("sync"),
+                i_ECLK=ClockSignal("sync2x"),
+                i_RST=ResetSignal("dramsync"),
+                i_DDRDEL=init.delay,
+                i_PAUSE=init.pause | self.rdly[i].w_stb,
 
-                                     # Control
-                                     # Assert LOADNs to use DDRDEL control
-                                     i_RDLOADN=0,
-                                     i_RDMOVE=0,
-                                     i_RDDIRECTION=1,
-                                     i_WRLOADN=0,
-                                     i_WRMOVE=0,
-                                     i_WRDIRECTION=1,
+                # Control
+                # Assert LOADNs to use DDRDEL control
+                i_RDLOADN=0,
+                i_RDMOVE=0,
+                i_RDDIRECTION=1,
+                i_WRLOADN=0,
+                i_WRMOVE=0,
+                i_WRDIRECTION=1,
 
-                                     # Reads (generate shifted DQS clock for reads)
-                                     i_READ0=1,
-                                     i_READ1=1,
-                                     i_READCLKSEL0=self.rdly[i].w_data[0],
-                                     i_READCLKSEL1=self.rdly[i].w_data[1],
-                                     i_READCLKSEL2=self.rdly[i].w_data[2],
-                                     i_DQSI=dqs_i,
-                                     o_DQSR90=dqsr90,
-                                     o_RDPNTR0=rdpntr[0],
-                                     o_RDPNTR1=rdpntr[1],
-                                     o_RDPNTR2=rdpntr[2],
-                                     o_WRPNTR0=wrpntr[0],
-                                     o_WRPNTR1=wrpntr[1],
-                                     o_WRPNTR2=wrpntr[2],
-                                     o_DATAVALID=self.datavalid[i],
-                                     o_BURSTDET=burstdet,
+                # Reads (generate shifted DQS clock for reads)
+                i_READ0=1,
+                i_READ1=1,
+                i_READCLKSEL0=self.rdly[i].w_data[0],
+                i_READCLKSEL1=self.rdly[i].w_data[1],
+                i_READCLKSEL2=self.rdly[i].w_data[2],
+                i_DQSI=dqs_i,
+                o_DQSR90=dqsr90,
+                o_RDPNTR0=rdpntr[0],
+                o_RDPNTR1=rdpntr[1],
+                o_RDPNTR2=rdpntr[2],
+                o_WRPNTR0=wrpntr[0],
+                o_WRPNTR1=wrpntr[1],
+                o_WRPNTR2=wrpntr[2],
+                o_DATAVALID=self.datavalid[i],
+                o_BURSTDET=burstdet,
 
-                                     # Writes (generate shifted ECLK clock for writes)
-                                     o_DQSW270=dqsw270,
-                                     o_DQSW=dqsw)
+                # Writes (generate shifted ECLK clock for writes)
+                o_DQSW270=dqsw270,
+                o_DQSW=dqsw)
 
             with m.If(burstdet):
                 m.d.sync += burstdet_reg[i].eq(1)
@@ -329,31 +328,28 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             dqs_oe_n = Signal()
             m.submodules += [
                 Instance("ODDRX2DQSB",
-                         i_RST=ResetSignal("dramsync"),
-                         i_ECLK=ClockSignal("sync2x"),
-                         i_SCLK=ClockSignal(),
-                         i_DQSW=dqsw,
-                         i_D0=0,
-                         i_D1=1,
-                         i_D2=0,
-                         i_D3=1,
-                         o_Q=dqs
-                         ),
+                    i_RST=ResetSignal("dramsync"),
+                    i_ECLK=ClockSignal("sync2x"),
+                    i_SCLK=ClockSignal(),
+                    i_DQSW=dqsw,
+                    i_D0=0,
+                    i_D1=1,
+                    i_D2=0,
+                    i_D3=1,
+                    o_Q=dqs),
                 Instance("TSHX2DQSA",
-                         i_RST=ResetSignal("dramsync"),
-                         i_ECLK=ClockSignal("sync2x"),
-                         i_SCLK=ClockSignal(),
-                         i_DQSW=dqsw,
-                         i_T0=~(dqs_oe | dqs_postamble),
-                         i_T1=~(dqs_oe | dqs_postamble),
-                         o_Q=dqs_oe_n
-                         ),
+                    i_RST=ResetSignal("dramsync"),
+                    i_ECLK=ClockSignal("sync2x"),
+                    i_SCLK=ClockSignal(),
+                    i_DQSW=dqsw,
+                    i_T0=~(dqs_oe | dqs_postamble),
+                    i_T1=~(dqs_oe | dqs_postamble),
+                    o_Q=dqs_oe_n),
                 Instance("BB",
                     i_I=dqs,
                     i_T=dqs_oe_n,
                     o_O=dqs_i,
-                    io_B=self.pads.dqs.io[i]
-                    )
+                    io_B=self.pads.dqs.io[i]),
             ]
 
             for j in range(8*i, 8*(i+1)):
@@ -388,58 +384,53 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
                 m.submodules += [
                     Instance("ODDRX2DQA",
-                             i_RST=ResetSignal("dramsync"),
-                             i_ECLK=ClockSignal("sync2x"),
-                             i_SCLK=ClockSignal(),
-                             i_DQSW270=dqsw270,
-                             i_D0=dq_o_data_muxed_d[2],
-                             i_D1=dq_o_data_muxed_d[3],
-                             i_D2=dq_o_data_muxed[0],
-                             i_D3=dq_o_data_muxed[1],
-                             o_Q=dq_o
-                             ),
+                        i_RST=ResetSignal("dramsync"),
+                        i_ECLK=ClockSignal("sync2x"),
+                        i_SCLK=ClockSignal(),
+                        i_DQSW270=dqsw270,
+                        i_D0=dq_o_data_muxed_d[2],
+                        i_D1=dq_o_data_muxed_d[3],
+                        i_D2=dq_o_data_muxed[0],
+                        i_D3=dq_o_data_muxed[1],
+                        o_Q=dq_o),
                     Instance("DELAYF",
-                             p_DEL_MODE="DQS_ALIGNED_X2",
-                             i_LOADN=1,
-                             i_MOVE=0,
-                             i_DIRECTION=0,
-                             i_A=dq_i,
-                             o_Z=dq_i_delayed
-                             ),
+                        p_DEL_MODE="DQS_ALIGNED_X2",
+                        i_LOADN=1,
+                        i_MOVE=0,
+                        i_DIRECTION=0,
+                        i_A=dq_i,
+                        o_Z=dq_i_delayed),
                     Instance("IDDRX2DQA",
-                             i_RST=ResetSignal("dramsync"),
-                             i_ECLK=ClockSignal("sync2x"),
-                             i_SCLK=ClockSignal(),
-                             i_DQSR90=dqsr90,
-                             i_RDPNTR0=rdpntr[0],
-                             i_RDPNTR1=rdpntr[1],
-                             i_RDPNTR2=rdpntr[2],
-                             i_WRPNTR0=wrpntr[0],
-                             i_WRPNTR1=wrpntr[1],
-                             i_WRPNTR2=wrpntr[2],
-                             i_D=dq_i_delayed,
-                             o_Q0=dq_i_data[0],
-                             o_Q1=dq_i_data[1],
-                             o_Q2=dq_i_data[2],
-                             o_Q3=dq_i_data[3],
-                             ),
+                        i_RST=ResetSignal("dramsync"),
+                        i_ECLK=ClockSignal("sync2x"),
+                        i_SCLK=ClockSignal(),
+                        i_DQSR90=dqsr90,
+                        i_RDPNTR0=rdpntr[0],
+                        i_RDPNTR1=rdpntr[1],
+                        i_RDPNTR2=rdpntr[2],
+                        i_WRPNTR0=wrpntr[0],
+                        i_WRPNTR1=wrpntr[1],
+                        i_WRPNTR2=wrpntr[2],
+                        i_D=dq_i_delayed,
+                        o_Q0=dq_i_data[0],
+                        o_Q1=dq_i_data[1],
+                        o_Q2=dq_i_data[2],
+                        o_Q3=dq_i_data[3]),
                 ]
                 m.submodules += [
                     Instance("TSHX2DQA",
-                             i_RST=ResetSignal("dramsync"),
-                             i_ECLK=ClockSignal("sync2x"),
-                             i_SCLK=ClockSignal(),
-                             i_DQSW270=dqsw270,
-                             i_T0=~dq_oe,
-                             i_T1=~dq_oe,
-                             o_Q=dq_oe_n,
-                             ),
+                        i_RST=ResetSignal("dramsync"),
+                        i_ECLK=ClockSignal("sync2x"),
+                        i_SCLK=ClockSignal(),
+                        i_DQSW270=dqsw270,
+                        i_T0=~dq_oe,
+                        i_T1=~dq_oe,
+                        o_Q=dq_oe_n),
                     Instance("BB",
                         i_I=dq_o,
                         i_T=dq_oe_n,
                         o_O=dq_i,
-                        io_B=self.pads.dq.io[j]
-                        )
+                        io_B=self.pads.dq.io[j])
                 ]
                 m.d.sync += [
                     dfi.phases[1].rddata[j].eq(dq_i_data[0]),
