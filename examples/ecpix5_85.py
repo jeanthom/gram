@@ -56,8 +56,7 @@ class _ECPIX5Platform(LatticeECP5Platform):
         Resource("eth_int", 0, PinsN("B13", dir="i"), Attrs(IO_TYPE="LVCMOS33")),
 
         Resource("ddr3", 0,
-            Subsignal("clk", Pins("H3", dir="o")),
-            #Subsignal("clk",    DiffPairs("H3", "J3", dir="o"), Attrs(IO_TYPE="SSTL135D_I")),
+            Subsignal("clk",    DiffPairs("H3", "J3", dir="o"), Attrs(IO_TYPE="SSTL135D_I")),
             Subsignal("clk_en", Pins("P1", dir="o")),
             Subsignal("we",   PinsN("R3", dir="o")),
             Subsignal("ras",  PinsN("T3", dir="o")),
