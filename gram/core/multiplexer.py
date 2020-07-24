@@ -343,12 +343,7 @@ class Multiplexer(Elaboratable):
 
         # Anti Starvation --------------------------------------------------------------------------
         m.submodules.read_antistarvation = read_antistarvation = _AntiStarvation(settings.read_time)
-        read_time_en = read_antistarvation.en
-        max_read_time = read_antistarvation.max_time
-
         m.submodules.write_antistarvation = write_antistarvation = _AntiStarvation(settings.write_time)
-        write_time_en = write_antistarvation.en
-        max_write_time = write_antistarvation.max_time
 
         # Refresh ----------------------------------------------------------------------------------
         m.d.comb += [bm.refresh_req.eq(refresher.cmd.valid)
@@ -390,7 +385,7 @@ class Multiplexer(Elaboratable):
         with m.FSM():
             with m.State("Read"):
                 m.d.comb += [
-                    read_time_en.eq(1),
+                    read_antistarvation.en.eq(1),
                     choose_req.want_reads.eq(1),
                     steerer_sel(steerer, "read"),
                 ]
@@ -408,7 +403,7 @@ class Multiplexer(Elaboratable):
 
                 with m.If(write_available):
                     # TODO: switch only after several cycles of ~read_available?
-                    with m.If(~read_available | max_read_time):
+                    with m.If(~read_available | read_antistarvation.max_time):
                         m.next = "RTW"
 
                 with m.If(go_to_refresh):
@@ -416,7 +411,7 @@ class Multiplexer(Elaboratable):
 
             with m.State("Write"):
                 m.d.comb += [
-                    write_time_en.eq(1),
+                    write_antistarvation.en.eq(1),
                     choose_req.want_writes.eq(1),
                     steerer_sel(steerer, "write"),
                 ]
@@ -433,7 +428,7 @@ class Multiplexer(Elaboratable):
                     ]
 
                 with m.If(read_available):
-                    with m.If(~write_available | max_write_time):
+                    with m.If(~write_available | write_antistarvation.max_time):
                         m.next = "WTR"
 
                 with m.If(go_to_refresh):
