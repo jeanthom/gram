@@ -29,7 +29,6 @@ class AntiStarvationTestCase(FHDLTestCase):
             self.assertFormal(dut, mode="bmc", depth=timeout+1)
 
         generic_test(0)
-        #generic_test(1)
         generic_test(5)
         generic_test(10)
         generic_test(0x20)
