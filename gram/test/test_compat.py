@@ -57,8 +57,6 @@ class TimelineTestCase(FHDLTestCase):
             (10, sigB.eq(1)),
             (11, sigB.eq(0)),
         ])
-        m = Module()
-        m.submodules.timeline = timeline
 
         def process():
             # Test default value for unset signals
@@ -100,7 +98,7 @@ class TimelineTestCase(FHDLTestCase):
                 self.assertFalse((yield sigA))
                 self.assertFalse((yield sigB))
 
-        runSimulation(m, process, "test_timeline.vcd")
+        runSimulation(timeline, process, "test_timeline.vcd")
 
 class RoundRobinOutputMatchSpec(Elaboratable):
     def __init__(self, dut):

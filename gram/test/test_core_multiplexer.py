@@ -6,8 +6,7 @@ from utils import *
 class AntiStarvationTestCase(FHDLTestCase):
     def test_duration(self):
         def generic_test(timeout):
-            m = Module()
-            m.submodules = dut = _AntiStarvation(timeout)
+            dut = _AntiStarvation(timeout)
 
             def process():
                 yield dut.en.eq(1)
@@ -21,7 +20,7 @@ class AntiStarvationTestCase(FHDLTestCase):
 
                 self.assertTrue((yield dut.max_time))
 
-            runSimulation(m, process, "test_core_multiplexer_antistarvation.vcd")
+            runSimulation(dut, process, "test_core_multiplexer_antistarvation.vcd")
 
     def test_formal(self):
         def generic_test(timeout):
