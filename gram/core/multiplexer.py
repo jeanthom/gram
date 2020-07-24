@@ -346,8 +346,7 @@ class Multiplexer(Elaboratable):
         m.submodules.write_antistarvation = write_antistarvation = _AntiStarvation(settings.write_time)
 
         # Refresh ----------------------------------------------------------------------------------
-        m.d.comb += [bm.refresh_req.eq(refresher.cmd.valid)
-                     for bm in bank_machines]
+        m.d.comb += [bm.refresh_req.eq(refresher.cmd.valid) for bm in bank_machines]
         go_to_refresh = Signal()
         bm_refresh_gnts = [bm.refresh_gnt for bm in bank_machines]
         m.d.comb += go_to_refresh.eq(reduce(and_, bm_refresh_gnts))
