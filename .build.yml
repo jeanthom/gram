@@ -24,6 +24,7 @@ packages:
   - gperf
   - libyaml-devel
   - gmp-devel
+  - z3-devel
 sources:
   - https://git.sr.ht/~macbook/gram
 tasks:
@@ -56,15 +57,6 @@ tasks:
       make -j$(nproc)
       sudo make install
       rm -rf /tmp/yices2
-  - install-z3: |
-      git clone https://github.com/Z3Prover/z3.git z3
-      cd z3
-      echo "z3 Git hash: $(git rev-parse HEAD)"
-      python scripts/mk_make.py
-      cd build
-      make -j$(nproc)
-      sudo make install
-      rm -rf /tmp/z3
   - install-icarus-verilog: |
       cd /tmp
       git clone git://github.com/steveicarus/iverilog.git iverilog
