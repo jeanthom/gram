@@ -9,7 +9,7 @@ class tXXDControllerTestCase(FHDLTestCase):
     def test_formal(self):
         def generic_test(txxd):
             dut = tXXDController(txxd)
-            self.assertFormal(dut, mode="bmc", depth=4)
+            self.assertFormal(dut, mode="bmc", depth=txxd+1 if txxd is not None else 10)
 
         generic_test(None)
         generic_test(0)

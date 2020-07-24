@@ -26,7 +26,7 @@ class AntiStarvationTestCase(FHDLTestCase):
     def test_formal(self):
         def generic_test(timeout):
             dut = _AntiStarvation(timeout)
-            self.assertFormal(dut, mode="bmc", depth=4)
+            self.assertFormal(dut, mode="bmc", depth=timeout+1)
 
         generic_test(0)
         #generic_test(1)

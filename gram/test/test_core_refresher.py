@@ -28,14 +28,15 @@ class RefreshExecuterTestCase(FHDLTestCase):
 
 class RefreshSequencerTestCase(FHDLTestCase):
     def test_formal(self):
-        dut = RefreshSequencer(abits=14, babits=3, trp=5, trfc=5, postponing=1)
-        self.assertFormal(dut, mode="bmc", depth=4)
+        trp = 5; trfc = 5
+        dut = RefreshSequencer(abits=14, babits=3, trp=trp, trfc=trfc, postponing=1)
+        self.assertFormal(dut, mode="bmc", depth=trp+trfc+1)
 
 class RefreshTimerTestCase(FHDLTestCase):
     def test_formal(self):
         def generic_test(tREFI):
             dut = RefreshTimer(tREFI)
-            self.assertFormal(dut, mode="bmc", depth=4)
+            self.assertFormal(dut, mode="bmc", depth=tREFI+1)
         [generic_test(_) for _ in [2, 5, 10]]
 
 class RefreshPostponerTestCase(FHDLTestCase):
