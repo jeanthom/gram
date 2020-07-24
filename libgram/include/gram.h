@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 enum GramError {
 	GRAM_ERR_NONE = 0,
@@ -33,6 +34,9 @@ extern __attribute__((visibility ("default"))) int gram_init(struct gramCtx *ctx
 extern __attribute__((visibility ("default"))) int gram_memtest(struct gramCtx *ctx, size_t length, enum GramWidth width);
 extern __attribute__((visibility ("default"))) int gram_calibration_auto(struct gramCtx *ctx);
 extern __attribute__((visibility ("default"))) void gram_load_calibration(struct gramCtx *ctx, struct gramProfile *profile);
+
+extern __attribute__((visibility ("default"))) void gram_reset_burstdet(struct gramCtx *ctx);
+extern __attribute__((visibility ("default"))) bool gram_read_burstdet(struct gramCtx *ctx, int phase);
 
 #ifdef GRAM_RW_FUNC
 extern uint32_t gram_read(struct gramCtx *ctx, void *addr);
