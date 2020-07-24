@@ -220,16 +220,18 @@ class _AntiStarvation(Elaboratable):
         if self._timeout > 0:
             time = Signal(range(self._timeout))
             with m.If(~self.en):
-                m.d.sync += time.eq(self._timeout-1)
+                m.d.sync += [
+                    time.eq(self._timeout-1),
+                    self.max_time.eq(0),
+                ]
+            with m.Elif(time != 0):
+                m.d.sync += [
+                    time.eq(time-1)
+                ]
                 with m.If(time == 1):
                     m.d.sync += self.max_time.eq(1)
                 with m.Else():
                     m.d.sync += self.max_time.eq(0)
-            with m.Elif(time != 0):
-                m.d.sync += [
-                    time.eq(time-1),
-                    self.max_time.eq(0),
-                ]
         else:
             m.d.comb += self.max_time.eq(0)
 
