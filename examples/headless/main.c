@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 	uint32_t pattern[kPatternSize];
 	const int kDumpWidth = 8;
 	size_t i;
-	int delay;
+	int delay, miss = 0;
 
 	struct gramProfile profile = {0,0};
 
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	printf("memtest... \n");
-	volatile uint32_t ddr_base = 0x10000000;
+	volatile uint32_t ddr_base = 0x10001000;
 
 	printf("Writing data sequence...");
 	for (i = 0; i < kPatternSize; i++) {
@@ -158,6 +158,7 @@ int main(int argc, char *argv[]) {
 		for (int j = 3; j >= 0; j--) {
 			if (((uint8_t*)(&read_value))[j] != ((uint8_t*)(&expected_value))[j]) {
 				printf("\033[0;31m%02x\033[0m", ((uint8_t*)(&read_value))[j]);
+				miss++;
 			} else {
 				printf("\033[0;32m%02x\033[0m", ((uint8_t*)(&read_value))[j]);
 			}
@@ -169,6 +170,8 @@ int main(int argc, char *argv[]) {
 			printf(" ");
 		}
 	}
+
+	printf("Memtest miss score (lowest is better): %d/100\n", (miss/4)*100/kPatternSize);
 
 	close(serial_port);
 
