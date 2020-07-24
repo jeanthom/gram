@@ -225,9 +225,7 @@ class _AntiStarvation(Elaboratable):
                     self.max_time.eq(0),
                 ]
             with m.Elif(time != 0):
-                m.d.sync += [
-                    time.eq(time-1)
-                ]
+                m.d.sync += time.eq(time-1)
                 with m.If(time == 1):
                     m.d.sync += self.max_time.eq(1)
                 with m.Else():
