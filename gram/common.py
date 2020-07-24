@@ -238,7 +238,7 @@ class tXXDController(Elaboratable):
                     count.eq(self._txxd-1),
                     self.ready.eq((self._txxd - 1) == 0),
                 ]
-            with m.Else():
+            with m.Elif(~self.ready):
                 m.d.sync += count.eq(count-1)
                 with m.If(count == 1):
                     m.d.sync += self.ready.eq(1)
