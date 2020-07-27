@@ -29,10 +29,6 @@ module simsoctb;
       #5;
     end
 
-  // UART
-  reg uart_rx;
-  wire uart_tx;
-
   // DDR3 init
   wire dram_ck;
   wire dram_cke;
@@ -72,6 +68,16 @@ module simsoctb;
 
   assign dram_dqs_n = (dram_dqs != 2'hz) ? ~dram_dqs : 2'hz;
 
+  // Wishbone
+  reg [31:0] wishbone_adr = 0;
+  reg [31:0] wishbone_dat_w = 0;
+  wire [31:0] wishbone_dat_r;
+  reg [3:0] wishbone_sel = 0;
+  reg wishbone_cyc = 0;
+  reg wishbone_stb = 0;
+  reg wishbone_we = 0;
+  wire wishbone_ack;
+
   //defparam ram_chip.
   
   top simsoctop (
@@ -86,10 +92,16 @@ module simsoctb;
     .ddr3_0__ba__io(dram_ba),
     .ddr3_0__dm__io(dram_dm),
     .ddr3_0__odt__io(dram_odt),
+    .wishbone_0__adr__io(wishbone_adr),
+    .wishbone_0__dat_r__io(wishbone_dat_r),
+    .wishbone_0__dat_w__io(wishbone_dat_w),
+    .wishbone_0__cyc__io(wishbone_cyc),
+    .wishbone_0__stb__io(wishbone_stb),
+    .wishbone_0__sel__io(wishbone_sel),
+    .wishbone_0__ack__io(wishbone_ack),
+    .wishbone_0__we__io(wishbone_we),
     .clk100_0__io(clkin),
-    .rst_0__io(1'b0),
-    .uart_0__rx__io(uart_rx),
-    .uart_0__tx__io(uart_tx)
+    .rst_0__io(1'b0)
   );
 
   initial
@@ -107,8 +119,14 @@ module simsoctb;
       $dumpvars(0, dram_ba);
       $dumpvars(0, dram_dm);
       $dumpvars(0, dram_odt);
-      $dumpvars(0, uart_rx);
-      $dumpvars(0, uart_tx);
+      $dumpvars(0, wishbone_adr);
+      $dumpvars(0, wishbone_dat_w);
+      $dumpvars(0, wishbone_dat_r);
+      $dumpvars(0, wishbone_ack);
+      $dumpvars(0, wishbone_stb);
+      $dumpvars(0, wishbone_cyc);
+      $dumpvars(0, wishbone_sel);
+      $dumpvars(0, wishbone_we);
       $dumpvars(0, simsoctop);
       $dumpvars(0, ram_chip);
 
@@ -195,10 +213,10 @@ module simsoctb;
       assert_equal_32(tmp, 32'h12345678);
 
       // Write
-      wishbone_write(32'h10000000 >> 2, 32'h00BA0BAB);
-      #2000;
-      wishbone_write(32'h10000100 >> 2, 32'h00000000);
-      #2000;
+      wishbone_write(32'h1000000C >> 2, 32'h00BA0BAB);
+      wishbone_write(32'h10000008 >> 2, 32'h13374242);
+      wishbone_write(32'h10000004 >> 2, 32'hC0DEC0DE);
+      wishbone_write(32'h10000000 >> 2, 32'h01020304);
       wishbone_read(32'h10000000 >> 2, tmp);
       assert_equal_32(tmp, 32'h00BA0BAB);
 
@@ -210,17 +228,22 @@ module simsoctb;
     input [31:0] value;
 
     begin
-      uart_send(8'h01); // Write command
-      uart_send(8'h01); // Length
-      uart_send(address[31:24]); // Address
-      uart_send(address[23:16]);
-      uart_send(address[15:8]);
-      uart_send(address[7:0]);
-      uart_send(value[31:24]);
-      uart_send(value[23:16]);
-      uart_send(value[15:8]);
-      uart_send(value[7:0]);
-      #100;
+      wishbone_adr = address;
+      wishbone_dat_w = value;
+      wishbone_cyc = 1;
+      wishbone_stb = 1;
+      wishbone_sel = 4'hF;
+      wishbone_we = 1;
+
+      while (wishbone_ack == 0)
+        begin
+          #10;
+        end
+
+      wishbone_cyc = 0;
+      wishbone_stb = 0;
+
+      #10;
     end
   endtask
 
@@ -229,52 +252,22 @@ module simsoctb;
     output [31:0] value;
 
     begin
-      uart_send(8'h02); // Read command
-      uart_send(8'h01); // Length
-      uart_send(address[31:24]); // Address
-      uart_send(address[23:16]);
-      uart_send(address[15:8]);
-      uart_send(address[7:0]);
-      uart_read(value[31:24]);
-      uart_read(value[23:16]);
-      uart_read(value[15:8]);
-      uart_read(value[7:0]);
-    end
-  endtask
+      wishbone_adr = address;
+      wishbone_we = 0;
+      wishbone_cyc = 1;
+      wishbone_stb = 1;
+      wishbone_sel = 4'hF;
 
-  task uart_send;
-    input [7:0] data;
-    integer i;
-
-    begin
-      uart_rx = 0;
-      #50;
-      for (i = 0; i < 8; i = i + 1)
+      while (wishbone_ack == 0)
         begin
-          uart_rx <= data[i];
-          #50;
-        end
-      uart_rx = 1;
-      #50;
-    end
-  endtask
-
-  task uart_read;
-    output [7:0] data;
-    integer i;
-
-    begin
-      while (uart_tx)
-        begin
-          #1;
+          #10;
         end
 
-      for (i = 0; i < 8; i = i+1)
-        begin
-          #50 data[i] = uart_tx;
-        end
+      value = wishbone_dat_r;
+      wishbone_cyc = 0;
+      wishbone_stb = 0;
 
-      #50;
+      #10;
     end
   endtask
 
