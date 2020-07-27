@@ -15,8 +15,6 @@ class gramCore(Peripheral, Elaboratable):
 
         bank = self.csr_bank()
 
-        self._zero_ev = self.event(mode="rise")
-
         self._phy = phy
         self._geom_settings = geom_settings
         self._timing_settings = timing_settings
@@ -45,7 +43,6 @@ class gramCore(Peripheral, Elaboratable):
 
         self._bridge = self.bridge(data_width=32, granularity=8, alignment=2)
         self.bus = self._bridge.bus
-        self.irq = self._bridge.irq
 
     def elaborate(self, platform):
         m = Module()
