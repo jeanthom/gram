@@ -371,11 +371,10 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 )
 
                 m.d.sync += dq_o_data_d.eq(dq_o_data)
-                with m.Switch(bl8_chunk):
-                    with m.Case(0):
-                        m.d.sync += dq_o_data_muxed.eq(dq_o_data[:4])
-                    with m.Case(1):
-                        m.d.sync += dq_o_data_muxed.eq(dq_o_data_d[4:])
+                with m.If(bl8_chunk):
+                    m.d.sync += dq_o_data_muxed.eq(dq_o_data_d[4:])
+                with m.Else():
+                    m.d.sync += dq_o_data_muxed.eq(dq_o_data[:4])
 
                 m.submodules += [
                     Instance("ODDRX2DQA",
