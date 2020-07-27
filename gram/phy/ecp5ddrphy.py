@@ -199,6 +199,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 self.pads.ba.o3[i].eq(dfi.phases[1].bank[i]),
             ]
 
+        # Control pins
         controls = ["ras", "cas", "we", "clk_en", "odt"]
         if hasattr(self.pads, "reset"):
             controls.append("reset")
