@@ -9,13 +9,13 @@ import warnings
 from contextlib import contextmanager
 
 from nmigen import *
-from nmigen.back.pysim import *
+from nmigen.sim.pysim import *
 from nmigen.hdl.ir import Fragment
 from nmigen.back import rtlil
 from nmigen._toolchain import require_tool
 
 
-__all__ = ["FHDLTestCase", "runSimulation", "wb_read", "wb_write", "PulseCounter"]
+__all__ = ["FHDLTestCase", "runSimulation", "wb_read", "wb_write", "PulseCounter", "Delay"]
 
 def runSimulation(module, process, vcd_filename="anonymous.vcd", clock=1e-6):
     sim = Simulator(module)
