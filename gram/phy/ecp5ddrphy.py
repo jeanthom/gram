@@ -341,7 +341,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                     i_SCLK=ClockSignal(),
                     i_DQSW=dqsw,
                     i_T0=~(dqs_oe | dqs_postamble),
-                    i_T1=~(dqs_oe | dqs_postamble),
+                    i_T1=~(dqs_oe | dqs_preamble),
                     o_Q=dqs_oe_n),
                 Instance("BB",
                     i_I=dqs,
