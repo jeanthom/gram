@@ -368,34 +368,25 @@ class Refresher(Elaboratable):
 
             if settings.timing.tZQCS is None:
                 with m.State("Do-Refresh"):
-                    m.d.comb += self.cmd.valid.eq(1)
+                    m.d.comb += self.cmd.valid.eq(~sequencer.done)
                     with m.If(sequencer.done):
-                        m.d.comb += [
-                            self.cmd.valid.eq(0),
-                            self.cmd.last.eq(1),
-                        ]
+                        m.d.comb += self.cmd.last.eq(1)
                         m.next = "Idle"
             else:
                 with m.State("Do-Refresh"):
-                    m.d.comb += self.cmd.valid.eq(1)
+                    m.d.comb += self.cmd.valid.eq(~wants_zqcs)
                     with m.If(sequencer.done):
                         with m.If(wants_zqcs):
                             m.d.comb += zqcs_executer.start.eq(1)
                             m.next = "Do-Zqcs"
                         with m.Else():
-                            m.d.comb += [
-                                self.cmd.valid.eq(0),
-                                self.cmd.last.eq(1),
-                            ]
+                            m.d.comb += self.cmd.last.eq(1)
                             m.next = "Idle"
 
                 with m.State("Do-Zqcs"):
-                    m.d.comb += self.cmd.valid.eq(1)
+                    m.d.comb += self.cmd.valid.eq(~zqcs_executer.done)
                     with m.If(zqcs_executer.done):
-                        m.d.comb += [
-                            self.cmd.valid.eq(0),
-                            self.cmd.last.eq(1),
-                        ]
+                        m.d.comb += self.cmd.last.eq(1)
                         m.next = "Idle"
 
         # Connect sequencer/executer outputs to cmd
