@@ -178,28 +178,6 @@ class SocTestCase(FHDLTestCase):
 
         runSimulation(soc, process, "test_soc_interleaved_read_write.vcd")
 
-    def test_sequential_reads(self):
-        soc = DDR3SoC(clk_freq=100e6,
-            dramcore_addr=0x00000000,
-            ddr_addr=0x10000000)
-
-        def process():
-            yield from SocTestCase.init_seq(soc.bus)
-
-            # Should read from same row/col/bank
-            yield from wb_read(soc.bus, 0x10000000 >> 2, 0xF, 128)
-            yield from wb_read(soc.bus, 0x10000004 >> 2, 0xF, 128)
-            yield from wb_read(soc.bus, 0x10000008 >> 2, 0xF, 128)
-            yield from wb_read(soc.bus, 0x1000000C >> 2, 0xF, 128)
-
-            # Should read from a different row
-            yield from wb_read(soc.bus, 0x10000010 >> 2, 0xF, 128)
-            yield from wb_read(soc.bus, 0x10000014 >> 2, 0xF, 128)
-            yield from wb_read(soc.bus, 0x10000018 >> 2, 0xF, 128)
-            yield from wb_read(soc.bus, 0x1000001C >> 2, 0xF, 128)
-
-        runSimulation(soc, process, "test_soc_sequential_reads.vcd")
-
     def test_random_memtest(self):
         soc = DDR3SoC(clk_freq=100e6,
             dramcore_addr=0x00000000,
