@@ -137,7 +137,6 @@ module simsoctb;
   reg [31:0] tmp;
   initial
     begin
-      uart_rx <= 1'b1;
       dram_rst = 1;
       #350; // Wait for RESET and POR
 
