@@ -176,7 +176,10 @@ class BankMachine(Elaboratable):
         with m.FSM():
             with m.State("Regular"):
                 with m.If(self.refresh_req):
-                    m.next = "Refresh"
+                    with m.If(row_opened):
+                        m.next = "Precharge-For-Refresh"
+                    with m.Else():
+                        m.next = "Refresh"
                 with m.Elif(cmd_buffer.source.valid):
                     with m.If(row_opened):
                         with m.If(row_hit):
@@ -215,6 +218,20 @@ class BankMachine(Elaboratable):
 
                     with m.If(self.cmd.ready):
                         m.next = "tRP"
+
+            with m.State("Precharge-For-Refresh"):
+                m.d.comb += row_close.eq(1)
+
+                with m.If(twtpcon.ready & trascon.ready):
+                    m.d.comb += [
+                        self.cmd.valid.eq(1),
+                        self.cmd.ras.eq(1),
+                        self.cmd.we.eq(1),
+                        self.cmd.is_cmd.eq(1),
+                    ]
+
+                    with m.If(self.cmd.ready):
+                        m.next = "Refresh"
 
             with m.State("Autoprecharge"):
                 m.d.comb += row_close.eq(1)
