@@ -60,8 +60,6 @@ class gramWishbone(Peripheral, Elaboratable):
                 with m.Case(i):
                     m.d.comb += self.bus.dat_r.eq(self._port.rdata.data >> (32*i))
 
-        adr_offset = 0
-
         with m.FSM():
             with m.State("Send-Cmd"):
                 m.d.comb += [
