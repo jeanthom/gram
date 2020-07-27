@@ -1,0 +1,16 @@
+{
+    "folders":
+    [
+        {
+            "path": "../",
+            "folder_exclude_patterns": ["build", "dist", "gram.egg-info", "__pycache__"]
+        }
+    ],
+    "settings":
+    {
+        "tab_size": 4,
+        "trim_automatic_white_space": true,
+        "translate_tabs_to_spaces": true,
+        "detect_indentation": false
+    }
+}
