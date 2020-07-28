@@ -4,9 +4,6 @@
 # This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 # License: BSD
 
-from functools import reduce
-from operator import or_
-
 from nmigen import *
 
 from gram.common import *
