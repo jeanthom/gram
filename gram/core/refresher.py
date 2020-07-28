@@ -342,12 +342,10 @@ class Refresher(Elaboratable):
         m.submodules.sequencer = sequencer
 
         if settings.timing.tZQCS is not None:
-            wants_zqcs = Signal()
 
             # ZQCS Timer ---------------------------------------------------------------------------
             zqcs_timer = RefreshTimer(int(self._clk_freq/self._zqcs_freq))
             m.submodules.zqcs_timer = zqcs_timer
-            m.d.comb += wants_zqcs.eq(zqcs_timer.done)
 
             # ZQCS Executer ------------------------------------------------------------------------
             zqcs_executer = ZQCSExecuter(self._abits, self._babits, settings.timing.tRP, settings.timing.tZQCS)
@@ -374,9 +372,9 @@ class Refresher(Elaboratable):
                         m.next = "Idle"
             else:
                 with m.State("Do-Refresh"):
-                    m.d.comb += self.cmd.valid.eq(wants_zqcs & ~sequencer.done)
+                    m.d.comb += self.cmd.valid.eq(zqcs_timer.done & ~sequencer.done)
                     with m.If(sequencer.done):
-                        with m.If(wants_zqcs):
+                        with m.If(zqcs_timer.done):
                             m.d.comb += zqcs_executer.start.eq(1)
                             m.next = "Do-Zqcs"
                         with m.Else():
