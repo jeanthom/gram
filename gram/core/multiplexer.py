@@ -7,8 +7,6 @@
 """LiteDRAM Multiplexer."""
 
 import math
-from functools import reduce
-from operator import or_, and_
 
 from nmigen import *
 from nmigen.asserts import Assert, Assume
@@ -337,8 +335,8 @@ class Multiplexer(Elaboratable):
         reads = [req.valid & req.is_read for req in requests]
         writes = [req.valid & req.is_write for req in requests]
         m.d.comb += [
-            read_available.eq(reduce(or_, reads)),
-            write_available.eq(reduce(or_, writes))
+            read_available.eq(reads.any()),
+            write_available.eq(writes.any())
         ]
 
         # Anti Starvation --------------------------------------------------------------------------
@@ -349,7 +347,7 @@ class Multiplexer(Elaboratable):
         m.d.comb += [bm.refresh_req.eq(refresher.cmd.valid) for bm in bank_machines]
         go_to_refresh = Signal()
         bm_refresh_gnts = [bm.refresh_gnt for bm in bank_machines]
-        m.d.comb += go_to_refresh.eq(reduce(and_, bm_refresh_gnts))
+        m.d.comb += go_to_refresh.eq(bm_refresh_gnts.all())
 
         # Datapath ---------------------------------------------------------------------------------
         all_rddata = [p.rddata for p in dfi.phases]
