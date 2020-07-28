@@ -197,6 +197,7 @@ module simsoctb;
       wishbone_write(32'h00009000 >> 2, 8'h01); // DFII_CONTROL_SEL
       #2000;
 
+      // Read test on provisioned data, row 0, col 0-7
       wishbone_read(32'h10000000 >> 2, tmp);
       assert_equal_32(tmp, 32'hFACECA8C);
       wishbone_read(32'h10000004 >> 2, tmp);
@@ -206,12 +207,49 @@ module simsoctb;
       wishbone_read(32'h1000000C >> 2, tmp);
       assert_equal_32(tmp, 32'h12345678);
 
+      // Read test on provisioned data, row 0, col 8-15
+      wishbone_read(32'h10000010 >> 2, tmp);
+      assert_equal_32(tmp, 32'h33333333);
+      wishbone_read(32'h10000014 >> 2, tmp);
+      assert_equal_32(tmp, 32'h22222222);
+      wishbone_read(32'h10000018 >> 2, tmp);
+      assert_equal_32(tmp, 32'h11111111);
+      wishbone_read(32'h1000001C >> 2, tmp);
+      assert_equal_32(tmp, 32'h00000000);
+
+      // Read test on provisioned data, row 0, col 16-23
+      wishbone_read(32'h10000020 >> 2, tmp);
+      assert_equal_32(tmp, 32'hA0A0A0A0);
+      wishbone_read(32'h10000024 >> 2, tmp);
+      assert_equal_32(tmp, 32'h55556666);
+      wishbone_read(32'h10000028 >> 2, tmp);
+      assert_equal_32(tmp, 32'h01020304);
+      wishbone_read(32'h1000002C >> 2, tmp);
+      assert_equal_32(tmp, 32'hF00DF00D);
+
+      // Read test on provisioned data, row 0, col 24-31
+      wishbone_read(32'h10000030 >> 2, tmp);
+      assert_equal_32(tmp, 32'hAAAAAAAA);
+      wishbone_read(32'h10000034 >> 2, tmp);
+      assert_equal_32(tmp, 32'h000C0C0A);
+      wishbone_read(32'h10000038 >> 2, tmp);
+      assert_equal_32(tmp, 32'h000CACA0);
+      wishbone_read(32'h1000003C >> 2, tmp);
+      assert_equal_32(tmp, 32'hC0CAC0CA);
+
       // Write
       wishbone_write(32'h1000000C >> 2, 32'h00BA0BAB);
       wishbone_write(32'h10000008 >> 2, 32'h13374242);
       wishbone_write(32'h10000004 >> 2, 32'hC0DEC0DE);
       wishbone_write(32'h10000000 >> 2, 32'h01020304);
+
       wishbone_read(32'h10000000 >> 2, tmp);
+      assert_equal_32(tmp, 32'h01020304);
+      wishbone_read(32'h10000004 >> 2, tmp);
+      assert_equal_32(tmp, 32'hC0DEC0DE);
+      wishbone_read(32'h10000008 >> 2, tmp);
+      assert_equal_32(tmp, 32'h13374242);
+      wishbone_read(32'h1000000C >> 2, tmp);
       assert_equal_32(tmp, 32'h00BA0BAB);
 
       $finish;
