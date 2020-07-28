@@ -310,8 +310,7 @@ class Refresher(Elaboratable):
         assert postponing <= 8
         self._abits = settings.geom.addressbits
         self._babits = settings.geom.bankbits + log2_int(settings.phy.nranks)
-        self.cmd = cmd = stream.Endpoint(
-            cmd_request_rw_layout(a=self._abits, ba=self._babits))
+        self.cmd = cmd = stream.Endpoint(cmd_request_rw_layout(a=self._abits, ba=self._babits))
         self._postponing = postponing
         self._settings = settings
         self._clk_freq = clk_freq
