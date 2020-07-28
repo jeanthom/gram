@@ -181,6 +181,9 @@ class gramNativePort(Settings):
     def __init__(self, mode, address_width, data_width, clock_domain="sync", id=0):
         self.set_attributes(locals())
 
+        if mode not in ["both", "read", "write"]:
+            raise ValueError("mode must be either both/read/write, not {!r}".format(mode))
+
         self.lock = Signal()
 
         self.cmd = stream.Endpoint(cmd_description(address_width))
@@ -202,16 +205,6 @@ class gramNativePort(Settings):
                 return self.cmd.addr[cba_upper:]
         else:
             return self.cmd.addr[:cba_shift]
-
-
-class gramNativeWritePort(gramNativePort):
-    def __init__(self, *args, **kwargs):
-        gramNativePort.__init__(self, "write", *args, **kwargs)
-
-
-class gramNativeReadPort(gramNativePort):
-    def __init__(self, *args, **kwargs):
-        gramNativePort.__init__(self, "read", *args, **kwargs)
 
 
 # Timing Controllers -------------------------------------------------------------------------------
