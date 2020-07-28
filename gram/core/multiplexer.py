@@ -330,14 +330,10 @@ class Multiplexer(Elaboratable):
         m.d.comb += twtrcon.valid.eq(choose_req.accept() & choose_req.write())
 
         # Read/write turnaround --------------------------------------------------------------------
-        read_available = Signal()
-        write_available = Signal()
-        reads = [req.valid & req.is_read for req in requests]
-        writes = [req.valid & req.is_write for req in requests]
-        m.d.comb += [
-            read_available.eq(reads.any()),
-            write_available.eq(writes.any())
-        ]
+        reads = Signal(len(requests))
+        m.d.comb += reads.eq(Cat([req.valid & req.is_read for req in requests]))
+        writes = Signal(len(requests))
+        m.d.comb += writes.eq(Cat([req.valid & req.is_write for req in requests]))
 
         # Anti Starvation --------------------------------------------------------------------------
         m.submodules.read_antistarvation = read_antistarvation = _AntiStarvation(settings.read_time)
@@ -345,9 +341,8 @@ class Multiplexer(Elaboratable):
 
         # Refresh ----------------------------------------------------------------------------------
         m.d.comb += [bm.refresh_req.eq(refresher.cmd.valid) for bm in bank_machines]
-        go_to_refresh = Signal()
-        bm_refresh_gnts = [bm.refresh_gnt for bm in bank_machines]
-        m.d.comb += go_to_refresh.eq(bm_refresh_gnts.all())
+        bm_refresh_gnts = Signal(len(bank_machines))
+        m.d.comb += bm_refresh_gnts.eq(Cat([bm.refresh_gnt for bm in bank_machines]))
 
         # Datapath ---------------------------------------------------------------------------------
         all_rddata = [p.rddata for p in dfi.phases]
@@ -398,12 +393,12 @@ class Multiplexer(Elaboratable):
                         choose_req.cmd.ready.eq(cas_allowed),
                     ]
 
-                with m.If(write_available):
-                    # TODO: switch only after several cycles of ~read_available?
-                    with m.If(~read_available | read_antistarvation.max_time):
+                with m.If(writes.any()):
+                    # TODO: switch only after several cycles of ~reads.any()?
+                    with m.If(~reads.any() | read_antistarvation.max_time):
                         m.next = "RTW"
 
-                with m.If(go_to_refresh):
+                with m.If(bm_refresh_gnts.all()):
                     m.next = "Refresh"
 
             with m.State("Write"):
@@ -424,11 +419,11 @@ class Multiplexer(Elaboratable):
                         choose_req.cmd.ready.eq(cas_allowed),
                     ]
 
-                with m.If(read_available):
-                    with m.If(~write_available | write_antistarvation.max_time):
+                with m.If(reads.any()):
+                    with m.If(~writes.any() | write_antistarvation.max_time):
                         m.next = "WTR"
 
-                with m.If(go_to_refresh):
+                with m.If(bm_refresh_gnts.all()):
                     m.next = "Refresh"
 
             with m.State("Refresh"):

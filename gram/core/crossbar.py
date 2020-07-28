@@ -13,6 +13,26 @@ import gram.stream as stream
 
 __ALL__ = ["gramCrossbar"]
 
+class DelayLine(Elaboratable):
+    def __init__(self, delay):
+        if delay < 1:
+            raise ValueError("delay value must be 1+")
+        self.delay = delay
+
+        self.i = Signal()
+        self.o = Signal()
+
+    def elaborate(self, platform):
+        m = Module()
+
+        buffer = Signal(self.delay)
+        m.d.sync += [
+            buffer.eq(Cat(self.i, buffer))
+        ]
+        m.d.comb += self.o.eq(buffer[-1])
+
+        return m
+
 class gramCrossbar(Elaboratable):
     """Multiplexes LiteDRAMController (slave) between ports (masters)
 
@@ -111,8 +131,7 @@ class gramCrossbar(Elaboratable):
                 for other_nb, other_arbiter in enumerate(arbiters):
                     if other_nb != nb:
                         other_bank = getattr(controller, "bank"+str(other_nb))
-                        locked = locked | (other_bank.lock & (
-                            other_arbiter.grant == nm))
+                        locked = locked | (other_bank.lock & (other_arbiter.grant == nm))
                 master_locked.append(locked)
 
             # Arbitrate ----------------------------------------------------------------------------
@@ -140,18 +159,16 @@ class gramCrossbar(Elaboratable):
 
         # Delay write/read signals based on their latency
         for nm, master_wdata_ready in enumerate(master_wdata_readys):
-            for i in range(self.write_latency):
-                new_master_wdata_ready = Signal()
-                m.d.sync += new_master_wdata_ready.eq(master_wdata_ready)
-                master_wdata_ready = new_master_wdata_ready
-            master_wdata_readys[nm] = master_wdata_ready
+            delayline = DelayLine(self.write_latency)
+            m.submodules += delayline
+            m.d.comb += delayline.i.eq(master_wdata_ready)
+            master_wdata_readys[nm] = delayline.o
 
         for nm, master_rdata_valid in enumerate(master_rdata_valids):
-            for i in range(self.read_latency):
-                new_master_rdata_valid = Signal()
-                m.d.sync += new_master_rdata_valid.eq(master_rdata_valid)
-                master_rdata_valid = new_master_rdata_valid
-            master_rdata_valids[nm] = master_rdata_valid
+            delayline = DelayLine(self.read_latency)
+            m.submodules += delayline
+            m.d.comb += delayline.i.eq(master_rdata_valid)
+            master_rdata_valids[nm] = delayline.o
 
         for master, master_ready in zip(self.masters, master_readys):
             m.d.comb += master.cmd.ready.eq(master_ready)
