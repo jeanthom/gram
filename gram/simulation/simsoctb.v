@@ -282,4 +282,36 @@ module simsoctb;
         end
     end
   endtask
+
+  integer i;
+  integer tstart;
+  integer tend;
+
+  task speedtest_read;
+    begin
+      tstart = $time;
+      for (i = 0; i < 10; i = i+1) begin
+        wishbone_read(32'h10000000 >> 2, tmp);
+        wishbone_read(32'h10000004 >> 2, tmp);
+        wishbone_read(32'h10000008 >> 2, tmp);
+        wishbone_read(32'h1000000C >> 2, tmp);
+        wishbone_read(32'h10000010 >> 2, tmp);
+        wishbone_read(32'h10000014 >> 2, tmp);
+        wishbone_read(32'h10000018 >> 2, tmp);
+        wishbone_read(32'h1000001C >> 2, tmp);
+        wishbone_read(32'h10000020 >> 2, tmp);
+        wishbone_read(32'h10000024 >> 2, tmp);
+        wishbone_read(32'h10000028 >> 2, tmp);
+        wishbone_read(32'h1000002C >> 2, tmp);
+        wishbone_read(32'h10000030 >> 2, tmp);
+        wishbone_read(32'h10000034 >> 2, tmp);
+        wishbone_read(32'h10000038 >> 2, tmp);
+        wishbone_read(32'h1000003C >> 2, tmp);
+      end
+      tend = $time;
+
+      //$display("Read speedtest: %d B/s", (10*16*4)*1000000000/(1024*1024)/(tend-tstart));
+      $display("Read speedtest: %d MB/s", 610352/(tend-tstart));
+    end
+  endtask
 endmodule
