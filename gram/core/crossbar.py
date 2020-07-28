@@ -13,7 +13,7 @@ import gram.stream as stream
 
 __ALL__ = ["gramCrossbar"]
 
-class DelayLine(Elaboratable):
+class _DelayLine(Elaboratable):
     def __init__(self, delay):
         if delay < 1:
             raise ValueError("delay value must be 1+")
@@ -159,13 +159,13 @@ class gramCrossbar(Elaboratable):
 
         # Delay write/read signals based on their latency
         for nm, master_wdata_ready in enumerate(master_wdata_readys):
-            delayline = DelayLine(self.write_latency)
+            delayline = _DelayLine(self.write_latency)
             m.submodules += delayline
             m.d.comb += delayline.i.eq(master_wdata_ready)
             master_wdata_readys[nm] = delayline.o
 
         for nm, master_rdata_valid in enumerate(master_rdata_valids):
-            delayline = DelayLine(self.read_latency)
+            delayline = _DelayLine(self.read_latency)
             m.submodules += delayline
             m.d.comb += delayline.i.eq(master_rdata_valid)
             master_rdata_valids[nm] = delayline.o
