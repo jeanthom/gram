@@ -220,6 +220,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
         # DQ ---------------------------------------------------------------------------------------
         dq_oe = Signal()
+        dqs_re = Signal()
         dqs_oe = Signal()
         dqs_postamble = Signal()
         dqs_preamble = Signal()
@@ -266,8 +267,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 i_WRDIRECTION=1,
 
                 # Reads (generate shifted DQS clock for reads)
-                i_READ0=1,
-                i_READ1=1,
+                i_READ0=dqs_re,
+                i_READ1=dqs_re,
                 i_READCLKSEL0=self.rdly[i].w_data[0],
                 i_READCLKSEL1=self.rdly[i].w_data[1],
                 i_READCLKSEL2=self.rdly[i].w_data[2],
@@ -451,6 +452,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         m.d.comb += rddata_en.eq(Cat(dfi.phases[self.settings.rdphase].rddata_en, rddata_en_last))
         m.d.sync += rddata_en_last.eq(rddata_en)
         m.d.sync += [phase.rddata_valid.eq(rddata_en[-1]) for phase in dfi.phases]
+        m.d.comb += dqs_re.eq(rddata_en[cl_sys_latency + 0] | rddata_en[cl_sys_latency + 1] | rddata_en[cl_sys_latency + 2])
 
         # Write Control Path -----------------------------------------------------------------------
         # Creates a shift register of write commands coming from the DFI interface. This shift register
