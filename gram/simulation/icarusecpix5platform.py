@@ -21,44 +21,11 @@ class IcarusECPIX5Platform(LatticeECP5Platform):
         Resource("clk100", 0, Pins("K23", dir="i"),
                  Clock(100e6), Attrs(IO_TYPE="LVCMOS33")),
 
-        RGBLEDResource(0, r="U21", g="W21", b="T24",
-                       attrs=Attrs(IO_TYPE="LVCMOS33")),
-        RGBLEDResource(1, r="T23", g="R21", b="T22",
-                       attrs=Attrs(IO_TYPE="LVCMOS33")),
-        RGBLEDResource(2, r="P21", g="R23", b="P22",
-                       attrs=Attrs(IO_TYPE="LVCMOS33")),
-        RGBLEDResource(3, r="K21", g="K24", b="M21",
-                       attrs=Attrs(IO_TYPE="LVCMOS33")),
-
         UARTResource(0,
                      rx="R26", tx="R24",
                      attrs=Attrs(IO_TYPE="LVCMOS33", PULLMODE="UP")
                      ),
 
-        Resource("eth_rgmii", 0,
-                 Subsignal("rst",     PinsN("C13", dir="o")),
-                 Subsignal("mdio",    Pins("A13", dir="io")),
-                 Subsignal("mdc",     Pins("C11", dir="o")),
-                 Subsignal("tx_clk",  Pins("A12", dir="o")),
-                 Subsignal("tx_ctrl", Pins("C9", dir="o")),
-                 Subsignal("tx_data", Pins("D8 C8 B8 A8", dir="o")),
-                 Subsignal("rx_clk",  Pins("E11", dir="i")),
-                 Subsignal("rx_ctrl", Pins("A11", dir="i")),
-                 Subsignal("rx_data", Pins("B11 A10 B10 A9", dir="i")),
-                 Attrs(IO_TYPE="LVCMOS33")
-                 ),
-        Resource("eth_int", 0, PinsN("B13", dir="i"),
-                 Attrs(IO_TYPE="LVCMOS33")),
-
-        *SDCardResources(0,
-                         clk="P24", cmd="M24", dat0="N26", dat1="N25", dat2="N23", dat3="N21", cd="L22",
-                         # TODO
-                         # clk_fb="P25", cmd_dir="M23", dat0_dir="N24", dat123_dir="P26",
-                         attrs=Attrs(IO_TYPE="LVCMOS33"),
-                         ),
-
-        # ERROR: cannot place differential IO at location PIOB
-        # if we choose to use DiffPairs
         Resource("ddr3", 0,
                  Subsignal("clk", Pins("H3", dir="o")),
                  #Subsignal("clk",    DiffPairs("H3", "J3", dir="o"), Attrs(IO_TYPE="SSTL135D_I")),
@@ -74,70 +41,6 @@ class IcarusECPIX5Platform(LatticeECP5Platform):
                  Subsignal("dm", Pins("U4 U1", dir="o")),
                  Subsignal("odt", Pins("P3", dir="o")),
                  Attrs(IO_TYPE="SSTL135_I")
-                 ),
-
-        Resource("hdmi", 0,
-                 Subsignal("rst",   PinsN("N6", dir="o")),
-                 Subsignal("scl",   Pins("C17", dir="io")),
-                 Subsignal("sda",   Pins("E17", dir="io")),
-                 Subsignal("pclk",  Pins("C1", dir="o")),
-                 Subsignal("vsync", Pins("A4", dir="o")),
-                 Subsignal("hsync", Pins("B4", dir="o")),
-                 Subsignal("de",    Pins("A3", dir="o")),
-                 Subsignal("d",
-                           Subsignal(
-                               "b", Pins("AD25 AC26 AB24 AB25  B3  C3  D3  B1  C2  D2 D1 E3", dir="o")),
-                           Subsignal(
-                               "g", Pins("AA23 AA22 AA24 AA25  E1  F2  F1 D17 D16 E16 J6 H6", dir="o")),
-                           Subsignal(
-                               "r", Pins("AD26 AE25 AF25 AE26 E10 D11 D10 C10  D9  E8 H5 J4", dir="o")),
-                           ),
-                 Subsignal("mclk",  Pins("E19", dir="o")),
-                 Subsignal("sck",   Pins("D6", dir="o")),
-                 Subsignal("ws",    Pins("C6", dir="o")),
-                 Subsignal("i2s",   Pins("A6 B6 A5 C5", dir="o")),
-                 Subsignal("int",   PinsN("C4", dir="i")),
-                 Attrs(IO_TYPE="LVTTL33")
-                 ),
-
-        Resource("sata", 0,
-                 Subsignal("tx", DiffPairs("AD16", "AD17", dir="o")),
-                 Subsignal("rx", DiffPairs("AF15", "AF16", dir="i")),
-                 Attrs(IO_TYPE="LVDS")
-                 ),
-
-        Resource("ulpi", 0,
-                 Subsignal("rst",  Pins("E23", dir="o")),
-                 Subsignal("clk",  Pins("H24", dir="i")),
-                 Subsignal("dir",  Pins("F22", dir="i")),
-                 Subsignal("nxt",  Pins("F23", dir="i")),
-                 Subsignal("stp",  Pins("H23", dir="o")),
-                 Subsignal("data", Pins(
-                     "M26 L25 L26 K25 K26 J23 J26 H25", dir="io")),
-                 Attrs(IO_TYPE="LVCMOS33")
-                 ),
-
-        Resource("usbc_cfg", 0,
-                 Subsignal("scl", Pins("D24", dir="io")),
-                 Subsignal("sda", Pins("C24", dir="io")),
-                 Subsignal("dir", Pins("B23", dir="i")),
-                 Subsignal("id",  Pins("D23", dir="i")),
-                 Subsignal("int", PinsN("B24", dir="i")),
-                 Attrs(IO_TYPE="LVCMOS33")
-                 ),
-        Resource("usbc_mux", 0,
-                 Subsignal("en",    Pins("C23", dir="oe")),
-                 Subsignal("amsel", Pins("B26", dir="oe")),
-                 Subsignal("pol",   Pins("D26", dir="o")),
-                 Subsignal("lna",   DiffPairs("AF9", "AF10", dir="i"),
-                           Attrs(IO_TYPE="LVCMOS18D")),
-                 Subsignal("lnb",   DiffPairs("AD10", "AD11",
-                                              dir="o"), Attrs(IO_TYPE="LVCMOS18D")),
-                 Subsignal("lnc",   DiffPairs("AD7",  "AD8", dir="o"),
-                           Attrs(IO_TYPE="LVCMOS18D")),
-                 Subsignal("lnd",   DiffPairs("AF6",  "AF7", dir="i"),
-                           Attrs(IO_TYPE="LVCMOS18D")),
-                 Attrs(IO_TYPE="LVCMOS33")
                  ),
     ]
 
