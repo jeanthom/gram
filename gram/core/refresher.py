@@ -374,7 +374,7 @@ class Refresher(Elaboratable):
                         m.next = "Idle"
             else:
                 with m.State("Do-Refresh"):
-                    m.d.comb += self.cmd.valid.eq(~wants_zqcs)
+                    m.d.comb += self.cmd.valid.eq(wants_zqcs & ~sequencer.done)
                     with m.If(sequencer.done):
                         with m.If(wants_zqcs):
                             m.d.comb += zqcs_executer.start.eq(1)
