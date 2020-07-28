@@ -106,7 +106,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
 
         # PHY settings -----------------------------------------------------------------------------
-        tck = 2/(2*2*self._sys_clk_freq)
+        tck = 1/(2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.io)
         nranks = 1 if not hasattr(self.pads, "cs") else len(self.pads.cs.o0)
@@ -137,7 +137,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
         m.submodules.bridge = self._bridge
 
-        tck = 2/(2*2*self._sys_clk_freq)
+        tck = 1/(2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.io)
 
