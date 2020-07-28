@@ -309,4 +309,32 @@ module simsoctb;
       $display("Read speedtest: %d MB/s", 610352/(tend-tstart));
     end
   endtask
+
+    task speedtest_write;
+    begin
+      tstart = $time;
+      for (i = 0; i < 10; i = i+1) begin
+        wishbone_write(32'h1000000C >> 2, 32'h00BA0BAB);
+        wishbone_write(32'h10000008 >> 2, 32'h13374242);
+        wishbone_write(32'h10000004 >> 2, 32'hC0DEC0DE);
+        wishbone_write(32'h10000000 >> 2, 32'h01020304);
+        wishbone_write(32'h1000001C >> 2, 32'h00BA0BAB);
+        wishbone_write(32'h10000018 >> 2, 32'h13374242);
+        wishbone_write(32'h10000014 >> 2, 32'hC0DEC0DE);
+        wishbone_write(32'h10000010 >> 2, 32'h01020304);
+        wishbone_write(32'h1000002C >> 2, 32'h00BA0BAB);
+        wishbone_write(32'h10000028 >> 2, 32'h13374242);
+        wishbone_write(32'h10000024 >> 2, 32'hC0DEC0DE);
+        wishbone_write(32'h10000020 >> 2, 32'h01020304);
+        wishbone_write(32'h1000003C >> 2, 32'h00BA0BAB);
+        wishbone_write(32'h10000038 >> 2, 32'h13374242);
+        wishbone_write(32'h10000034 >> 2, 32'hC0DEC0DE);
+        wishbone_write(32'h10000030 >> 2, 32'h01020304);
+      end
+      tend = $time;
+
+      //$display("Write speedtest: %d B/s", (10*16*4)*1000000000/(1024*1024)/(tend-tstart));
+      $display("Write speedtest: %d MB/s", 610352/(tend-tstart));
+    end
+  endtask
 endmodule
