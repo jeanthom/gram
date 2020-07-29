@@ -156,9 +156,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         cl_sys_latency = get_sys_latency(nphases, cl)
         cwl_sys_latency = get_sys_latency(nphases, cwl)
 
-        # Observation
-        self.datavalid = Signal(databits//8)
-
         # DFI Interface ----------------------------------------------------------------------------
         dfi = self.dfi
 
@@ -280,7 +277,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 o_WRPNTR0=wrpntr[0],
                 o_WRPNTR1=wrpntr[1],
                 o_WRPNTR2=wrpntr[2],
-                o_DATAVALID=self.datavalid[i],
                 o_BURSTDET=burstdet,
 
                 # Writes (generate shifted ECLK clock for writes)
