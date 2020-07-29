@@ -91,3 +91,6 @@ ENV/
 # VCD+GTKW
 *.vcd
 *.gtkw
+
+# Sublime Text
+*.sublime-workspace
