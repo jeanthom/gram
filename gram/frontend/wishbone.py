@@ -12,21 +12,19 @@ from lambdasoc.periph import Peripheral
 
 
 class gramWishbone(Peripheral, Elaboratable):
-    def __init__(self, core, data_width = 32):
+    def __init__(self, core, data_width=32, granularity=8):
         super().__init__(name="wishbone")
 
-        self.dw = data_width
-        self._port = core.crossbar.get_native_port()
+        self.native_port = core.crossbar.get_native_port()
 
-        dram_size = core.size//4
-        dram_addr_width = log2_int(dram_size)
-        granularity = 8
+        self.ratio = self.native_port.data_width//data_width
 
-        self.bus = wishbone.Interface(addr_width=dram_addr_width,
-                                      data_width=self.dw, granularity=granularity)
+        addr_width = log2_int(core.size//(self.native_port.data_width//data_width))
+        self.bus = wishbone.Interface(addr_width=addr_width+log2_int(self.ratio),
+                                      data_width=data_width, granularity=granularity)
 
-        map = MemoryMap(addr_width=dram_addr_width +
-                        log2_int(granularity)-1, data_width=granularity)
+        map = MemoryMap(addr_width=addr_width+log2_int(self.ratio)+log2_int(data_width//granularity),
+            data_width=granularity)
         self.bus.memory_map = map
 
     def elaborate(self, platform):
@@ -34,53 +32,52 @@ class gramWishbone(Peripheral, Elaboratable):
 
         # Write datapath
         m.d.comb += [
-            self._port.wdata.valid.eq(self.bus.cyc & self.bus.stb & self.bus.we),
+            self.native_port.wdata.valid.eq(self.bus.cyc & self.bus.stb & self.bus.we),
         ]
 
-        with m.Switch(self.bus.adr & 0b11):
-            for i in range(4):
-                with m.Case(i):
-                    with m.If(self.bus.sel):
-                        m.d.comb += self._port.wdata.we.eq(0xF << (4*i))
-                    with m.Else():
-                        m.d.comb += self._port.wdata.we.eq(0)
+        ratio_bitmask = Repl(1, log2_int(self.ratio))
 
-        with m.Switch(self.bus.adr & 0b11):
-            for i in range(4):
+        with m.Switch(self.bus.adr & ratio_bitmask):
+            for i in range(self.ratio):
                 with m.Case(i):
-                    m.d.comb += self._port.wdata.data.eq(self.bus.dat_w << (32*i))
+                    m.d.comb += self.native_port.wdata.we.eq(Repl(self.bus.sel, self.bus.data_width//self.bus.granularity) << (self.ratio*i))
+
+        with m.Switch(self.bus.adr & ratio_bitmask):
+            for i in range(self.ratio):
+                with m.Case(i):
+                    m.d.comb += self.native_port.wdata.data.eq(self.bus.dat_w << (self.bus.data_width*i))
 
         # Read datapath
         m.d.comb += [
-            self._port.rdata.ready.eq(1),
+            self.native_port.rdata.ready.eq(1),
         ]
 
-        with m.Switch(self.bus.adr & 0b11):
-            for i in range(4):
+        with m.Switch(self.bus.adr & ratio_bitmask):
+            for i in range(self.ratio):
                 with m.Case(i):
-                    m.d.comb += self.bus.dat_r.eq(self._port.rdata.data >> (32*i))
+                    m.d.comb += self.bus.dat_r.eq(self.native_port.rdata.data >> (self.bus.data_width*i))
 
         with m.FSM():
             with m.State("Send-Cmd"):
                 m.d.comb += [
-                    self._port.cmd.valid.eq(self.bus.cyc & self.bus.stb),
-                    self._port.cmd.we.eq(self.bus.we),
-                    self._port.cmd.addr.eq(self.bus.adr >> 2),
+                    self.native_port.cmd.valid.eq(self.bus.cyc & self.bus.stb),
+                    self.native_port.cmd.we.eq(self.bus.we),
+                    self.native_port.cmd.addr.eq(self.bus.adr >> log2_int(self.bus.data_width//self.bus.granularity)),
                 ]
 
-                with m.If(self._port.cmd.valid & self._port.cmd.ready):
+                with m.If(self.native_port.cmd.valid & self.native_port.cmd.ready):
                     with m.If(self.bus.we):
                         m.next = "Wait-Write"
                     with m.Else():
                         m.next = "Wait-Read"
 
             with m.State("Wait-Read"):
-                with m.If(self._port.rdata.valid):
+                with m.If(self.native_port.rdata.valid):
                     m.d.comb += self.bus.ack.eq(1)
                     m.next = "Send-Cmd"
 
             with m.State("Wait-Write"):
-                with m.If(self._port.wdata.ready):
+                with m.If(self.native_port.wdata.ready):
                     m.d.comb += self.bus.ack.eq(1)
                     m.next = "Send-Cmd"
 
