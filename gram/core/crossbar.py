@@ -136,10 +136,8 @@ class gramCrossbar(Elaboratable):
                 master_locked.append(locked)
 
             # Arbitrate ----------------------------------------------------------------------------
-            bank_selected = [(ba == nb) & ~locked for ba,
-                             locked in zip(m_ba, master_locked)]
-            bank_requested = [bs & master.cmd.valid for bs,
-                              master in zip(bank_selected, self.masters)]
+            bank_selected = [(ba == nb) & ~locked for ba, locked in zip(m_ba, master_locked)]
+            bank_requested = [bs & master.cmd.valid for bs, master in zip(bank_selected, self.masters)]
             m.d.comb += [
                 arbiter.requests.eq(Cat(*bank_requested)),
                 arbiters_en[nb].eq(~bank.valid & ~bank.lock)
