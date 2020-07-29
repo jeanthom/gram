@@ -31,38 +31,14 @@ sources:
   - https://git.sr.ht/~macbook/gram
 tasks:
   - install-python-packages: |
-      pip install git+git://github.com/nmigen/nmigen.git git+git://github.com/nmigen/nmigen-boards.git git+git://github.com/nmigen/nmigen-stdio.git git+git://github.com/nmigen/nmigen-soc.git git+git://github.com/lambdaconcept/lambdasoc.git --user
+      pip install git+git://github.com/nmigen/nmigen.git git+git://github.com/nmigen/nmigen-boards.git git+git://github.com/nmigen/nmigen-stdio.git git+git://github.com/nmigen/nmigen-soc.git git+git://github.com/lambdaconcept/lambdasoc.git yowasp-yosys --user
       pip list
-  - install-yosys: |
-      cd /tmp
-      git clone https://github.com/YosysHQ/yosys yosys
-      cd yosys
-      echo "Yosys Git hash: $(git rev-parse HEAD)"
-      make config-gcc
-      make -j$(nproc)
-      sudo make install
-      rm -rf /tmp/yosys
-  - install-symbiyosys: |
-      cd /tmp
-      git clone https://github.com/YosysHQ/SymbiYosys.git SymbiYosys
-      cd SymbiYosys
-      echo "SymbiYosys Git hash: $(git rev-parse HEAD)"
-      sudo make install
-      rm -rf /tmp/SymbiYosys
-  - install-icarus-verilog: |
-      cd /tmp
-      git clone git://github.com/steveicarus/iverilog.git iverilog
-      cd iverilog
-      echo "Icarus Verilog Git hash: $(git rev-parse HEAD)"
-      autoconf
-      ./configure
-      make -j$(nproc)
-      sudo make install
-      rm -rf /tmp/iverilog
   - install-gram: |
       cd ~/gram
       python setup.py install --user
   - run-tests: |
+      alias yosys=yowasp-yosys
       cd ~/gram
+      export YOSYS=yowasp-yosys SBY=yowasp-sby SMTBMC=yowasp-yosys-smtbmc NMIGEN_USE_YOSYS=builtin
       contrib/test
 shell: false
