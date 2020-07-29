@@ -66,4 +66,12 @@ module simcrgtb;
 
       last_sync2x_tick = $time;
     end
+
+  always @(posedge top.crg_dramsync_clk)
+    begin
+      if (top.crg_dramsync_clk && $time > 700000)
+        begin
+          assert(top.crg_sync2x_clk == 1) else $error("dramsync and sync2x are out of sync");
+        end
+    end
 endmodule
