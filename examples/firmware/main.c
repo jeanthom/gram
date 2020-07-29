@@ -28,7 +28,7 @@ struct uart_regs {
 
 void uart_write(char c)
 {
-	struct uart_regs *regs = 0x5000;
+	struct uart_regs *regs = 0x2000;
 	while (!read32(&regs->tx_rdy));
 	write32(&regs->tx_data, c);
 }
@@ -78,11 +78,11 @@ int main(void) {
 		uart_writestr("Writing to 0x");
 		uart_writeuint32(&ram[i]);
 		uart_write('\n');
-		ram[i] = 0xDEADBEEF;
+		ram[i] = 0xDEAF0000 | i*4;
 	}
 
 	for (size_t i = 0; i < 1000; i++) {
-		if (ram[i] != 0xDEADBEEF) {
+		if (ram[i] != (0xDEAF0000 | i*4)) {
 			uart_writestr("fail : *(0x");
 			uart_writeuint32(&ram[i]);
 			uart_writestr(") = ");
