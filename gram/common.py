@@ -192,6 +192,8 @@ class gramNativePort(Settings):
 
         self.flush = Signal()
 
+        self.data_width = data_width
+
     def get_bank_address(self, bank_bits, cba_shift):
         cba_upper = cba_shift + bank_bits
         return self.cmd.addr[cba_shift:cba_upper]
