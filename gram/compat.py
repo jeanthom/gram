@@ -11,7 +11,12 @@ __ALL__ = ["delayed_enter", "Timeline", "CSRPrefixProxy"]
 
 
 def delayed_enter(m, src, dst, delay):
-    assert delay > 0
+    if not isinstance(m, Module):
+        raise ValueError("m must be a module object, not {!r}".format(m))
+    if not isinstance(delay, int):
+        raise ValueError("Delay must be an integer, not {!r}".format(delay))
+    if delay < 1:
+        raise ValueError("Delay must be at least one cycle, not {!r}".format(delay))
 
     for i in range(delay):
         if i == 0:

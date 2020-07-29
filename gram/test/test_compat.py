@@ -37,7 +37,7 @@ class DelayedEnterTestCase(FHDLTestCase):
 
             runSimulation(m, process, "test_delayedenter.vcd")
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             sequence(0)
         sequence(1)
         sequence(2)
