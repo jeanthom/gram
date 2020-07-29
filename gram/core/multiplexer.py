@@ -10,10 +10,11 @@ import math
 
 from nmigen import *
 from nmigen.asserts import Assert, Assume
+from nmigen.lib.scheduler import RoundRobin
 
 from gram.common import *
 import gram.stream as stream
-from gram.compat import RoundRobin, delayed_enter
+from gram.compat import delayed_enter
 
 __ALL__ = ["Multiplexer"]
 
@@ -69,10 +70,12 @@ class _CommandChooser(Elaboratable):
             write = request.is_write == self.want_writes
             m.d.comb += valids[i].eq(request.valid & (command | (read & write)))
 
-        m.submodules.arbiter = arbiter = RoundRobin(n)
+        # Arbitrate if a command is being accepted or if the command is not valid to ensure a valid
+        # command is selected when cmd.ready goes high.
+        m.submodules.arbiter = arbiter = EnableInserter(self.cmd.ready | ~self.cmd.valid)(RoundRobin(count=n))
         choices = Array(valids[i] for i in range(n))
         m.d.comb += [
-            arbiter.request.eq(valids),
+            arbiter.requests.eq(valids),
             self.cmd.valid.eq(choices[arbiter.grant])
         ]
 
@@ -89,10 +92,6 @@ class _CommandChooser(Elaboratable):
         for i, request in enumerate(self._requests):
             with m.If(self.cmd.valid & self.cmd.ready & (arbiter.grant == i)):
                 m.d.comb += self.ready[i].eq(1)
-
-        # Arbitrate if a command is being accepted or if the command is not valid to ensure a valid
-        # command is selected when cmd.ready goes high.
-        m.d.comb += arbiter.stb.eq(self.cmd.ready | ~self.cmd.valid)
 
         return m
 

@@ -5,10 +5,10 @@
 # License: BSD
 
 from nmigen import *
+from nmigen.lib.scheduler import RoundRobin
 
 from gram.common import *
 from gram.core.controller import *
-from gram.compat import RoundRobin
 import gram.stream as stream
 
 __ALL__ = ["gramCrossbar"]
@@ -118,7 +118,8 @@ class gramCrossbar(Elaboratable):
         master_wdata_readys = [0]*nmasters
         master_rdata_valids = [0]*nmasters
 
-        arbiters = [RoundRobin(nmasters) for n in range(self.nbanks)]
+        arbiters_en = Signal(self.nbanks)
+        arbiters = [EnableInserter(arbiters_en[n])(RoundRobin(count=nmasters)) for n in range(self.nbanks)]
         m.submodules += arbiters
 
         for nb, arbiter in enumerate(arbiters):
@@ -140,8 +141,8 @@ class gramCrossbar(Elaboratable):
             bank_requested = [bs & master.cmd.valid for bs,
                               master in zip(bank_selected, self.masters)]
             m.d.comb += [
-                arbiter.request.eq(Cat(*bank_requested)),
-                arbiter.stb.eq(~bank.valid & ~bank.lock)
+                arbiter.requests.eq(Cat(*bank_requested)),
+                arbiters_en[nb].eq(~bank.valid & ~bank.lock)
             ]
 
             # Route requests -----------------------------------------------------------------------
