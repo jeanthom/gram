@@ -3,7 +3,7 @@ from nmigen import *
 from gram.core.multiplexer import _AntiStarvation, _CommandChooser
 from gram.common import cmd_request_rw_layout
 import gram.stream as stream
-from utils import *
+from gram.test.utils import *
 
 class CommandChooserTestCase(FHDLTestCase):
     def prepare_testbench(self):

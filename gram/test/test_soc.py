@@ -17,7 +17,7 @@ from gram.modules import MT41K256M16
 from gram.frontend.wishbone import gramWishbone
 
 from gram.core.multiplexer import _AntiStarvation
-from utils import *
+from gram.test.utils import *
 
 class DDR3SoC(SoC, Elaboratable):
     def __init__(self, *, clk_freq, dramcore_addr,

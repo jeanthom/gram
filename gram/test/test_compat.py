@@ -4,7 +4,7 @@ from nmigen.hdl.ast import Past
 from nmigen.asserts import Assert, Assume
 
 from gram.compat import *
-from utils import *
+from gram.test.utils import *
 
 class DelayedEnterTestCase(FHDLTestCase):
     def test_sequence(self):

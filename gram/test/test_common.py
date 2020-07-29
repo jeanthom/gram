@@ -3,7 +3,7 @@ from nmigen import *
 from nmigen.hdl.ast import Past
 
 from gram.common import tXXDController, tFAWController
-from utils import *
+from gram.test.utils import *
 
 class tXXDControllerTestCase(FHDLTestCase):
     def test_formal(self):

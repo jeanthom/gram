@@ -4,7 +4,7 @@ from nmigen.asserts import Assert, Assume
 
 from gram.core.refresher import RefreshExecuter, RefreshSequencer, RefreshTimer, RefreshPostponer, Refresher
 from gram.compat import *
-from utils import *
+from gram.test.utils import *
 
 class RefreshExecuterTestCase(FHDLTestCase):
     def test_executer(self):

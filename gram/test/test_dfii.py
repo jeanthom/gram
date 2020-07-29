@@ -3,7 +3,7 @@ from lambdasoc.periph import Peripheral
 
 from gram.dfii import *
 from gram.phy.dfi import Interface
-from utils import *
+from gram.test.utils import *
 
 # Phase injector CSR addresses
 PI_COMMAND_ADDR = 0x00

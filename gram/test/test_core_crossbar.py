@@ -3,7 +3,7 @@ from nmigen.hdl.ast import Sample
 from nmigen.asserts import Assert, Assume
 
 from gram.core.crossbar import _DelayLine
-from utils import *
+from gram.test.utils import *
 
 class DelayLineSpec(Elaboratable):
     def __init__(self, delay):
