@@ -25,7 +25,7 @@ class DDR3SoC(SoC, Elaboratable):
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
 
-        self.bus = wishbone.Interface(addr_width=30, data_width=32, granularity=32)
+        self.bus = wishbone.Interface(addr_width=30, data_width=32, granularity=8)
 
         tck = 2/(2*2*100e6)
         nphases = 2
