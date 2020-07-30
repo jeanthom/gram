@@ -11,7 +11,14 @@ Build libgram with make. In your firmware:
 
 int main(void) {
 	struct gramCtx ctx;
-	int err = gram_init(&ctx, 0x10000000, 0x00006000, 0x00005000);
+	struct gramProfile profile {
+		.mode_registers = {
+			0x320, 0x6, 0x200, 0
+		},
+		.rdly_p0 = 0,
+		.rdly_p1 = 0
+	};
+	int err = gram_init(&ctx, &profile, 0x10000000, 0x00006000, 0x00005000);
 
 	return 0;
 }

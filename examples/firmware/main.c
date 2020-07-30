@@ -69,7 +69,14 @@ int main(void) {
 
 	uart_writestr("DRAM init... ");
 	struct gramCtx ctx;
-	gram_init(&ctx, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
+	struct gramProfile profile = {
+		.mode_registers = {
+			0x320, 0x6, 0x200, 0x0
+		},
+		.rdly_p0 = 2,
+		.rdly_p1 = 2,
+	};
+	gram_init(&ctx, &profile, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
 	uart_writestr("done\n");
 
 	uart_writestr("DRAM test... \n");

@@ -102,7 +102,13 @@ int main(int argc, char *argv[]) {
 	size_t i;
 	int delay, miss = 0;
 
-	struct gramProfile profile = {0,0};
+	struct gramProfile profile = {
+		.mode_registers = {
+			0x320, 0x6, 0x200, 0x0
+		},
+		.rdly_p0 = 2,
+		.rdly_p1 = 2,
+	};
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s port baudrate\n", argv[0]);
@@ -120,8 +126,7 @@ int main(int argc, char *argv[]) {
 	ctx.user_data = &serial_port;
 
 	printf("gram init... ");
-	gram_init(&ctx, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
-	gram_load_calibration(&ctx, &profile);
+	gram_init(&ctx, &profile, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
 	printf("done\n");
 
 	srand(time(NULL));
