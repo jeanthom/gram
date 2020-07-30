@@ -62,9 +62,9 @@ void gram_reset_burstdet(const struct gramCtx *ctx) {
 
 bool gram_read_burstdet(const struct gramCtx *ctx, int phase) {
 #ifdef GRAM_RW_FUNC
-	return gram_read(ctx, &(ctx->phy->burstdet)) & (1 << phase);
+	return !!(gram_read(ctx, &(ctx->phy->burstdet)) & (1 << phase));
 #else
-	return ctx->phy->burstdet & (1 << phase);
+	return !!(ctx->phy->burstdet & (1 << phase));
 #endif
 }
 
