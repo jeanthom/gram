@@ -61,7 +61,7 @@ int serial_setup(const char *devname, int baudrate) {
 
 	memset(&tty, 0, sizeof(tty));
 	if (tcgetattr(serialfd, &tty) != 0) {
-    	fprintf(stderr, "Error %i from tcgetattr: %s\n", errno, strerror(errno));
+		fprintf(stderr, "Error %i from tcgetattr: %s\n", errno, strerror(errno));
 	}
 
 	/* Parameters from flterm */
@@ -86,7 +86,7 @@ int serial_setup(const char *devname, int baudrate) {
 
 	tcflush(serialfd, TCIFLUSH );
 	if (tcsetattr(serialfd, TCSANOW, &tty) != 0) {
-    	fprintf(stderr, "Error %i from tcsetattr: %s\n", errno, strerror(errno));
+		fprintf(stderr, "Error %i from tcsetattr: %s\n", errno, strerror(errno));
 	}
 
 	return serialfd;
