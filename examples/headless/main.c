@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	printf("memtest... \n");
-	volatile uint32_t ddr_base = 0x10001000;
+	uint32_t ddr_base = 0x10000000;
 
 	printf("Writing data sequence...");
 	for (i = 0; i < kPatternSize; i++) {
