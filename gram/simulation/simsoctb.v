@@ -40,7 +40,7 @@ module simsoctb;
   wire [1:0] dram_dm;
   wire dram_odt;
   wire [1:0] dram_tdqs_n;
-  reg dram_rst;
+  reg dram_rst = 0;
 
   ddr3 #(
     .check_strict_timing(0)
