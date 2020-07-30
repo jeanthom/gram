@@ -129,6 +129,8 @@ int main(int argc, char *argv[]) {
 	gram_init(&ctx, &profile, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
 	printf("done\n");
 
+	gram_reset_burstdet(&ctx);
+
 	srand(time(NULL));
 	for (i = 0; i < kPatternSize; i++) {
 		pattern[i] = rand();
@@ -175,6 +177,8 @@ int main(int argc, char *argv[]) {
 			printf(" ");
 		}
 	}
+
+	printf("Burstdet %d-%d\n", gram_read_burstdet(&ctx, 0), gram_read_burstdet(&ctx, 1));
 
 	printf("Memtest miss score (lowest is better): %d/100\n", (miss/4)*100/kPatternSize);
 
