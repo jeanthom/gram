@@ -22,36 +22,6 @@ static void set_rdly(const struct gramCtx *ctx, unsigned int phase, unsigned int
 #endif
 }
 
-static inline uint32_t lsfr(uint32_t in) {
-	return (in >> 1) ^ (uint32_t)(0 - (in & 1u) & 0xd0000001);
-}
-
-static bool memtest(uint32_t *start, uint32_t *stop, int delay) {
-	const uint32_t seed = 0x6C616D62;
-	uint32_t rand = seed;
-	volatile uint32_t *ptr;
-	int i;
-
-	for (ptr = start; ptr < stop; ptr++) {
-		*ptr = rand;
-		rand = lsfr(rand);
-	}
-
-	for (i = 0; i < delay; i++) {
-		__asm__("nop");
-	}
-
-	rand = seed;
-	for (ptr = start; ptr < stop; ptr++) {
-		if (*ptr != rand) {
-			return false;
-		}
-		rand = lsfr(rand);
-	}
-
-	return true;
-}
-
 void gram_reset_burstdet(const struct gramCtx *ctx) {
 #ifdef GRAM_RW_FUNC
 	gram_write(ctx, &(ctx->phy->burstdet), 0);
