@@ -38,7 +38,7 @@ bool gram_read_burstdet(struct gramCtx *ctx, int phase) {
 #endif
 }
 
-int gram_calibration_auto(struct gramCtx *ctx) {
+int gram_generate_calibration(struct gramCtx *ctx, struct gramProfile *profile) {
 	uint32_t refval[8];
 	size_t i, j, k;
 	int score;
