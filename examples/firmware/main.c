@@ -46,7 +46,7 @@ void memcpy(void *dest, void *src, size_t n) {
    char *src_char = (char *)src;
    char *dest_char = (char *)dest;
    for (i=0; i<n; i++)
-      dest_char[i] = src_char[i]; //copy contents byte by byte
+	  dest_char[i] = src_char[i]; //copy contents byte by byte
 }
 
 void uart_writeuint32(uint32_t val) {
