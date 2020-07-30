@@ -69,23 +69,74 @@ bool gram_read_burstdet(const struct gramCtx *ctx, int phase) {
 }
 
 int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *profile) {
-	unsigned char rdly_p0, rdly_p1;
+	unsigned char rdly;
 	unsigned char min_rdly_p0, min_rdly_p1;
-	unsigned char max_rdly_p0, max_rdly_p1;
+	unsigned char max_rdly_p0 = 7, max_rdly_p1 = 7;
+	uint32_t tmp;
+	volatile uint32_t *ram = ctx->ddr_base;
+	size_t i;
 
 	dfii_setsw(ctx, true);
 
 	// Find minimal rdly
-	for (rdly_p0 = 0; rdly_p0 < 8; rdly_p0++) {
-		for (rdly_p1 = 0; rdly_p1 < 8; rdly_p1++) {
+	for (rdly = 0; rdly < 8; rdly++) {
+		profile->rdly_p0 = rdly;
+		gram_load_calibration(ctx, profile);
+		gram_reset_burstdet(ctx);
 
+		for (i = 0; i < 128; i++) {
+			tmp = ram[i];
+		}
+
+		if (gram_read_burstdet(&ctx, 0)) {
+			min_rdly_p0 = rdly;
+			break;
+		}
+	}
+
+	for (rdly = 0; rdly < 8; rdly++) {
+		profile->rdly_p1 = rdly;
+		gram_load_calibration(ctx, profile);
+		gram_reset_burstdet(ctx);
+
+		for (i = 0; i < 128; i++) {
+			tmp = ram[i];
+		}
+
+		if (gram_read_burstdet(&ctx, 1)) {
+			min_rdly_p1 = rdly;
+			break;
 		}
 	}
 
 	// Find maximal rdly
-	for (rdly_p0 = 0; rdly_p0 < 8; rdly_p0++) {
-		for (rdly_p1 = 0; rdly_p1 < 8; rdly_p1++) {
+	for (rdly = min_rdly_p0; rdly < 8; rdly++) {
+		profile->rdly_p0 = rdly;
+		gram_load_calibration(ctx, profile);
+		gram_reset_burstdet(ctx);
 
+		for (i = 0; i < 128; i++) {
+			tmp = ram[i];
+		}
+
+		if (!gram_read_burstdet(&ctx, 0)) {
+			max_rdly_p0 = rdly - 1;
+			break;
+		}
+	}
+
+	for (rdly = 0; rdly < 8; rdly++) {
+		profile->rdly_p1 = rdly;
+		gram_load_calibration(ctx, profile);
+		gram_reset_burstdet(ctx);
+
+		for (i = 0; i < 128; i++) {
+			tmp = ram[i];
+		}
+
+		if (!gram_read_burstdet(&ctx, 1)) {
+			max_rdly_p1 = rdly - 1;
+			break;
 		}
 	}
 

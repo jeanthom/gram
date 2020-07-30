@@ -80,6 +80,18 @@ int main(void) {
 	gram_init(&ctx, &profile, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
 	uart_writestr("done\n");
 
+	uart_writestr("Auto calibrating... ");
+	gram_generate_calibration(&ctx, &profile);
+	gram_load_calibration(&ctx, &profile);
+	uart_writestr("done\n");
+
+	uart_writestr("Auto calibration profile:");
+	uart_writestr("p0 rdly:");
+	uart_writeuint32(profile.rdly_p0);
+	uart_writestr(" p1 rdly:");
+	uart_writeuint32(profile.rdly_p1);
+	uart_writestr("\n");
+
 	uart_writestr("DRAM test... \n");
 	volatile uint32_t *ram = 0x10000000;
 	for (size_t i = 0; i < kNumIterations; i++) {
