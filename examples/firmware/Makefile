@@ -20,7 +20,10 @@ main.bin: $(OBJS) link.ld ../../libgram/libgram.a
 	$(CC) $(LDFLAGS) $(OBJS) ../../libgram/libgram.a -o main.elf
 	$(OBJCOPY) -O binary main.elf main.bin
 
-main.img.bin: main.bin
-	$(PYTHON) -m lambdasoc.software.bios.util.mkmscimg --little $< -o $@
+all: main.bin
 
-all: main.img.bin
+clean:
+	rm -f $(OBJS)
+	rm *.elf
+	rm *.bin
+.PHONY: clean
