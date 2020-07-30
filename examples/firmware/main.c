@@ -65,6 +65,7 @@ void isr(void) {
 }
 
 int main(void) {
+	const int kNumIterations = 65536;
 	uart_writestr("Firmware launched...\n");
 
 	uart_writestr("DRAM init... ");
@@ -81,14 +82,11 @@ int main(void) {
 
 	uart_writestr("DRAM test... \n");
 	volatile uint32_t *ram = 0x10000000;
-	for (size_t i = 0; i < 1000; i++) {
-		uart_writestr("Writing to 0x");
-		uart_writeuint32(&ram[i]);
-		uart_write('\n');
+	for (size_t i = 0; i < kNumIterations; i++) {
 		ram[i] = 0xDEAF0000 | i*4;
 	}
 
-	for (size_t i = 0; i < 1000; i++) {
+	for (size_t i = 0; i < kNumIterations; i++) {
 		if (ram[i] != (0xDEAF0000 | i*4)) {
 			uart_writestr("fail : *(0x");
 			uart_writeuint32(&ram[i]);
