@@ -28,11 +28,12 @@ struct gramCtx {
 struct gramProfile {
 	uint8_t rdly_p0;
 	uint8_t rdly_p1;
+	uint32_t mode_registers[4];
 };
 
 extern __attribute__((visibility ("default"))) int gram_init(struct gramCtx *ctx, void *ddr_base, void *core_base, void *phy_base);
 extern __attribute__((visibility ("default"))) int gram_memtest(struct gramCtx *ctx, size_t length, enum GramWidth width);
-extern __attribute__((visibility ("default"))) int gram_calibration_auto(struct gramCtx *ctx);
+extern __attribute__((visibility ("default"))) int gram_generate_calibration(struct gramCtx *ctx, struct gramProfile *profile);
 extern __attribute__((visibility ("default"))) void gram_load_calibration(struct gramCtx *ctx, struct gramProfile *profile);
 
 extern __attribute__((visibility ("default"))) void gram_reset_burstdet(struct gramCtx *ctx);
