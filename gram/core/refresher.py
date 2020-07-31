@@ -348,7 +348,7 @@ class Refresher(Elaboratable):
 
             # ZQCS Executer ------------------------------------------------------------------------
             zqcs_executer = ZQCSExecuter(self._abits, self._babits, settings.timing.tRP, settings.timing.tZQCS)
-            m.submodules.zqs_executer = zqcs_executer
+            m.submodules.zqcs_executer = zqcs_executer
             m.d.comb += zqcs_timer.wait.eq(~zqcs_executer.done)
 
         # Refresh FSM ------------------------------------------------------------------------------
