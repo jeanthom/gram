@@ -99,7 +99,7 @@ if __name__ == "__main__":
     platform = ECPIX585Platform()
 
     ddr_pins = platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"},
-            xdr={"clk":4, "a":4, "ba":4, "clk_en":4, "we_n":4, "odt":4, "ras":4, "cas":4, "we":4})
+        xdr={"clk":4, "a":4, "ba":4, "clk_en":4, "odt":4, "ras":4, "cas":4, "we":4})
     uart_pins = platform.request("uart", 0)
 
     soc = DDR3SoC(ddrphy_addr=0x00008000, dramcore_addr=0x00009000,
