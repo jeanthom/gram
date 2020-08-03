@@ -8,7 +8,7 @@
 enum GramError {
 	GRAM_ERR_NONE = 0,
 	GRAM_ERR_UNDOCUMENTED,
-	GRAM_ERR_MEMTEST,
+	GRAM_ERR_RDLY_MAX,
 };
 
 struct gramCoreRegs;

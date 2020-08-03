@@ -1,6 +1,6 @@
 # libgram, the C companion for gram
 
-libgram is the C library for gram core initialization and memory testing.
+libgram is the C library for gram core initialization and calibration.
 
 ## HowTo
 
@@ -31,6 +31,7 @@ Link it to this library and you should be good to go!
 ```
 GRAM_ERR_NONE: No error happened (hardcoded to zero)
 GRAM_ERR_UNDOCUMENTED: Undocumented error, shame on us lazy coders (take a look at the code)
+GRAM_ERR_RDLY_MAX: Read delay calibration unsuccessful because its value exceeds DQSBUFM's max
 ```
 
 ## Using libgram outside the SoC

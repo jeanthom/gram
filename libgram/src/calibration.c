@@ -61,6 +61,8 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		if (gram_read_burstdet(&ctx, 0)) {
 			min_rdly_p0 = rdly;
 			break;
+		} else if (rdly == 7) {
+			return GRAM_ERR_RDLY_MAX;
 		}
 	}
 
@@ -76,6 +78,8 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		if (gram_read_burstdet(&ctx, 1)) {
 			min_rdly_p1 = rdly;
 			break;
+		} else if (rdly == 7) {
+			return GRAM_ERR_RDLY_MAX;
 		}
 	}
 
@@ -92,6 +96,8 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		if (!gram_read_burstdet(&ctx, 0)) {
 			max_rdly_p0 = rdly - 1;
 			break;
+		} else if (rdly == 7) {
+			return GRAM_ERR_RDLY_MAX;
 		}
 	}
 
@@ -107,6 +113,8 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		if (!gram_read_burstdet(&ctx, 1)) {
 			max_rdly_p1 = rdly - 1;
 			break;
+		} else if (rdly == 7) {
+			return GRAM_ERR_RDLY_MAX;
 		}
 	}
 
@@ -116,7 +124,7 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 	profile->rdly_p0 = (min_rdly_p0+max_rdly_p0)/2;
 	profile->rdly_p1 = (min_rdly_p1+max_rdly_p1)/2;
 
-	return 0;
+	return GRAM_ERR_NONE;
 }
 
 void gram_load_calibration(const struct gramCtx *ctx, const struct gramProfile *profile) {
