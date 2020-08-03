@@ -344,7 +344,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                     i_I=dqs,
                     i_T=dqs_oe_n,
                     o_O=dqs_i,
-                    io_B=self.pads.dqs.io[i]),
+                    io_B=self.pads.dqs.p[i]),
             ]
 
             for j in range(8*i, 8*(i+1)):
