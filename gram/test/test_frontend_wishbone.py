@@ -236,9 +236,9 @@ class GramWishboneTestCase(FHDLTestCase):
 
             self.assertEqual((yield native_port.wdata.we), 1)
 
-            yield bus.stb.eq(0)
-            yield bus.cyc.eq(0)
-            yield native_port.wdata.ready.eq(0)
+            yield dut.bus.stb.eq(0)
+            yield dut.bus.cyc.eq(0)
+            yield dut.native_port.wdata.ready.eq(0)
             yield
 
         runSimulation(dut, process, "test_frontend_wishbone.vcd")
