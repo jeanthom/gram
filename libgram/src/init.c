@@ -10,4 +10,6 @@ int gram_init(struct gramCtx *ctx, const struct gramProfile *profile, void *ddr_
 	dfii_initseq(ctx, profile);
 	gram_load_calibration(ctx, profile);
 	dfii_setsw(ctx, false);
+
+    return GRAM_ERR_NONE;
 }
