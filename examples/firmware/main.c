@@ -66,6 +66,7 @@ void isr(void) {
 
 int main(void) {
 	const int kNumIterations = 65536;
+	int res, failcnt = 0;
 	uart_writestr("Firmware launched...\n");
 
 	uart_writestr("DRAM init... ");
@@ -81,7 +82,11 @@ int main(void) {
 	uart_writestr("done\n");
 
 	uart_writestr("Auto calibrating... ");
-	gram_generate_calibration(&ctx, &profile);
+	res = gram_generate_calibration(&ctx, &profile);
+	if (res != GRAM_ERR_NONE) {
+		uart_writestr("failed\n");
+		while (1);
+	}
 	gram_load_calibration(&ctx, &profile);
 	uart_writestr("done\n");
 
@@ -105,6 +110,11 @@ int main(void) {
 			uart_writestr(") = ");
 			uart_writeuint32(ram[i]);
 			uart_write('\n');
+			failcnt++;
+
+			if (failcnt > 10) {
+				uart_writestr("Test canceled (more than 10 errors)\n");
+			}
 		}
 	}
 	uart_writestr("done\n");
