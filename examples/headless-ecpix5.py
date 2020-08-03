@@ -17,7 +17,7 @@ from gram.phy.ecp5ddrphy import ECP5DDRPHY
 from gram.modules import MT41K256M16
 from gram.frontend.wishbone import gramWishbone
 
-from ecpix5_85 import ECPIX585Platform
+from nmigen_boards.ecpix5 import *
 from uartbridge import UARTBridge
 from crg import *
 
