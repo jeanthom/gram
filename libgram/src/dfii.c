@@ -7,7 +7,7 @@
 
 static void dfii_setcontrol(const struct gramCtx *ctx, uint8_t val) {
 #ifdef GRAM_RW_FUNC
-	gram_write(ctx, &(ctx->core->control), val);
+	gram_write(ctx, (void*)&(ctx->core->control), val);
 #else
 	ctx->core->control = val;
 #endif
@@ -23,7 +23,7 @@ void dfii_setsw(const struct gramCtx *ctx, bool software_control) {
 
 void dfii_set_p0_address(const struct gramCtx *ctx, uint32_t val) {
 #ifdef GRAM_RW_FUNC
-	gram_write(ctx, &(ctx->core->phases[0].address), val);
+	gram_write(ctx, (void*)&(ctx->core->phases[0].address), val);
 #else
 	ctx->core->phases[0].address = val;
 #endif
@@ -31,7 +31,7 @@ void dfii_set_p0_address(const struct gramCtx *ctx, uint32_t val) {
 
 void dfii_set_p0_baddress(const struct gramCtx *ctx, uint32_t val) {
 #ifdef GRAM_RW_FUNC
-	gram_write(ctx, &(ctx->core->phases[0].baddress), val);
+	gram_write(ctx, (void*)&(ctx->core->phases[0].baddress), val);
 #else
 	ctx->core->phases[0].baddress = val;
 #endif
@@ -39,8 +39,8 @@ void dfii_set_p0_baddress(const struct gramCtx *ctx, uint32_t val) {
 
 void dfii_p0_command(const struct gramCtx *ctx, uint32_t cmd) {
 #ifdef GRAM_RW_FUNC
-	gram_write(ctx, &(ctx->core->phases[0].command), cmd);
-	gram_write(ctx, &(ctx->core->phases[0].command_issue), 1);
+	gram_write(ctx, (void*)&(ctx->core->phases[0].command), cmd);
+	gram_write(ctx, (void*)&(ctx->core->phases[0].command_issue), 1);
 #else
 	ctx->core->phases[0].command = cmd;
 	ctx->core->phases[0].command_issue = 1;

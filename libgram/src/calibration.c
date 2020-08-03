@@ -9,9 +9,9 @@
 static void set_rdly(const struct gramCtx *ctx, unsigned int phase, unsigned int rdly) {
 #ifdef GRAM_RW_FUNC
 	if (phase == 0) {
-		gram_write(ctx, &(ctx->phy->rdly_p0), rdly);
+		gram_write(ctx, (void*)&(ctx->phy->rdly_p0), rdly);
 	} else if (phase == 1) {
-		gram_write(ctx, &(ctx->phy->rdly_p1), rdly);
+		gram_write(ctx, (void*)&(ctx->phy->rdly_p1), rdly);
 	}
 #else
 	if (phase == 0) {
@@ -24,7 +24,7 @@ static void set_rdly(const struct gramCtx *ctx, unsigned int phase, unsigned int
 
 void gram_reset_burstdet(const struct gramCtx *ctx) {
 #ifdef GRAM_RW_FUNC
-	gram_write(ctx, &(ctx->phy->burstdet), 0);
+	gram_write(ctx, (void*)&(ctx->phy->burstdet), 0);
 #else
 	ctx->phy->burstdet = 0;
 #endif
@@ -32,7 +32,7 @@ void gram_reset_burstdet(const struct gramCtx *ctx) {
 
 bool gram_read_burstdet(const struct gramCtx *ctx, int phase) {
 #ifdef GRAM_RW_FUNC
-	return !!(gram_read(ctx, &(ctx->phy->burstdet)) & (1 << phase));
+	return !!(gram_read(ctx, (void*)&(ctx->phy->burstdet)) & (1 << phase));
 #else
 	return !!(ctx->phy->burstdet & (1 << phase));
 #endif
