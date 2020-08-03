@@ -105,5 +105,4 @@ if __name__ == "__main__":
     soc = DDR3SoC(ddrphy_addr=0x00008000, dramcore_addr=0x00009000,
         ddr_addr=0x10000000, ddr_pins=ddr_pins, uart_pins=uart_pins)
 
-    #soc.build(do_build=Tru)
     platform.build(soc, do_program=True)
