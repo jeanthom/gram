@@ -41,4 +41,7 @@ tasks:
       cd ~/gram
       export YOSYS=yowasp-yosys SBY=yowasp-sby SMTBMC=yowasp-yosys-smtbmc NMIGEN_USE_YOSYS=builtin
       contrib/test
+  - compile-libgram: |
+      cd ~/gram/libgram
+      CFLAGS="-DGRAM_RW_FUNC" make TRIPLE=""
 shell: false
