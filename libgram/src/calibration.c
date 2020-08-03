@@ -84,7 +84,7 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 	}
 
 	// Find maximal rdly
-	for (rdly = min_rdly_p0; rdly < 8; rdly++) {
+	for (rdly = min_rdly_p0+1; rdly < 8; rdly++) {
 		profile->rdly_p0 = rdly;
 		gram_load_calibration(ctx, profile);
 		gram_reset_burstdet(ctx);
@@ -101,7 +101,7 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		}
 	}
 
-	for (rdly = min_rdly_p1; rdly < 8; rdly++) {
+	for (rdly = min_rdly_p1+1; rdly < 8; rdly++) {
 		profile->rdly_p1 = rdly;
 		gram_load_calibration(ctx, profile);
 		gram_reset_burstdet(ctx);
