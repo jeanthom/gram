@@ -34,8 +34,8 @@ extern __attribute__((visibility ("default"))) void gram_reset_burstdet(const st
 extern __attribute__((visibility ("default"))) bool gram_read_burstdet(const struct gramCtx *ctx, int phase);
 
 #ifdef GRAM_RW_FUNC
-extern uint32_t gram_read(struct gramCtx *ctx, void *addr);
-extern int gram_write(struct gramCtx *ctx, void *addr, uint32_t value);
+extern uint32_t gram_read(const struct gramCtx *ctx, void *addr);
+extern int gram_write(const struct gramCtx *ctx, void *addr, uint32_t value);
 #endif /* GRAM_RW_FUNC */
 
 #endif /* GRAM_H */
