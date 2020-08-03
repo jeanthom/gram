@@ -230,6 +230,12 @@ class GramWishboneTestCase(FHDLTestCase):
                 self.assertEqual((yield native_port.wdata.we), 0b10000)
             def sel9(bus, native_port):
                 self.assertEqual((yield native_port.wdata.we), 0b100000000)
+            def sel13(bus, native_port):
+                self.assertEqual((yield native_port.wdata.we), 0b1000000000000)
+            def selfirstdword(bus, native_port):
+                self.assertEqual((yield native_port.wdata.we), 0xF)
+            def sellastdword(bus, native_port):
+                self.assertEqual((yield native_port.wdata.we), 0xF000)
 
             yield from self.write_request(bus=dut.bus,
                 native_port=native_port,
@@ -278,5 +284,29 @@ class GramWishboneTestCase(FHDLTestCase):
                 value=0xCA,
                 timeout=128,
                 ackCallback=sel9)
+
+        yield from self.write_request(bus=dut.bus,
+                native_port=native_port,
+                adr=3,
+                sel=1,
+                value=0xCA,
+                timeout=128,
+                ackCallback=sel13)
+
+        yield from self.write_request(bus=dut.bus,
+                native_port=native_port,
+                adr=3,
+                sel=0xF,
+                value=0xCA,
+                timeout=128,
+                ackCallback=sellastdword)
+
+        yield from self.write_request(bus=dut.bus,
+                native_port=native_port,
+                adr=4,
+                sel=0xF,
+                value=0xCA,
+                timeout=128,
+                ackCallback=selfirstdword)
 
         runSimulation(dut, process, "test_frontend_wishbone.vcd")
