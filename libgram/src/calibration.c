@@ -48,6 +48,8 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 
 	dfii_setsw(ctx, true);
 
+	(void)tmp;
+
 	// Find minimal rdly
 	for (rdly = 0; rdly < 8; rdly++) {
 		profile->rdly_p0 = rdly;

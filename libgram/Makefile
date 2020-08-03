@@ -8,7 +8,7 @@ OBJCOPY := $(TRIPLE)objcopy
 AR := $(TRIPLE)ar
 LD := $(TRIPLE)ld
 
-CFLAGS += -fvisibility=hidden -nostdlib -Os -Iinclude -std=c99
+CFLAGS += -fvisibility=hidden -nostdlib -Os -Iinclude -std=c99 -Wall -Werror -pedantic
 LDFLAGS += -nostdlib
 
 ifeq ($(TRIPLE),riscv64-unknown-elf-)
