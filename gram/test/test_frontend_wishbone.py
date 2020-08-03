@@ -200,3 +200,45 @@ class GramWishboneTestCase(FHDLTestCase):
 
     def test_write64_64(self):
         self.write_test(data_width=64, granularity=64)
+
+    def test_sel(self):
+        core = FakeGramCore()
+        native_port = core.crossbar.get_native_port()
+        dut = gramWishbone(core, data_width=32, granularity=8)
+
+        def process():
+            # Initialize native port
+            yield native_port.cmd.ready.eq(0)
+            yield native_port.wdata.ready.eq(0)
+            yield native_port.rdata.valid.eq(0)
+
+            # Send a write request
+            yield dut.bus.adr.eq(0)
+            yield dut.bus.stb.eq(1)
+            yield dut.bus.cyc.eq(1)
+            yield dut.bus.sel.eq(1)
+            yield dut.bus.we.eq(1)
+            yield dut.bus.dat_w.eq(0xA8)
+            yield
+
+            # Answer cmd
+            yield native_port.cmd.ready.eq(1)
+            yield
+
+            # Answer wdata
+            yield native_port.wdata.ready.eq(1)
+
+            timeout = 128
+            while not (yield dut.bus.ack):
+                timeout -= 1
+                yield
+                self.assertTrue(timeout > 0)
+
+            self.assertEqual((yield native_port.wdata.we), 1)
+
+            yield bus.stb.eq(0)
+            yield bus.cyc.eq(0)
+            yield native_port.wdata.ready.eq(0)
+            yield
+
+        runSimulation(dut, process, "test_frontend_wishbone.vcd")
