@@ -114,6 +114,7 @@ int main(void) {
 
 			if (failcnt > 10) {
 				uart_writestr("Test canceled (more than 10 errors)\n");
+				break;
 			}
 		}
 	}
