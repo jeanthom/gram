@@ -206,7 +206,7 @@ class _Steerer(Elaboratable):
 
 class _AntiStarvation(Elaboratable):
     def __init__(self, timeout):
-        if timeout <= 2:
+        if timeout < 2:
             raise ValueError("Timeout values under 2 are not currently supported")
 
         self.en = Signal()
