@@ -106,7 +106,8 @@ class gramCrossbar(Elaboratable):
 
         controller = self.controller
         nmasters = len(self.masters)
-        assert nmasters > 0
+        if nmasters < 1:
+            raise ValueError("No frontend instantiated")
 
         # Address mapping --------------------------------------------------------------------------
         cba_shifts = {"ROW_BANK_COL": controller.settings.geom.colbits - controller.address_align}
