@@ -230,6 +230,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             rdpntr = Signal(3)
             wrpntr = Signal(3)
             burstdet = Signal()
+            datavalid = Signal()
+            datavalid_prev = Signal()
+            m.d.sync += datavalid_prev.eq(datavalid)
 
             m.submodules += Instance("DQSBUFM",
                 p_DQS_LI_DEL_ADJ="MINUS",
@@ -278,6 +281,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 o_WRPNTR1=wrpntr[1],
                 o_WRPNTR2=wrpntr[2],
                 o_BURSTDET=burstdet,
+                o_DATAVALID=datavalid,
 
                 # Writes (generate shifted ECLK clock for writes)
                 o_DQSW270=dqsw270,
@@ -423,15 +427,20 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         o_O=dq_i,
                         io_B=self.pads.dq.io[j])
                 ]
-                m.d.sync += [
-                    dfi.phases[1].rddata[j].eq(dq_i_data[0]),
-                    dfi.phases[1].rddata[1*databits+j].eq(dq_i_data[1]),
-                    dfi.phases[1].rddata[2*databits+j].eq(dq_i_data[2]),
-                    dfi.phases[1].rddata[3*databits+j].eq(dq_i_data[3]),
-                ]
-        m.d.sync += [
-            dfi.phases[0].rddata.eq(dfi.phases[1].rddata),
-        ]
+                with m.If(~datavalid_prev & datavalid):
+                    m.d.sync += [
+                        dfi.phases[0].rddata[0*databits+j].eq(dq_i_data[0]),
+                        dfi.phases[0].rddata[1*databits+j].eq(dq_i_data[1]),
+                        dfi.phases[0].rddata[2*databits+j].eq(dq_i_data[2]),
+                        dfi.phases[0].rddata[3*databits+j].eq(dq_i_data[3]),
+                    ]
+                with m.Elif(datavalid):
+                    m.d.sync += [
+                        dfi.phases[1].rddata[0*databits+j].eq(dq_i_data[0]),
+                        dfi.phases[1].rddata[1*databits+j].eq(dq_i_data[1]),
+                        dfi.phases[1].rddata[2*databits+j].eq(dq_i_data[2]),
+                        dfi.phases[1].rddata[3*databits+j].eq(dq_i_data[3]),
+                    ]
 
         # Read Control Path ------------------------------------------------------------------------
         # Creates a shift register of read commands coming from the DFI interface. This shift register
@@ -447,8 +456,12 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         rddata_en_last = Signal.like(rddata_en)
         m.d.comb += rddata_en.eq(Cat(dfi.phases[self.settings.rdphase].rddata_en, rddata_en_last))
         m.d.sync += rddata_en_last.eq(rddata_en)
-        m.d.sync += [phase.rddata_valid.eq(rddata_en[-1]) for phase in dfi.phases]
-        m.d.comb += dqs_re.eq(rddata_en[cl_sys_latency + 1] | rddata_en[cl_sys_latency + 2])
+        m.d.comb += dqs_re.eq(rddata_en[cl_sys_latency + 0] | rddata_en[cl_sys_latency + 1] | rddata_en[cl_sys_latency + 2])
+
+        rddata_valid = Signal()
+        m.d.sync += rddata_valid.eq(datavalid_prev & ~datavalid)
+        for phase in dfi.phases:
+            m.d.comb += phase.rddata_valid.eq(rddata_valid)
 
         # Write Control Path -----------------------------------------------------------------------
         # Creates a shift register of write commands coming from the DFI interface. This shift register
