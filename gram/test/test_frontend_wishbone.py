@@ -216,8 +216,6 @@ class GramWishboneTestCase(FHDLTestCase):
             yield native_port.wdata.ready.eq(0)
             yield native_port.rdata.valid.eq(0)
 
-            reference_value = 0xBADDCAFE_FEEDFACE_BEEFCAFE_BAD0DAB0
-
             def sel1(bus, native_port):
                 self.assertEqual((yield native_port.wdata.we), 0b1)
             def sel2(bus, native_port):
