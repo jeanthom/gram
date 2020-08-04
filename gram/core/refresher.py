@@ -160,8 +160,8 @@ class RefreshTimer(Elaboratable):
     """
 
     def __init__(self, trefi):
-        # TODO: we don't pass formal verification for trefi = 1
-        assert trefi != 1
+        if trefi < 2:
+            raise ValueError("trefi values under 2 are currently unsupported")
 
         self.wait = Signal()
         self.done = Signal()
