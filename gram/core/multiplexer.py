@@ -140,7 +140,9 @@ class _Steerer(Elaboratable):
     """
 
     def __init__(self, commands, dfi):
-        assert len(commands) == 4
+        if len(commands) != 4:
+            raise ValueError("Commands is not the right size")
+
         self._commands = commands
         self._dfi = dfi
         self.sel = [Signal(range(len(commands))) for i in range(len(dfi.phases))]
