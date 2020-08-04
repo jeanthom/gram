@@ -79,7 +79,7 @@ module simsoctb;
   
   top simsoctop (
     .ddr3_0__dq__io(dram_dq),
-    .ddr3_0__dqs__io(dram_dqs),
+    .ddr3_0__dqs__p(dram_dqs),
     .ddr3_0__clk__io(dram_ck),
     .ddr3_0__clk_en__io(dram_cke),
     .ddr3_0__we__io(dram_we_n),
