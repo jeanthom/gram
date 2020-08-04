@@ -46,7 +46,7 @@ class gramWishbone(Peripheral, Elaboratable):
         with m.Switch(self.bus.adr & ratio_bitmask):
             for i in range(self.ratio):
                 with m.Case(i):
-                    m.d.comb += self.native_port.wdata.we.eq(Repl(self.bus.sel, self.bus.granularity//8) << (self.ratio*i))
+                    m.d.comb += self.native_port.wdata.we.eq(Repl(sel, self.bus.granularity//8) << (self.ratio*i))
 
         with m.Switch(self.bus.adr & ratio_bitmask):
             for i in range(self.ratio):
