@@ -85,7 +85,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self._sys_clk_freq = sys_clk_freq
 
         databits = len(self.pads.dq.io)
-        assert databits % 8 == 0
+        if databits % 8 != 0:
+            raise ValueError("DQ pads should come in a multiple of 8")
 
         # CSR
         bank = self.csr_bank()
