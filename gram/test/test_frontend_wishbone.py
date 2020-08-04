@@ -308,3 +308,27 @@ class GramWishboneTestCase(FHDLTestCase):
                 ackCallback=selfirstdword)
 
         runSimulation(dut, process, "test_frontend_wishbone.vcd")
+
+    def test_sel_empty(self):
+        core = FakeGramCore()
+        native_port = core.crossbar.get_native_port()
+        dut = gramWishbone(core, data_width=32, granularity=8)
+
+        def process():
+            # Initialize native port
+            yield native_port.cmd.ready.eq(0)
+            yield native_port.wdata.ready.eq(0)
+            yield native_port.rdata.valid.eq(0)
+
+            def selfirstdword(bus, native_port):
+                self.assertEqual((yield native_port.wdata.we), 0xF)
+
+            yield from self.write_request(bus=dut.bus,
+                native_port=native_port,
+                adr=0,
+                sel=0,
+                value=0xAAAAAAAA,
+                timeout=128,
+                ackCallback=selfirstdword)
+
+        runSimulation(dut, process, "test_frontend_wishbone.vcd")

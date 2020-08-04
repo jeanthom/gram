@@ -37,6 +37,12 @@ class gramWishbone(Peripheral, Elaboratable):
 
         ratio_bitmask = Repl(1, log2_int(self.ratio))
 
+        sel = Signal.like(self.bus.sel)
+        with m.If(self.bus.sel == 0):
+            m.d.comb += sel.eq(Repl(1, sel.width))
+        with m.Else():
+            m.d.comb += sel.eq(self.bus.sel)
+
         with m.Switch(self.bus.adr & ratio_bitmask):
             for i in range(self.ratio):
                 with m.Case(i):
