@@ -289,8 +289,7 @@ class Multiplexer(Elaboratable):
         m.submodules.choose_cmd = choose_cmd = _CommandChooser(requests)
         m.submodules.choose_req = choose_req = _CommandChooser(requests)
         for i, request in enumerate(requests):
-            m.d.comb += request.ready.eq(
-                choose_cmd.ready[i] | choose_req.ready[i])
+            m.d.comb += request.ready.eq(choose_cmd.ready[i] | choose_req.ready[i])
         if settings.phy.nphases == 1:
             # When only 1 phase, use choose_req for all requests
             choose_cmd = choose_req
@@ -332,9 +331,9 @@ class Multiplexer(Elaboratable):
 
         # Read/write turnaround --------------------------------------------------------------------
         reads = Signal(len(requests))
-        m.d.comb += reads.eq(Cat([req.valid & req.is_read for req in requests]))
+        m.d.comb += reads.eq(Cat([(req.valid & req.is_read) for req in requests]))
         writes = Signal(len(requests))
-        m.d.comb += writes.eq(Cat([req.valid & req.is_write for req in requests]))
+        m.d.comb += writes.eq(Cat([(req.valid & req.is_write) for req in requests]))
 
         # Anti Starvation --------------------------------------------------------------------------
         m.submodules.read_antistarvation = read_antistarvation = _AntiStarvation(settings.read_time)
@@ -399,8 +398,7 @@ class Multiplexer(Elaboratable):
                         m.d.comb += steerer.sel[i].eq(STEER_CMD)
 
                 with m.If(settings.phy.nphases == 1):
-                    m.d.comb += choose_req.cmd.ready.eq(
-                        cas_allowed & (~choose_req.activate() | ras_allowed))
+                    m.d.comb += choose_req.cmd.ready.eq(cas_allowed & (~choose_req.activate() | ras_allowed))
                 with m.Else():
                     m.d.comb += [
                         choose_cmd.want_activates.eq(ras_allowed),
