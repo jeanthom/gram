@@ -355,42 +355,26 @@ class Multiplexer(Elaboratable):
             Cat(*all_wrdata_mask).eq(~interface.wdata_we)
         ]
 
-        def steerer_sel(steerer, r_w_n):
-            r = []
-            for i in range(settings.phy.nphases):
-                s = steerer.sel[i].eq(STEER_NOP)
-                if r_w_n == "read":
-                    if i == settings.phy.rdphase:
-                        s = steerer.sel[i].eq(STEER_REQ)
-                    elif i == settings.phy.rdcmdphase:
-                        s = steerer.sel[i].eq(STEER_CMD)
-                elif r_w_n == "write":
-                    if i == settings.phy.wrphase:
-                        s = steerer.sel[i].eq(STEER_REQ)
-                    elif i == settings.phy.wrcmdphase:
-                        s = steerer.sel[i].eq(STEER_CMD)
-                else:
-                    raise ValueError
-                r.append(s)
-            return r
-
         # Control FSM ------------------------------------------------------------------------------
         with m.FSM():
             with m.State("Read"):
                 m.d.comb += [
                     read_antistarvation.en.eq(1),
                     choose_req.want_reads.eq(1),
-                    steerer_sel(steerer, "read"),
                 ]
 
+                for i in range(settings.phy.nphases):
+                    if i == settings.phy.rdphase:
+                        m.d.comb += steerer.sel[i].eq(STEER_REQ)
+                    elif i == settings.phy.rdcmdphase:
+                        m.d.comb += steerer.sel[i].eq(STEER_CMD)
+
                 with m.If(settings.phy.nphases == 1):
-                    m.d.comb += choose_req.cmd.ready.eq(
-                        cas_allowed & (~choose_req.activate() | ras_allowed))
+                    m.d.comb += choose_req.cmd.ready.eq(cas_allowed & (~choose_req.activate() | ras_allowed))
                 with m.Else():
                     m.d.comb += [
                         choose_cmd.want_activates.eq(ras_allowed),
-                        choose_cmd.cmd.ready.eq(
-                            ~choose_cmd.activate() | ras_allowed),
+                        choose_cmd.cmd.ready.eq(~choose_cmd.activate() | ras_allowed),
                         choose_req.cmd.ready.eq(cas_allowed),
                     ]
 
@@ -406,8 +390,13 @@ class Multiplexer(Elaboratable):
                 m.d.comb += [
                     write_antistarvation.en.eq(1),
                     choose_req.want_writes.eq(1),
-                    steerer_sel(steerer, "write"),
                 ]
+
+                for i in range(settings.phy.nphases):
+                    if i == settings.phy.wrphase:
+                        m.d.comb += steerer.sel[i].eq(STEER_REQ)
+                    elif i == settings.phy.wrcmdphase:
+                        m.d.comb += steerer.sel[i].eq(STEER_CMD)
 
                 with m.If(settings.phy.nphases == 1):
                     m.d.comb += choose_req.cmd.ready.eq(
@@ -415,8 +404,7 @@ class Multiplexer(Elaboratable):
                 with m.Else():
                     m.d.comb += [
                         choose_cmd.want_activates.eq(ras_allowed),
-                        choose_cmd.cmd.ready.eq(
-                            ~choose_cmd.activate() | ras_allowed),
+                        choose_cmd.cmd.ready.eq(~choose_cmd.activate() | ras_allowed),
                         choose_req.cmd.ready.eq(cas_allowed),
                     ]
 
