@@ -150,19 +150,20 @@ class BankMachine(Elaboratable):
         with m.Else():
             m.d.comb += self.cmd.a.eq((auto_precharge << 10) | current_slicer.col)
 
-        # tWTP (write-to-precharge) controller -----------------------------------------------------
+        # tWTP / tRC / tRAS controllers
         write_latency = math.ceil(self.settings.phy.cwl / self.settings.phy.nphases)
         precharge_time = write_latency + self.settings.timing.tWR + self.settings.timing.tCCD  # AL=0
         m.submodules.twtpcon = twtpcon = tXXDController(precharge_time)
         m.d.comb += twtpcon.valid.eq(self.cmd.valid & self.cmd.ready & self.cmd.is_write)
 
-        # tRC (activate-activate) controller -------------------------------------------------------
         m.submodules.trccon = trccon = tXXDController(self.settings.timing.tRC)
-        m.d.comb += trccon.valid.eq(self.cmd.valid & self.cmd.ready & row_open)
-
-        # tRAS (activate-precharge) controller -----------------------------------------------------
         m.submodules.trascon = trascon = tXXDController(self.settings.timing.tRAS)
-        m.d.comb += trascon.valid.eq(self.cmd.valid & self.cmd.ready & row_open)
+        valid_ready_row_open = Signal()
+        m.d.comb += [
+            valid_ready_row_open.eq(self.cmd.valid & self.cmd.ready & row_open),
+            trccon.valid.eq(valid_ready_row_open),
+            trascon.valid.eq(valid_ready_row_open),
+        ]
 
         # Auto Precharge generation ----------------------------------------------------------------
         # generate auto precharge when current and next cmds are to different rows
