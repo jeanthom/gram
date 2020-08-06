@@ -75,6 +75,32 @@ class ECP5DDRPHYInit(Elaboratable):
         return m
 
 
+class _DQSBUFMSettingManager(Elaboratable):
+    def __init__(self, rdly_csr):
+        self.rdly_csr = rdly_csr
+
+        self.pause = Signal()
+        self.readclksel = Signal(3)
+
+    def elaborate(self, platform):
+        m = Module()
+
+        with m.FSM():
+            with m.State("Idle"):
+                with m.If(self.rdly_csr.w_stb):
+                    m.d.sync += self.pause.eq(1)
+                    m.next = "RdlyUpdateRequested"
+
+            with m.State("RdlyUpdateRequested"):
+                m.d.sync += self.readclksel.eq(self.rdly_csr.w_data)
+                m.next = "ResetPause"
+
+            with m.State("ResetPause"):
+                m.d.sync += self.pause.eq(0)
+                m.next = "Idle"
+
+        return m
+
 
 class ECP5DDRPHY(Peripheral, Elaboratable):
     def __init__(self, pads, sys_clk_freq=100e6):
@@ -234,6 +260,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             datavalid_prev = Signal()
             m.d.sync += datavalid_prev.eq(datavalid)
 
+            dqsbufm_manager = _DQSBUFMSettingManager(self.rdly[i])
+            setattr(m.submodules, f"dqsbufm_manager{i}", dqsbufm_manager)
+
             m.submodules += Instance("DQSBUFM",
                 p_DQS_LI_DEL_ADJ="MINUS",
                 p_DQS_LI_DEL_VAL=1,
@@ -255,7 +284,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 i_ECLK=ClockSignal("sync2x"),
                 i_RST=ResetSignal("dramsync"),
                 i_DDRDEL=init.delay,
-                i_PAUSE=init.pause | self.rdly[i].w_stb,
+                i_PAUSE=init.pause | dqsbufm_manager.pause,
 
                 # Control
                 # Assert LOADNs to use DDRDEL control
@@ -269,9 +298,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 # Reads (generate shifted DQS clock for reads)
                 i_READ0=dqs_re,
                 i_READ1=dqs_re,
-                i_READCLKSEL0=self.rdly[i].w_data[0],
-                i_READCLKSEL1=self.rdly[i].w_data[1],
-                i_READCLKSEL2=self.rdly[i].w_data[2],
+                i_READCLKSEL0=dqsbufm_manager.readclksel[0],
+                i_READCLKSEL1=dqsbufm_manager.readclksel[1],
+                i_READCLKSEL2=dqsbufm_manager.readclksel[2],
                 i_DQSI=dqs_i,
                 o_DQSR90=dqsr90,
                 o_RDPNTR0=rdpntr[0],
