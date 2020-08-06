@@ -86,6 +86,7 @@ int main(void) {
 	res = gram_generate_calibration(&ctx, &profile2);
 	if (res != GRAM_ERR_NONE) {
 		uart_writestr("failed\n");
+		gram_load_calibration(&ctx, &profile);
 	} else {
 		gram_load_calibration(&ctx, &profile2);
 	}
