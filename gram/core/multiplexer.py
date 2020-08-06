@@ -367,6 +367,8 @@ class Multiplexer(Elaboratable):
                         m.d.comb += steerer.sel[i].eq(STEER_REQ)
                     elif i == settings.phy.rdcmdphase:
                         m.d.comb += steerer.sel[i].eq(STEER_CMD)
+                    else:
+                        m.d.comb += steerer.sel[i].eq(STEER_NOP)
 
                 with m.If(settings.phy.nphases == 1):
                     m.d.comb += choose_req.cmd.ready.eq(cas_allowed & (~choose_req.activate() | ras_allowed))
@@ -396,6 +398,8 @@ class Multiplexer(Elaboratable):
                         m.d.comb += steerer.sel[i].eq(STEER_REQ)
                     elif i == settings.phy.wrcmdphase:
                         m.d.comb += steerer.sel[i].eq(STEER_CMD)
+                    else:
+                        m.d.comb += steerer.sel[i].eq(STEER_NOP)
 
                 with m.If(settings.phy.nphases == 1):
                     m.d.comb += choose_req.cmd.ready.eq(cas_allowed & (~choose_req.activate() | ras_allowed))
