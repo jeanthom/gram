@@ -31,6 +31,8 @@ class DDR3SoC(SoC, Elaboratable):
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
 
+        freq = 100e6
+
         self.crg = ECPIX5CRG()
 
         self.cpu = MinervaCPU(reset_address=0)
@@ -48,20 +50,20 @@ class DDR3SoC(SoC, Elaboratable):
         self.ram = SRAMPeripheral(size=4096)
         self._decoder.add(self.ram.bus, addr=0x1000)
 
-        self.uart = AsyncSerialPeripheral(divisor=100000000//115200, pins=uart_pins)
+        self.uart = AsyncSerialPeripheral(divisor=int(freq//115200), pins=uart_pins)
         self._decoder.add(self.uart.bus, addr=0x2000)
 
         
         self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(ddr_pins))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
-        ddrmodule = MT41K256M16(platform.default_clk_frequency, "1:2")
+        ddrmodule = MT41K256M16(freq, "1:2")
 
         self.dramcore = DomainRenamer("dramsync")(gramCore(
             phy=self.ddrphy,
             geom_settings=ddrmodule.geom_settings,
             timing_settings=ddrmodule.timing_settings,
-            clk_freq=platform.default_clk_frequency))
+            clk_freq=freq))
         self._decoder.add(self.dramcore.bus, addr=dramcore_addr)
 
         self.drambone = DomainRenamer("dramsync")(gramWishbone(self.dramcore))
@@ -69,7 +71,7 @@ class DDR3SoC(SoC, Elaboratable):
 
         self.memory_map = self._decoder.bus.memory_map
 
-        self.clk_freq = platform.default_clk_frequency
+        self.clk_freq = freq
 
     def elaborate(self, platform):
         m = Module()
