@@ -76,6 +76,24 @@ class ECP5DDRPHYInit(Elaboratable):
 
 
 class _DQSBUFMSettingManager(Elaboratable):
+    """DQSBUFM setting manager.
+
+    The DQSBUFM primitive requires a very basic sequence when updating
+    read delay or other parameters. This elaboratable generates this
+    sequence from CSR events.
+
+    Parameters
+    ----------
+    rdly_slr : CSR
+        CSR storing the rdly value.
+
+    Attributes
+    ----------
+    pause : Signal(), out
+        Pause signal for DQSBUFM.
+    readclksel : Signal(3), out
+        Readclksel signal for DQSBUFM.
+    """
     def __init__(self, rdly_csr):
         self.rdly_csr = rdly_csr
 
