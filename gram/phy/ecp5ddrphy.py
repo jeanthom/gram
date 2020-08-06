@@ -19,7 +19,7 @@ from gram.common import *
 from gram.phy.dfi import Interface
 from gram.compat import Timeline
 
-# Lattice ECP5 DDR PHY Initialization --------------------------------------------------------------
+__all__ = ["ECP5DDRPHY"]
 
 
 class ECP5DDRPHYInit(Elaboratable):
@@ -74,7 +74,6 @@ class ECP5DDRPHYInit(Elaboratable):
 
         return m
 
-# Lattice ECP5 DDR PHY -----------------------------------------------------------------------------
 
 
 class ECP5DDRPHY(Peripheral, Elaboratable):
@@ -412,8 +411,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         o_Q1=dq_i_data[1],
                         o_Q2=dq_i_data[2],
                         o_Q3=dq_i_data[3]),
-                ]
-                m.submodules += [
                     Instance("TSHX2DQA",
                         i_RST=ResetSignal("dramsync"),
                         i_ECLK=ClockSignal("sync2x"),
