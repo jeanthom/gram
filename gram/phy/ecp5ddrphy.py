@@ -338,8 +338,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
             # DQS and DM ---------------------------------------------------------------------------
             dm_o_data = Signal(8)
-            dm_o_data_d = Signal(8)
-            dm_o_data_muxed = Signal(4)
+            dm_o_data_d = Signal(8, reset_less=True)
+            dm_o_data_muxed = Signal(4, reset_less=True)
             m.d.comb += dm_o_data.eq(Cat(
                 dfi.phases[0].wrdata_mask[0*databits//8+i],
                 dfi.phases[0].wrdata_mask[1*databits//8+i],
@@ -404,8 +404,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 dq_i_delayed = Signal()
                 dq_i_data = Signal(4)
                 dq_o_data = Signal(8)
-                dq_o_data_d = Signal(8)
-                dq_o_data_muxed = Signal(4)
+                dq_o_data_d = Signal(8, reset_less=True)
+                dq_o_data_muxed = Signal(4, reset_less=True)
                 m.d.comb += dq_o_data.eq(Cat(
                     dfi.phases[0].wrdata[0*databits+j],
                     dfi.phases[0].wrdata[1*databits+j],
