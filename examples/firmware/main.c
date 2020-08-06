@@ -78,23 +78,24 @@ int main(void) {
 		.rdly_p0 = 2,
 		.rdly_p1 = 2,
 	};
+	struct gramProfile profile2;
 	gram_init(&ctx, &profile, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
 	uart_writestr("done\n");
 
 	uart_writestr("Auto calibrating... ");
-	res = gram_generate_calibration(&ctx, &profile);
+	res = gram_generate_calibration(&ctx, &profile2);
 	if (res != GRAM_ERR_NONE) {
 		uart_writestr("failed\n");
-		while (1);
+	} else {
+		gram_load_calibration(&ctx, &profile2);
 	}
-	gram_load_calibration(&ctx, &profile);
 	uart_writestr("done\n");
 
 	uart_writestr("Auto calibration profile:");
 	uart_writestr("p0 rdly:");
-	uart_writeuint32(profile.rdly_p0);
+	uart_writeuint32(profile2.rdly_p0);
 	uart_writestr(" p1 rdly:");
-	uart_writeuint32(profile.rdly_p1);
+	uart_writeuint32(profile2.rdly_p1);
 	uart_writestr("\n");
 
 	uart_writestr("DRAM test... \n");
