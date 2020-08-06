@@ -14,7 +14,6 @@ from nmigen.utils import log2_int
 
 from lambdasoc.periph import Peripheral
 
-import gram.stream as stream
 from gram.common import *
 from gram.phy.dfi import Interface
 from gram.compat import Timeline
