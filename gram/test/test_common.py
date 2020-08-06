@@ -22,7 +22,7 @@ class tXXDControllerTestCase(FHDLTestCase):
             dut = tXXDController(txxd)
 
             yield dut.valid.eq(1)
-            yield; yield Delay(1e-8)
+            yield; yield Delay(1e-9)
             self.assertFalse((yield dut.ready))
 
             yield dut.valid.eq(0)

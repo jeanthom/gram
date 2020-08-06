@@ -35,13 +35,13 @@ class CommandChooserTestCase(FHDLTestCase):
 
             # want_writes
             yield dut.want_writes.eq(1)
-            yield; yield Delay(1e-8)
+            yield; yield Delay(1e-9)
             self.assertEqual((yield dut.cmd.a), 7)
 
             # want_reads
             yield dut.want_writes.eq(0)
             yield dut.want_reads.eq(1)
-            yield; yield Delay(1e-8)
+            yield; yield Delay(1e-9)
             self.assertEqual((yield dut.cmd.a), 5)
 
         runSimulation(dut, process, "test_core_multiplexer_commandchooser.vcd")
@@ -65,14 +65,14 @@ class CommandChooserTestCase(FHDLTestCase):
 
             # want_writes
             yield dut.want_writes.eq(1)
-            yield; yield Delay(1e-8)
+            yield; yield Delay(1e-9)
             self.assertTrue((yield dut.write()))
             self.assertFalse((yield dut.read()))
 
             # want_reads
             yield dut.want_writes.eq(0)
             yield dut.want_reads.eq(1)
-            yield; yield Delay(1e-8)
+            yield; yield Delay(1e-9)
             self.assertTrue((yield dut.read()))
             self.assertFalse((yield dut.write()))
 

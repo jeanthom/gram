@@ -13,11 +13,11 @@ class RefreshExecuterTestCase(FHDLTestCase):
 
             def process():
                 yield dut.start.eq(1)
-                yield; yield Delay(1e-8)
+                yield; yield Delay(1e-9)
                 self.assertEqual((yield dut.a), 2**10)
                 for i in range(trp):
                     yield
-                yield Delay(1e-8)
+                yield Delay(1e-9)
                 self.assertEqual((yield dut.a), 0)
 
             runSimulation(dut, process, "test_refreshexecuter.vcd")
@@ -77,7 +77,7 @@ class RefreshPostponerTestCase(FHDLTestCase):
                     yield
 
                 yield dut.req_i.eq(0)
-                yield; yield Delay(1e-8)
+                yield; yield Delay(1e-9)
 
                 self.assertFalse((yield dut.req_o))
 

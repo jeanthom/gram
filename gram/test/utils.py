@@ -17,7 +17,7 @@ from nmigen._toolchain import require_tool
 
 __all__ = ["FHDLTestCase", "runSimulation", "wb_read", "wb_write", "PulseCounter", "Delay"]
 
-def runSimulation(module, process, vcd_filename="anonymous.vcd", clock=1e-6):
+def runSimulation(module, process, vcd_filename="anonymous.vcd", clock=1e-8):
     sim = Simulator(module)
     with sim.write_vcd(vcd_filename):
         sim.add_clock(clock)
