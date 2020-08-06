@@ -500,7 +500,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         rddata_en_last = Signal.like(rddata_en)
         m.d.comb += rddata_en.eq(Cat(dfi.phases[self.settings.rdphase].rddata_en, rddata_en_last))
         m.d.sync += rddata_en_last.eq(rddata_en)
-        m.d.comb += dqs_re.eq(rddata_en[cl_sys_latency + 0] | rddata_en[cl_sys_latency + 1] | rddata_en[cl_sys_latency + 2])
+        m.d.comb += dqs_re.eq(rddata_en[cl_sys_latency + 1] | rddata_en[cl_sys_latency + 2])
 
         rddata_valid = Signal()
         m.d.sync += rddata_valid.eq(datavalid_prev & ~datavalid)
