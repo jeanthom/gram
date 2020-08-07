@@ -2,7 +2,7 @@ from nmigen import *
 from nmigen.hdl.ast import Past
 from nmigen.asserts import Assert, Assume
 
-from gram.core.refresher import RefreshExecuter, RefreshSequencer, RefreshTimer, RefreshPostponer, Refresher
+from gram.core.refresher import RefreshExecuter, RefreshSequencer, RefreshTimer, RefreshPostponer, Refresher, ZQCSExecuter
 from gram.compat import *
 from gram.test.utils import *
 
@@ -113,3 +113,41 @@ class RefresherTestCase(FHDLTestCase):
             runSimulation(dut, process, "test_refresher.vcd")
 
         [generic_test(_) for _ in [1, 2, 4, 8]]
+
+class ZQCSExecuterTestCase(FHDLTestCase):
+    abits = 12
+    babits = 3
+    trp = 5
+    tzqcs = 5    
+
+    def test_sequence(self):
+        dut = ZQCSExecuter(self.abits, self.babits, self.trp, self.tzqcs)
+
+        def process():
+            yield dut.start.eq(1)
+            yield
+            yield dut.start.eq(0)
+            yield
+
+            # Check for Precharge ALL command
+            for i in range(self.trp):
+                self.assertEqual((yield dut.a), 2**10)
+                self.assertEqual((yield dut.ba), 0)
+                self.assertFalse((yield dut.cas))
+                self.assertTrue((yield dut.ras))
+                self.assertTrue((yield dut.we))
+                self.assertFalse((yield dut.done))
+                yield
+
+            # Check for ZQCS command
+            for i in range(self.tzqcs):
+                self.assertFalse((yield dut.a[10]))
+                self.assertFalse((yield dut.cas))
+                self.assertFalse((yield dut.ras))
+                self.assertTrue((yield dut.we))
+                self.assertFalse((yield dut.done))
+                yield
+
+            self.assertTrue((yield dut.done))
+
+        runSimulation(dut, process, "test_core_refresher_zqcsexecuter.vcd")
