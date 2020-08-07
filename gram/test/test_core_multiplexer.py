@@ -1,7 +1,8 @@
 from nmigen import *
 
-from gram.core.multiplexer import _AntiStarvation, _CommandChooser
+from gram.core.multiplexer import _AntiStarvation, _CommandChooser, _Steerer, STEER_NOP, STEER_CMD
 from gram.common import cmd_request_rw_layout
+from gram.phy.dfi import Interface
 import gram.stream as stream
 from gram.test.utils import *
 
@@ -77,6 +78,97 @@ class CommandChooserTestCase(FHDLTestCase):
             self.assertFalse((yield dut.write()))
 
         runSimulation(dut, process, "test_core_multiplexer_commandchooser.vcd")
+
+class SteererTestCase(FHDLTestCase):
+    def test_nop(self):
+        a = 12
+        ba = 3
+
+        commands = [
+            stream.Endpoint(cmd_request_rw_layout(a, ba)), # NOP
+            stream.Endpoint(cmd_request_rw_layout(a, ba)), # CMD
+            stream.Endpoint(cmd_request_rw_layout(a, ba)), # REQ
+            stream.Endpoint(cmd_request_rw_layout(a, ba)), # REFRESH
+        ]
+        dfi = Interface(a, ba, 1, 8, nphases=2)
+        dut = _Steerer(commands, dfi)
+
+        def process():
+            yield dut.sel[0].eq(STEER_NOP)
+            yield dut.sel[1].eq(STEER_NOP)
+            yield
+
+            # Check for NOP command on CAS/RAS/WE on phase #0
+            self.assertFalse((yield dfi.phases[0].cas))
+            self.assertFalse((yield dfi.phases[0].ras))
+            self.assertFalse((yield dfi.phases[0].we))
+
+            # Check for NOP command on CAS/RAS/WE on phase #1
+            self.assertFalse((yield dfi.phases[1].cas))
+            self.assertFalse((yield dfi.phases[1].ras))
+            self.assertFalse((yield dfi.phases[1].we))
+
+        runSimulation(dut, process, "test_core_multiplexer_steerer.vcd")
+
+    def test_cmd(self):
+        a = 12
+        ba = 3
+
+        commands = [
+            stream.Endpoint(cmd_request_rw_layout(a, ba)), # NOP
+            stream.Endpoint(cmd_request_rw_layout(a, ba)), # CMD
+            stream.Endpoint(cmd_request_rw_layout(a, ba)), # REQ
+            stream.Endpoint(cmd_request_rw_layout(a, ba)), # REFRESH
+        ]
+        dfi = Interface(a, ba, 1, 8, nphases=2)
+        dut = _Steerer(commands, dfi)
+
+        def process():
+            yield dut.sel[0].eq(STEER_CMD)
+            yield dut.sel[1].eq(STEER_NOP)
+            yield commands[STEER_CMD].cas.eq(1)
+            yield commands[STEER_CMD].ras.eq(0)
+            yield commands[STEER_CMD].we.eq(1)
+            yield commands[STEER_CMD].ready.eq(0)
+            yield
+
+            # Check for NOP command on CAS/RAS/WE on phase #0
+            self.assertFalse((yield dfi.phases[0].cas))
+            self.assertFalse((yield dfi.phases[0].ras))
+            self.assertFalse((yield dfi.phases[0].we))
+
+            # Check for NOP command on CAS/RAS/WE on phase #1
+            self.assertFalse((yield dfi.phases[1].cas))
+            self.assertFalse((yield dfi.phases[1].ras))
+            self.assertFalse((yield dfi.phases[1].we))
+
+            yield commands[STEER_CMD].valid.eq(1)
+            yield; yield Delay(1e-9)
+
+            # Check for NOP command on CAS/RAS/WE on phase #0
+            self.assertFalse((yield dfi.phases[0].cas))
+            self.assertFalse((yield dfi.phases[0].ras))
+            self.assertFalse((yield dfi.phases[0].we))
+
+            # Check for NOP command on CAS/RAS/WE on phase #1
+            self.assertFalse((yield dfi.phases[1].cas))
+            self.assertFalse((yield dfi.phases[1].ras))
+            self.assertFalse((yield dfi.phases[1].we))
+
+            yield commands[STEER_CMD].ready.eq(1)
+            yield; yield Delay(1e-9)
+
+            # Check for READ/WRITE command on CAS/RAS/WE on phase #0
+            self.assertTrue((yield dfi.phases[0].cas))
+            self.assertFalse((yield dfi.phases[0].ras))
+            self.assertTrue((yield dfi.phases[0].we))
+
+            # Check for NOP command on CAS/RAS/WE on phase #1
+            self.assertFalse((yield dfi.phases[1].cas))
+            self.assertFalse((yield dfi.phases[1].ras))
+            self.assertFalse((yield dfi.phases[1].we))
+
+        runSimulation(dut, process, "test_core_multiplexer_steerer.vcd")
 
 class AntiStarvationTestCase(FHDLTestCase):
     def test_duration(self):
