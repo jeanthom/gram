@@ -85,8 +85,8 @@ class BankMachine(Elaboratable):
     def __init__(self, n, address_width, address_align, nranks, settings):
         self.settings = settings
         self.req = req = Record(cmd_layout(address_width))
-        self.refresh_req = refresh_req = Signal()
-        self.refresh_gnt = refresh_gnt = Signal()
+        self.refresh_req = Signal()
+        self.refresh_gnt = Signal()
 
         a = settings.geom.addressbits
         ba = settings.geom.bankbits + log2_int(nranks)
