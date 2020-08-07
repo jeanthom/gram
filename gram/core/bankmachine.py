@@ -171,7 +171,7 @@ class BankMachine(Elaboratable):
         if self.settings.with_auto_precharge:
             with m.If(cmd_buffer_lookahead.source.valid & cmd_buffer.source.valid):
                 with m.If(lookahead_slicer.row != current_slicer.row):
-                    m.d.comb += auto_precharge.eq(row_close == 0)
+                    m.d.comb += auto_precharge.eq(~row_close)
 
         # Control and command generation FSM -------------------------------------------------------
         # Note: tRRD, tFAW, tCCD, tWTR timings are enforced by the multiplexer
