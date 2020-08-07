@@ -143,15 +143,12 @@ class _Steerer(Elaboratable):
         if len(commands) != 4:
             raise ValueError("Commands is not the right size")
 
-        self._commands = commands
-        self._dfi = dfi
+        self.commands = commands
+        self.dfi = dfi
         self.sel = [Signal(range(len(commands))) for i in range(len(dfi.phases))]
 
     def elaborate(self, platform):
         m = Module()
-
-        commands = self._commands
-        dfi = self._dfi
 
         def valid_and(cmd, attr):
             if not hasattr(cmd, "valid"):
@@ -159,7 +156,7 @@ class _Steerer(Elaboratable):
             else:
                 return cmd.valid & cmd.ready & getattr(cmd, attr)
 
-        for i, (phase, sel) in enumerate(zip(dfi.phases, self.sel)):
+        for i, (phase, sel) in enumerate(zip(self.dfi.phases, self.sel)):
             nranks = len(phase.cs)
             rankbits = log2_int(nranks)
             if hasattr(phase, "reset"):
@@ -171,8 +168,7 @@ class _Steerer(Elaboratable):
             if rankbits:
                 rank_decoder = Decoder(nranks)
                 m.submodules += rank_decoder
-                m.d.comb += rank_decoder.i.eq(
-                    (Array(cmd.ba[-rankbits:] for cmd in commands)[sel]))
+                m.d.comb += rank_decoder.i.eq((Array(cmd.ba[-rankbits:] for cmd in self.commands)[sel]))
                 if i == 0:  # Select all ranks on refresh.
                     with m.If(sel == STEER_REFRESH):
                         m.d.sync += phase.cs.eq(1)
@@ -180,22 +176,22 @@ class _Steerer(Elaboratable):
                         m.d.sync += phase.cs.eq(rank_decoder.o)
                 else:
                     m.d.sync += phase.cs.eq(rank_decoder.o)
-                m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits] for cmd in commands)[sel])
+                m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits] for cmd in self.commands)[sel])
             else:
                 m.d.sync += [
                     phase.cs.eq(1),
-                    phase.bank.eq(Array(cmd.ba[:] for cmd in commands)[sel]),
+                    phase.bank.eq(Array(cmd.ba[:] for cmd in self.commands)[sel]),
                 ]
 
             m.d.sync += [
                 phase.address.eq(Array(cmd.a for cmd in commands)[sel]),
-                phase.cas.eq(Array(valid_and(cmd, "cas") for cmd in commands)[sel]),
-                phase.ras.eq(Array(valid_and(cmd, "ras") for cmd in commands)[sel]),
-                phase.we.eq(Array(valid_and(cmd, "we") for cmd in commands)[sel])
+                phase.cas.eq(Array(valid_and(cmd, "cas") for cmd in self.commands)[sel]),
+                phase.ras.eq(Array(valid_and(cmd, "ras") for cmd in self.commands)[sel]),
+                phase.we.eq(Array(valid_and(cmd, "we") for cmd in self.commands)[sel])
             ]
 
-            rddata_ens = Array(valid_and(cmd, "is_read") for cmd in commands)
-            wrdata_ens = Array(valid_and(cmd, "is_write") for cmd in commands)
+            rddata_ens = Array(valid_and(cmd, "is_read") for cmd in self.commands)
+            wrdata_ens = Array(valid_and(cmd, "is_write") for cmd in self.commands)
             m.d.sync += [
                 phase.rddata_en.eq(rddata_ens[sel]),
                 phase.wrdata_en.eq(wrdata_ens[sel])
