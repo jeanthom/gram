@@ -164,10 +164,10 @@ class _Steerer(Elaboratable):
             rankbits = log2_int(nranks)
             if hasattr(phase, "reset"):
                 m.d.comb += phase.reset.eq(0)
-            m.d.comb += phase.clk_en.eq(Repl(Signal(reset=1), nranks))
+            m.d.comb += phase.clk_en.eq(Repl(1, nranks))
             if hasattr(phase, "odt"):
                 # FIXME: add dynamic drive for multi-rank (will be needed for high frequencies)
-                m.d.comb += phase.odt.eq(Repl(Signal(reset=1), nranks))
+                m.d.comb += phase.odt.eq(Repl(1, nranks))
             if rankbits:
                 rank_decoder = Decoder(nranks)
                 m.submodules += rank_decoder
@@ -180,8 +180,7 @@ class _Steerer(Elaboratable):
                         m.d.sync += phase.cs.eq(rank_decoder.o)
                 else:
                     m.d.sync += phase.cs.eq(rank_decoder.o)
-                m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits]
-                                                for cmd in commands)[sel])
+                m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits] for cmd in commands)[sel])
             else:
                 m.d.sync += [
                     phase.cs.eq(1),
