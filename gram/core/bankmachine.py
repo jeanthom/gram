@@ -118,6 +118,7 @@ class BankMachine(Elaboratable):
             self.req.lock.eq(cmd_buffer_lookahead.source.valid | cmd_buffer.source.valid),
         ]
 
+        # Address slicers
         m.submodules.lookahead_slicer = lookahead_slicer = _AddressSlicer(len(cmd_buffer_lookahead.source.addr),
             self.settings.geom.colbits, self._address_align)
         m.submodules.current_slicer = current_slicer = _AddressSlicer(len(cmd_buffer.source.addr),
