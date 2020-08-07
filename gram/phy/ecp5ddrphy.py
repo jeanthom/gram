@@ -32,12 +32,13 @@ class ECP5DDRPHYInit(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        new_lock = Signal()
         update = Signal()
         freeze = Signal()
 
         # DDRDLLA instance -------------------------------------------------------------------------
         _lock = Signal()
+        lock = Signal()
+        lock_d = Signal()
         m.submodules += Instance("DDRDLLA",
             i_CLK=ClockSignal("sync2x"),
             i_RST=ResetSignal("init"),
@@ -45,11 +46,8 @@ class ECP5DDRPHYInit(Elaboratable):
             i_FREEZE=freeze,
             o_DDRDEL=self.delay,
             o_LOCK=_lock)
-        lock = Signal()
-        lock_d = Signal()
         m.submodules += FFSynchronizer(_lock, lock, o_domain="init")
         m.d.init += lock_d.eq(lock)
-        m.d.sync += new_lock.eq(lock & ~lock_d)
 
         # DDRDLLA/DDQBUFM/ECLK initialization sequence ---------------------------------------------
         t = 8  # in cycles
@@ -65,9 +63,8 @@ class ECP5DDRPHYInit(Elaboratable):
             (9*t,  [update.eq(0)]),  # Release DDRDMMA update
             (10*t, [self.pause.eq(0)]),  # Release DQSBUFM pause
         ])
-        m.submodules += tl
-        # Wait DDRDLLA Lock
-        m.d.comb += tl.trigger.eq(new_lock)
+        m.d.comb += tl.trigger.eq(lock & ~lock_d) # Trigger timeline on lock rising edge
+        m.submodules += DomainRenamer("init")(tl)
 
         return m
 
