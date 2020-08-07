@@ -38,13 +38,12 @@ class ECP5DDRPHYInit(Elaboratable):
 
         # DDRDLLA instance -------------------------------------------------------------------------
         _lock = Signal()
-        delay = Signal()
         m.submodules += Instance("DDRDLLA",
             i_CLK=ClockSignal("sync2x"),
             i_RST=ResetSignal("init"),
             i_UDDCNTLN=~update,
             i_FREEZE=freeze,
-            o_DDRDEL=delay,
+            o_DDRDEL=self.delay,
             o_LOCK=_lock)
         lock = Signal()
         lock_d = Signal()
@@ -69,8 +68,6 @@ class ECP5DDRPHYInit(Elaboratable):
         m.submodules += tl
         # Wait DDRDLLA Lock
         m.d.comb += tl.trigger.eq(new_lock)
-
-        m.d.comb += self.delay.eq(delay)
 
         return m
 
