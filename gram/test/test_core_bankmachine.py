@@ -69,4 +69,4 @@ class BankMachineTestCase(FHDLTestCase):
 
     def test_no_request_grant(self):
         dut = BankMachine(0, 20, 2, 1, self.settings)
-        self.assertFormal(dut, "bmc", depth=100)
+        self.assertFormal(dut, "bmc", depth=21)
