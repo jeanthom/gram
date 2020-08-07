@@ -184,7 +184,7 @@ class _Steerer(Elaboratable):
                 ]
 
             m.d.sync += [
-                phase.address.eq(Array(cmd.a for cmd in commands)[sel]),
+                phase.address.eq(Array(cmd.a for cmd in self.commands)[sel]),
                 phase.cas.eq(Array(valid_and(cmd, "cas") for cmd in self.commands)[sel]),
                 phase.ras.eq(Array(valid_and(cmd, "ras") for cmd in self.commands)[sel]),
                 phase.we.eq(Array(valid_and(cmd, "we") for cmd in self.commands)[sel])
