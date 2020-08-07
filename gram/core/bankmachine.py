@@ -37,20 +37,20 @@ class BankMachine(Elaboratable):
     """Converts requests from ports into DRAM commands
 
     BankMachine abstracts single DRAM bank by keeping track of the currently
-    selected row. It converts requests from LiteDRAMCrossbar to targetted
+    selected row. It converts requests from gramCrossbar to targetted
     to that bank into DRAM commands that go to the Multiplexer, inserting any
     needed activate/precharge commands (with optional auto-precharge). It also
     keeps track and enforces some DRAM timings (other timings are enforced in
     the Multiplexer).
 
     BankMachines work independently from the data path (which connects
-    LiteDRAMCrossbar with the Multiplexer directly).
+    gramCrossbar with the Multiplexer directly).
 
-    Stream of requests from LiteDRAMCrossbar is being queued, so that reqeust
+    Stream of requests from gramCrossbar is being queued, so that reqeust
     can be "looked ahead", and auto-precharge can be performed (if enabled in
     settings).
 
-    Lock (cmd_layout.lock) is used to synchronise with LiteDRAMCrossbar. It is
+    Lock (cmd_layout.lock) is used to synchronise with gramCrossbar. It is
     being held when:
      - there is a valid command awaiting in `cmd_buffer_lookahead` - this buffer
        becomes ready simply when the next data gets fetched to the `cmd_buffer`
@@ -73,7 +73,7 @@ class BankMachine(Elaboratable):
     Attributes
     ----------
     req : Record(cmd_layout)
-        Stream of requests from LiteDRAMCrossbar
+        Stream of requests from gramCrossbar
     refresh_req : Signal(), in
         Indicates that refresh needs to be done, connects to Refresher.cmd.valid
     refresh_gnt : Signal(), out
