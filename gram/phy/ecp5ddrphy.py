@@ -9,6 +9,7 @@
 import math
 
 from nmigen import *
+from nmigen.hdl.ast import Rose
 from nmigen.lib.cdc import FFSynchronizer
 from nmigen.utils import log2_int
 
@@ -333,7 +334,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 o_DQSW270=dqsw270,
                 o_DQSW=dqsw)
 
-            with m.If(burstdet):
+            with m.If(Rose(burstdet)):
                 m.d.sync += burstdet_reg[i].eq(1)
 
             # DQS and DM ---------------------------------------------------------------------------
