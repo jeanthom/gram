@@ -180,7 +180,7 @@ class _Steerer(Elaboratable):
             else:
                 m.d.sync += [
                     phase.cs.eq(1),
-                    phase.bank.eq(Array(cmd.ba[:] for cmd in self.commands)[sel]),
+                    phase.bank.eq(Array(cmd.ba for cmd in self.commands)[sel]),
                 ]
 
             m.d.sync += [
