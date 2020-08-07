@@ -67,6 +67,8 @@ void isr(void) {
 int main(void) {
 	const int kNumIterations = 65536;
 	int res, failcnt = 0;
+	uint32_t tmp;
+	volatile uint32_t *ram = 0x10000000;
 	uart_writestr("Firmware launched...\n");
 
 	uart_writestr("DRAM init... ");
@@ -81,6 +83,38 @@ int main(void) {
 	struct gramProfile profile2;
 	gram_init(&ctx, &profile, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
 	uart_writestr("done\n");
+
+	uart_writestr("Rdly\np0: ");
+	for (size_t i = 0; i < 8; i++) {
+		profile2.rdly_p0 = i;
+		gram_load_calibration(&ctx, &profile2);
+		gram_reset_burstdet(&ctx);
+		for (size_t j = 0; j < 128; j++) {
+			tmp = ram[j];
+		}
+		if (gram_read_burstdet(&ctx, 0)) {
+			uart_writestr("1");
+		} else {
+			uart_writestr("0");
+		}
+	}
+	uart_writestr("\n");
+
+	uart_writestr("Rdly\np1: ");
+	for (size_t i = 0; i < 8; i++) {
+		profile2.rdly_p1 = i;
+		gram_load_calibration(&ctx, &profile2);
+		gram_reset_burstdet(&ctx);
+		for (size_t j = 0; j < 128; j++) {
+			tmp = ram[j];
+		}
+		if (gram_read_burstdet(&ctx, 1)) {
+			uart_writestr("1");
+		} else {
+			uart_writestr("0");
+		}
+	}
+	uart_writestr("\n");
 
 	uart_writestr("Auto calibrating... ");
 	res = gram_generate_calibration(&ctx, &profile2);
@@ -100,7 +134,6 @@ int main(void) {
 	uart_writestr("\n");
 
 	uart_writestr("DRAM test... \n");
-	volatile uint32_t *ram = 0x10000000;
 	for (size_t i = 0; i < kNumIterations; i++) {
 		ram[i] = 0xDEAF0000 | i*4;
 	}
