@@ -139,7 +139,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
         addressbits = len(self.pads.a.o0)
         bankbits = len(self.pads.ba.o0)
-        nranks = 1 if not hasattr(self.pads, "cs") else len(self.pads.cs.o0)
+        nranks = 1
+        if hasattr(self.pads, "cs") and hasattr(self.pads.cs, "o0"):
+            nranks = len(self.pads.cs.o0)
         databits = len(self.pads.dq.io)
         self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
 
@@ -147,7 +149,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         tck = 1/(2*self._sys_clk_freq)
         nphases = 2
         databits = len(self.pads.dq.io)
-        nranks = 1 if not hasattr(self.pads, "cs") else len(self.pads.cs.o0)
         cl, cwl = get_cl_cw("DDR3", tck)
         cl_sys_latency = get_sys_latency(nphases, cl)
         cwl_sys_latency = get_sys_latency(nphases, cwl)
@@ -241,16 +242,20 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         if hasattr(self.pads, "cs"):
             controls.append("cs")
         for name in controls:
+            print ("clock", name, getattr(self.pads, name))
+            pad = getattr(self.pads, name)
+            if not hasattr(pad, "o_clk"):
+                continue
             m.d.comb += [
-                getattr(self.pads, name).o_clk.eq(ClockSignal("dramsync")),
-                getattr(self.pads, name).o_fclk.eq(ClockSignal("sync2x")),
+                pad.o_clk.eq(ClockSignal("dramsync")),
+                pad.o_fclk.eq(ClockSignal("sync2x")),
             ]
-            for i in range(len(getattr(self.pads, name).o0)):
+            for i in range(len(pad.o0)):
                 m.d.comb += [
-                    getattr(self.pads, name).o0[i].eq(getattr(dfi.phases[0], name)[i]),
-                    getattr(self.pads, name).o1[i].eq(getattr(dfi.phases[0], name)[i]),
-                    getattr(self.pads, name).o2[i].eq(getattr(dfi.phases[1], name)[i]),
-                    getattr(self.pads, name).o3[i].eq(getattr(dfi.phases[1], name)[i]),
+                    pad.o0[i].eq(getattr(dfi.phases[0], name)[i]),
+                    pad.o1[i].eq(getattr(dfi.phases[0], name)[i]),
+                    pad.o2[i].eq(getattr(dfi.phases[1], name)[i]),
+                    pad.o3[i].eq(getattr(dfi.phases[1], name)[i]),
                 ]
 
         # DQ ---------------------------------------------------------------------------------------
