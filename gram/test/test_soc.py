@@ -1,6 +1,7 @@
 # This file is Copyright (c) 2020 LambdaConcept <contact@lambdaconcept.com>
 
 import random
+import unittest
 
 from nmigen import *
 from nmigen.asserts import Assert, Assume
@@ -18,6 +19,7 @@ from gram.frontend.wishbone import gramWishbone
 
 from gram.core.multiplexer import _AntiStarvation
 from gram.test.utils import *
+
 
 class DDR3SoC(SoC, Elaboratable):
     def __init__(self, *, clk_freq, dramcore_addr,
@@ -221,3 +223,7 @@ class SocTestCase(FHDLTestCase):
                 self.assertEqual(0xFACE0000 | i, (yield from wb_read(soc.bus, (0x10000000 >> 2) + i, 0xF, 256)))
 
         runSimulation(soc, process, "test_soc_continuous_memtest.vcd")
+
+
+if __name__ == '__main__':
+    unittest.main()
