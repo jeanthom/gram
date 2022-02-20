@@ -81,7 +81,8 @@ class DFIInjector(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        m.submodules += self._phases
+        for n, phase in enumerate(self._phases):
+            m.submodules['phase_%d' % n] = phase
 
         with m.If(self._control.w_data[0]):
             m.d.comb += self.slave.connect(self.master)
