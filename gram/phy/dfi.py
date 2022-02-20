@@ -32,11 +32,13 @@ def phase_description(addressbits, bankbits, nranks, databits):
 
 
 class Interface:
-    def __init__(self, addressbits, bankbits, nranks, databits, nphases=1):
+    def __init__(self, addressbits, bankbits, nranks, databits, nphases=1,
+                       name=None):
         self.phases = []
         for p in range(nphases):
-            p = Record(phase_description(
-                addressbits, bankbits, nranks, databits))
+            p = Record(phase_description(addressbits, bankbits,
+                                         nranks, databits),
+                       name=name)
             self.phases += [p]
             p.reset.reset = 1
 
