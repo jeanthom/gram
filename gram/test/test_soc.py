@@ -7,6 +7,7 @@ from nmigen import *
 from nmigen.asserts import Assert, Assume
 from nmigen_soc import wishbone, memory
 from nmigen.lib.cdc import ResetSynchronizer
+from nmigen.cli import verilog
 
 from lambdasoc.periph import Peripheral
 from lambdasoc.soc.base import SoC
@@ -140,6 +141,10 @@ class SocTestCase(FHDLTestCase):
         soc = DDR3SoC(clk_freq=100e6,
             dramcore_addr=0x00000000,
             ddr_addr=0x10000000)
+
+        vl = verilog.convert(soc, ports=None)
+        with open("test_soc_multiple_reads.v", "w") as f:
+            f.write(vl)
 
         def process():
             yield from SocTestCase.init_seq(soc.bus)
