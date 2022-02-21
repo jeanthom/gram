@@ -34,6 +34,9 @@ def phase_description(addressbits, bankbits, nranks, databits):
 class Interface:
     def __init__(self, addressbits, bankbits, nranks, databits, nphases=1,
                        name=None):
+        print ("DFI Interface", name, "addr", addressbits,
+                "bankbits", bankbits, "nranks", nranks, "data", databits,
+                "phases", nphases)
         self.phases = []
         for p in range(nphases):
             p = Record(phase_description(addressbits, bankbits,

@@ -22,8 +22,8 @@ SDRAM_VERBOSE_OFF = 0
 SDRAM_VERBOSE_STD = 1
 SDRAM_VERBOSE_DBG = 2
 
-def Display(*args):
-    return Signal().eq(0)
+#def Display(*args):
+#    return Signal().eq(0)
 
 def Assert(*args):
     return Signal().eq(0)
@@ -511,7 +511,8 @@ class FakePHY(Elaboratable):
             bankbits    = self.bankbits,
             nranks      = self.settings.nranks,
             databits    = self.settings.dfi_databits,
-            nphases     = self.settings.nphases
+            nphases     = self.settings.nphases,
+            name="phy"
         )
 
     def elaborate(self, platform):

@@ -59,6 +59,7 @@ class PhaseInjector(Elaboratable):
 
 class DFIInjector(Elaboratable):
     def __init__(self, csr_bank, addressbits, bankbits, nranks, databits, nphases=1):
+        print ("nranks", nranks, "nphases", nphases)
         self._nranks = nranks
 
         self._inti = dfi.Interface(addressbits, bankbits,
@@ -83,6 +84,9 @@ class DFIInjector(Elaboratable):
 
         for n, phase in enumerate(self._phases):
             m.submodules['phase_%d' % n] = phase
+
+        for phase in self._inti.phases:
+            print ("phase", phase)
 
         with m.If(self._control.w_data[0]):
             m.d.comb += self.slave.connect(self.master)
