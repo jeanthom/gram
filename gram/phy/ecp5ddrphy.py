@@ -235,7 +235,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 self.pads.ba.o3[i].eq(dfi.phases[1].bank[i]),
             ]
 
-        # Control pins
+        # Control pins: all of thees have to be declared "xdr 4" when
+        # requesting the resource:
+        # ddr_pins = platform.request("ddr3", 0, xdr={"clk":4, "odt":4, ... })
         controls = ["ras", "cas", "we", "clk_en", "odt"]
         if hasattr(self.pads, "reset"):
             controls.append("reset")
@@ -244,8 +246,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         for name in controls:
             print ("clock", name, getattr(self.pads, name))
             pad = getattr(self.pads, name)
-            if not hasattr(pad, "o_clk"):
-                continue
             m.d.comb += [
                 pad.o_clk.eq(ClockSignal("dramsync")),
                 pad.o_fclk.eq(ClockSignal("sync2x")),
