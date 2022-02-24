@@ -60,6 +60,46 @@ def get_sys_phases(nphases, sys_latency, cas_latency):
     cmd_phase = (dat_phase - 1) % nphases
     return cmd_phase, dat_phase
 
+# BitSlip ---------------------------------------------------------------
+
+class BitSlip(Elaboratable):
+    """BitSlip: provides a delay-buffer by N clock cycles for data of width dw
+    * rst will reset the delay back to zero
+    * slp will increment the counter.  it must be held for {cycles} cycles
+      for the input data to appear on the output buffer
+    """
+    def __init__(self, dw, rst=None, slp=None, cycles=1):
+        self.i = Signal(dw)
+        self.o = Signal(dw)
+        self.rst = Signal() if rst is None else rst
+        self.slp = Signal() if slp is None else slp
+        self.dw = dw
+        self.cycles = cycles
+
+    def elaborate(self, platform):
+        m = Module()
+        comb, sync = m.d.comb, m.d.sync
+        vcount = self.cycles * self.dw
+        value = Signal(vcount.bit_length())
+
+        with m.If(self.rst):
+            sync += value.eq(0)
+        with m.Elif(self.slp):
+            sync += value.eq(value+1)
+
+        # Shift Register using input i.
+        r = Signal((self.cycles+1)*self.dw, reset_less=True)
+        sync += r.eq(Cat(r[self.dw:], self.i))
+
+        # note the slightly strange arrangement: whilst the shift register
+        # shuffles along by {dw} bits, if dw is not 1, the output can contain
+        # parts of data from previous clocks.
+        with m.Switch(value):
+            for i in range(self.cycles*self.dw):
+                with m.Case(i):
+                    comb += self.o.eq(r[i:self.dw+i])
+        return m
+
 # Settings -----------------------------------------------------------------------------------------
 
 
