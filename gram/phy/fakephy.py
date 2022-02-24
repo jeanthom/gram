@@ -13,6 +13,8 @@ from gram.common import burst_lengths
 from gram.phy.dfi import *
 from gram.modules import _speedgrade_timings, _technology_timings
 
+from lambdasoc.periph import Peripheral
+
 from functools import reduce
 from operator import or_
 
@@ -27,6 +29,7 @@ SDRAM_VERBOSE_DBG = 2
 
 def Assert(*args):
     return Signal().eq(0)
+
 
 # Bank Model ---------------------------------------------------------------------------------------
 
@@ -105,6 +108,52 @@ class BankModel(Elaboratable):
                 ]
 
         return m
+
+
+class _DQSBUFMSettingManager(Elaboratable):
+    """DQSBUFM setting manager.
+
+    The DQSBUFM primitive requires a very basic sequence when updating
+    read delay or other parameters. This elaboratable generates this
+    sequence from CSR events.
+
+    Parameters
+    ----------
+    rdly_slr : CSR
+        CSR storing the rdly value.
+
+    Attributes
+    ----------
+    pause : Signal(), out
+        Pause signal for DQSBUFM.
+    readclksel : Signal(3), out
+        Readclksel signal for DQSBUFM.
+    """
+    def __init__(self, rdly_csr):
+        self.rdly_csr = rdly_csr
+
+        self.pause = Signal()
+        self.readclksel = Signal(3)
+
+    def elaborate(self, platform):
+        m = Module()
+
+        with m.FSM():
+            with m.State("Idle"):
+                with m.If(self.rdly_csr.w_stb):
+                    m.d.sync += self.pause.eq(1)
+                    m.next = "RdlyUpdateRequested"
+
+            with m.State("RdlyUpdateRequested"):
+                m.d.sync += self.readclksel.eq(self.rdly_csr.w_data)
+                m.next = "ResetPause"
+
+            with m.State("ResetPause"):
+                m.d.sync += self.pause.eq(0)
+                m.next = "Idle"
+
+        return m
+
 
 # DFI Phase Model ----------------------------------------------------------------------------------
 
@@ -421,7 +470,8 @@ class DFITimingsChecker(Elaboratable):
 
         return m
 
-class FakePHY(Elaboratable):
+
+class FakePHY(Peripheral, Elaboratable):
     def __prepare_bank_init_data(self, init, nbanks, nrows, ncols, data_width, address_mapping):
         mem_size          = (self.settings.databits//8)*(nrows*ncols*nbanks)
         bank_size         = mem_size // nbanks
@@ -480,6 +530,7 @@ class FakePHY(Elaboratable):
         init                   = [],
         address_mapping        = "ROW_BANK_COL",
         verbosity              = SDRAM_VERBOSE_OFF):
+        super().__init__(name="fakephy")
 
         # Parameters -------------------------------------------------------------------------------
         self.burst_length = {
@@ -505,6 +556,19 @@ class FakePHY(Elaboratable):
 
         self.init = init
 
+        # CSR
+        databits = self.settings.dfi_databits
+        bank = self.csr_bank()
+
+        self.burstdet = bank.csr(databits//8, "rw")
+
+        self.rdly = []
+        self.rdly += [bank.csr(3, "rw", name="rdly_p0")]
+        self.rdly += [bank.csr(3, "rw", name="rdly_p1")]
+
+        self._bridge = self.bridge(data_width=32, granularity=8, alignment=2)
+        self.bus = self._bridge.bus
+
         # DFI Interface ----------------------------------------------------------------------------
         self.dfi = Interface(
             addressbits = self.addressbits,
@@ -524,9 +588,28 @@ class FakePHY(Elaboratable):
         ncols      = 2**self.colbits
         data_width = self.settings.dfi_databits*self.settings.nphases
 
-        # DFI phases -------------------------------------------------------------------------------
-        phases = [DFIPhaseModel(self.dfi, n) for n in range(self.settings.nphases)]
-        m.submodules += phases
+        # CSR Bridge
+        m.submodules.bridge = self._bridge
+
+        # fake burstdet
+        databits = self.settings.dfi_databits
+        burstdet_reg = Signal(databits//8, reset_less=True)
+        m.d.comb += self.burstdet.r_data.eq(burstdet_reg)
+
+        # Burstdet clear
+        with m.If(self.burstdet.w_stb):
+            m.d.sync += burstdet_reg.eq(0)
+
+
+        # DFI phases ---------------------------------------------------
+        phases = []
+        for i in range(self.settings.nphases):
+            phase = DFIPhaseModel(self.dfi, i)
+            m.submodules['phase%d' % i] = phase
+            phases.append(phase)
+
+            dqsbufm_manager = _DQSBUFMSettingManager(self.rdly[i])
+            m.submodules["dqsbufm_manager%i" % i] = dqsbufm_manager
 
         # DFI timing checker -----------------------------------------------------------------------
         if self.verbosity > SDRAM_VERBOSE_OFF:
