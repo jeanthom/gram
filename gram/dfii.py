@@ -59,7 +59,7 @@ class PhaseInjector(Elaboratable):
 
 class DFIInjector(Elaboratable):
     def __init__(self, csr_bank, addressbits, bankbits, nranks, databits, nphases=1):
-        print ("nranks", nranks, "nphases", nphases)
+        print ("nranks", nranks, "nphases", nphases, "addressbits", addressbits)
         self._nranks = nranks
 
         self._inti = dfi.Interface(addressbits, bankbits,

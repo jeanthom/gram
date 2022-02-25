@@ -143,7 +143,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         if hasattr(self.pads, "cs") and hasattr(self.pads.cs, "o0"):
             nranks = len(self.pads.cs.o0)
         databits = len(self.pads.dq.io)
-        self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4)
+        self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4,
+                             name="ecp5phy")
 
         # PHY settings -----------------------------------------------------------------------------
         tck = 1/(2*self._sys_clk_freq)
