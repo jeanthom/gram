@@ -239,13 +239,19 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # requesting the resource:
         # ddr_pins = platform.request("ddr3", 0, xdr={"clk":4, "odt":4, ... })
         controls = ["ras", "cas", "we", "clk_en", "odt"]
-        if hasattr(self.pads, "reset"):
-            controls.append("reset")
+        if hasattr(self.pads, "rst"): # this gets renamed later to match dfi
+            controls.append("rst")
+        if hasattr(self.pads, "reset_n"):
+            controls.append("reset_n")
         if hasattr(self.pads, "cs"):
             controls.append("cs")
         for name in controls:
             print ("clock", name, getattr(self.pads, name))
             pad = getattr(self.pads, name)
+            # sigh, convention in nmigen_boards is "rst" but in
+            # dfi.Interface it is "reset"
+            if name == 'rst':
+                name = 'reset_n'
             m.d.comb += [
                 pad.o_clk.eq(ClockSignal("dramsync")),
                 pad.o_fclk.eq(ClockSignal("sync2x")),

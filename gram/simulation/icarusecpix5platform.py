@@ -27,6 +27,7 @@ class IcarusECPIX5Platform(LatticeECP5Platform):
                      ),
 
         Resource("ddr3", 0,
+                 Subsignal("rst", Pins("fake", dir="o")), # for sim
                  Subsignal("clk", Pins("H3", dir="o")),
                  #Subsignal("clk", DiffPairs("H3", "J3", dir="o"), Attrs(IO_TYPE="SSTL135D_I")),
                  Subsignal("clk_en", Pins("P1", dir="o")),

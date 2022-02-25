@@ -18,7 +18,7 @@ def phase_description(addressbits, bankbits, nranks, databits):
         ("we", 1, DIR_FANOUT),
         ("clk_en", nranks, DIR_FANOUT),
         ("odt", nranks, DIR_FANOUT),
-        ("reset", 1, DIR_FANOUT),
+        ("reset_n", 1, DIR_FANOUT),
         ("act", 1, DIR_FANOUT),
         # wrdata description
         ("wrdata", databits, DIR_FANOUT),
@@ -43,7 +43,6 @@ class Interface:
                                          nranks, databits),
                        name=name)
             self.phases += [p]
-            p.reset.reset = 1
 
     def connect(self, target):
         if not isinstance(target, Interface):

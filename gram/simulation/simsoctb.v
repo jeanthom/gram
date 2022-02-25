@@ -40,12 +40,12 @@ module simsoctb;
   wire [1:0] dram_dm;
   wire dram_odt;
   wire [1:0] dram_tdqs_n;
-  reg dram_rst = 0;
+  wire dram_rst;
 
   ddr3 #(
     .check_strict_timing(0)
   ) ram_chip (
-    .rst_n(~dram_rst),
+    .rst_n(dram_rst),
     .ck(dram_ck),
     .ck_n(~dram_ck),
     .cke(dram_cke),
@@ -78,6 +78,7 @@ module simsoctb;
   //defparam ram_chip.
   
   top simsoctop (
+    .ddr3_0__rst__io(dram_rst),
     .ddr3_0__dq__io(dram_dq),
     .ddr3_0__dqs__p(dram_dqs),
     .ddr3_0__clk__io(dram_ck),
@@ -105,6 +106,7 @@ module simsoctb;
     begin
       $dumpfile("simsoc.fst");
       $dumpvars(0, clkin);
+      $dumpvars(0, dram_rst);
       $dumpvars(0, dram_dq);
       $dumpvars(0, dram_dqs);
       $dumpvars(0, dram_ck);
@@ -132,18 +134,13 @@ module simsoctb;
   reg [31:0] tmp;
   initial
     begin
-      dram_rst = 1;
       #350; // Wait for RESET and POR
-
-      // Software control
-      dram_rst = 0;
-
-      #10;
 
       $display("Release RESET_N");
       wishbone_write(32'h0000900c >> 2, 32'h0); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009000 >> 2, 8'h0C); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N
+
       $display("Enable CKE");
       wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
       if (dram_cke != 1)

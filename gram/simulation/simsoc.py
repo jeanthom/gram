@@ -25,7 +25,8 @@ class DDR3SoC(SoC, Elaboratable):
                                          features={"cti", "bte"})
 
         ddr_pins = platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"},
-            xdr={"clk":4, "a":4, "ba":4, "clk_en":4, "we_n":4, "odt":4, "ras":4, "cas":4, "we":4})
+            xdr={"rst": 4, "clk":4, "a":4, "ba":4, "clk_en":4, "we_n":4,
+                 "odt":4, "ras":4, "cas":4, "we":4})
         self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(ddr_pins))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 

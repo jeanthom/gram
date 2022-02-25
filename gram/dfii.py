@@ -98,7 +98,7 @@ class DFIInjector(Elaboratable):
                          for phase in self._inti.phases]
             m.d.comb += [phase.odt[i].eq(self._control.w_data[2])
                          for phase in self._inti.phases if hasattr(phase, "odt")]
-        m.d.comb += [phase.reset.eq(self._control.w_data[3])
-                     for phase in self._inti.phases if hasattr(phase, "reset")]
+        m.d.comb += [phase.reset_n.eq(self._control.w_data[3])
+                     for phase in self._inti.phases if hasattr(phase, "reset_n")]
 
         return m

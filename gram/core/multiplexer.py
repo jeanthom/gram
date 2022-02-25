@@ -159,8 +159,8 @@ class _Steerer(Elaboratable):
         for i, (phase, sel) in enumerate(zip(self.dfi.phases, self.sel)):
             nranks = len(phase.cs)
             rankbits = log2_int(nranks)
-            if hasattr(phase, "reset"):
-                m.d.comb += phase.reset.eq(0)
+            if hasattr(phase, "reset_n"):
+                m.d.comb += phase.reset_n.eq(1)
             m.d.comb += phase.clk_en.eq(Repl(1, nranks))
             if hasattr(phase, "odt"):
                 # FIXME: add dynamic drive for multi-rank (will be needed for high frequencies)
