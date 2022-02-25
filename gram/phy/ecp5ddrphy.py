@@ -140,8 +140,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         addressbits = len(self.pads.a.o0)
         bankbits = len(self.pads.ba.o0)
         nranks = 1
-        if hasattr(self.pads, "cs") and hasattr(self.pads.cs, "o0"):
-            nranks = len(self.pads.cs.o0)
+        if hasattr(self.pads, "cs_n") and hasattr(self.pads.cs_n, "o0"):
+            nranks = len(self.pads.cs_n.o0)
         databits = len(self.pads.dq.io)
         self.dfi = Interface(addressbits, bankbits, nranks, 4*databits, 4,
                              name="ecp5phy")
@@ -253,6 +253,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             # dfi.Interface it is "reset"
             if name == 'rst':
                 name = 'reset_n'
+            # sigh same for cs
+            if name == 'cs':
+                name = 'cs_n'
             m.d.comb += [
                 pad.o_clk.eq(ClockSignal("dramsync")),
                 pad.o_fclk.eq(ClockSignal("sync2x")),
