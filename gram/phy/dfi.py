@@ -13,7 +13,7 @@ def phase_description(addressbits, bankbits, nranks, databits):
         ("address", addressbits, DIR_FANOUT),
         ("bank", bankbits, DIR_FANOUT),
         ("cas", 1, DIR_FANOUT),
-        ("cs", nranks, DIR_FANOUT),
+        ("cs_n", nranks, DIR_FANOUT),
         ("ras", 1, DIR_FANOUT),
         ("we", 1, DIR_FANOUT),
         ("clk_en", nranks, DIR_FANOUT),

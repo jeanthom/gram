@@ -157,7 +157,7 @@ class _Steerer(Elaboratable):
                 return cmd.valid & cmd.ready & getattr(cmd, attr)
 
         for i, (phase, sel) in enumerate(zip(self.dfi.phases, self.sel)):
-            nranks = len(phase.cs)
+            nranks = len(phase.cs_n)
             rankbits = log2_int(nranks)
             if hasattr(phase, "reset_n"):
                 m.d.comb += phase.reset_n.eq(1)
@@ -171,15 +171,15 @@ class _Steerer(Elaboratable):
                 m.d.comb += rank_decoder.i.eq((Array(cmd.ba[-rankbits:] for cmd in self.commands)[sel]))
                 if i == 0:  # Select all ranks on refresh.
                     with m.If(sel == STEER_REFRESH):
-                        m.d.sync += phase.cs.eq(1)
+                        m.d.sync += phase.cs_n.eq(0)
                     with m.Else():
-                        m.d.sync += phase.cs.eq(rank_decoder.o)
+                        m.d.sync += phase.cs_n.eq(rank_decoder.o)
                 else:
-                    m.d.sync += phase.cs.eq(rank_decoder.o)
+                    m.d.sync += phase.cs_n.eq(rank_decoder.o)
                 m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits] for cmd in self.commands)[sel])
             else:
                 m.d.sync += [
-                    phase.cs.eq(1),
+                    phase.cs_n.eq(0),
                     phase.bank.eq(Array(cmd.ba for cmd in self.commands)[sel]),
                 ]
 

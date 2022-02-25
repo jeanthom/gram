@@ -178,13 +178,13 @@ class DFIPhaseModel(Elaboratable):
     def elaborate(self, platform):
         m = Module()
 
-        with m.If(self.phase.cs & self.phase.ras & ~self.phase.cas):
+        with m.If(~self.phase.cs_n & self.phase.ras & ~self.phase.cas):
             m.d.comb += [
                 self.activate.eq(~self.phase.we),
                 self.precharge.eq(self.phase.we),
             ]
 
-        with m.If(self.phase.cs & ~self.phase.ras & self.phase.cas):
+        with m.If(~self.phase.cs_n  & ~self.phase.ras & self.phase.cas):
             m.d.comb += [
                 self.write.eq(self.phase.we),
                 self.read.eq(~self.phase.we),
@@ -340,7 +340,8 @@ class DFITimingsChecker(Elaboratable):
             ps = Signal().like(cnt)
             m.d.comb += ps.eq((cnt + np)*int(self.timings["tCK"]))
             state = Signal(4)
-            m.d.comb += state.eq(Cat(phase.we, phase.cas, phase.ras, phase.cs))
+            m.d.comb += state.eq(Cat(phase.we, phase.cas, phase.ras,
+                                     phase.cs_n))
             all_banks = Signal()
 
             m.d.comb += all_banks.eq(
