@@ -251,11 +251,8 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             pad = getattr(self.pads, name)
             # sigh, convention in nmigen_boards is "rst" but in
             # dfi.Interface it is "reset"
-            if name == 'rst':
-                name = 'reset_n'
-            # sigh same for cs
-            if name == 'cs':
-                name = 'cs_n'
+            dfi2pads = {'rst': 'reset_n', 'cs': 'cs_n'}
+            name = dfi2pads.get(name, name) # remap if exists
             m.d.comb += [
                 pad.o_clk.eq(ClockSignal("dramsync")),
                 pad.o_fclk.eq(ClockSignal("sync2x")),

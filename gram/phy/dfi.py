@@ -45,6 +45,7 @@ class Interface:
             self.phases += [p]
             # set all logic-inverted x_n signal resets to on at power-up
             p.cas.reset = 1
+            p.ras.reset = 1
             p.cs_n.reset = -1
             p.we.reset = 1
             p.act.reset = 1
