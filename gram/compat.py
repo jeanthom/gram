@@ -4,7 +4,6 @@ import unittest
 
 from nmigen import *
 from nmigen import tracer
-from nmigen.compat import Case
 from nmigen.back.pysim import *
 
 __ALL__ = ["delayed_enter", "Timeline", "CSRPrefixProxy"]
