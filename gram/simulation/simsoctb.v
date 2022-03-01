@@ -30,6 +30,7 @@ module simsoctb;
   wire dram_ck;
   wire dram_cke;
   wire dram_we_n;
+  wire dram_cs_n;
   wire dram_ras_n;
   wire dram_cas_n;
   wire [15:0] dram_dq;
@@ -49,7 +50,7 @@ module simsoctb;
     .ck(dram_ck),
     .ck_n(~dram_ck),
     .cke(dram_cke),
-    .cs_n(1'b0),
+    .cs_n(~dram_cs_n),
     .ras_n(dram_ras_n),
     .cas_n(dram_cas_n),
     .we_n(dram_we_n),
@@ -84,6 +85,7 @@ module simsoctb;
     .ddr3_0__clk__io(dram_ck),
     .ddr3_0__clk_en__io(dram_cke),
     .ddr3_0__we__io(dram_we_n),
+    .ddr3_0__cs__io(dram_cs_n),
     .ddr3_0__ras__io(dram_ras_n),
     .ddr3_0__cas__io(dram_cas_n),
     .ddr3_0__a__io(dram_a),
@@ -111,6 +113,7 @@ module simsoctb;
       $dumpvars(0, dram_dqs);
       $dumpvars(0, dram_ck);
       $dumpvars(0, dram_cke);
+      $dumpvars(0, dram_cs_n);
       $dumpvars(0, dram_we_n);
       $dumpvars(0, dram_ras_n);
       $dumpvars(0, dram_cas_n);
@@ -193,6 +196,12 @@ module simsoctb;
       // Hardware control
       wishbone_write(32'h00009000 >> 2, 8'h01); // DFII_CONTROL_SEL
       #2000;
+
+      // reset burst detect
+      //wishbone_write(32'h00008000 >> 2, 0); // burst detect reset
+
+      // read on burst detect
+      //wishbone_read(32'h00008000 >> 2, tmp); // burst detect
 
       // Read test on provisioned data, row 0, col 0-7
       wishbone_read(32'h10000000 >> 2, tmp);

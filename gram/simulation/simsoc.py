@@ -9,7 +9,7 @@ from lambdasoc.soc.base import SoC
 
 from gram.core import gramCore
 from gram.phy.ecp5ddrphy import ECP5DDRPHY
-from gram.modules import MT41K256M16
+from gram.modules import (MT41K256M16, MT41K64M16)
 from gram.frontend.wishbone import gramWishbone
 
 from icarusecpix5platform import IcarusECPIX5Platform
@@ -26,11 +26,12 @@ class DDR3SoC(SoC, Elaboratable):
 
         ddr_pins = platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"},
             xdr={"rst": 4, "clk":4, "a":4, "ba":4, "clk_en":4, "we_n":4,
-                 "odt":4, "ras":4, "cas":4, "we":4})
+                 "cs": 4, "odt":4, "ras":4, "cas":4, "we":4})
         self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(ddr_pins))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
-        ddrmodule = MT41K256M16(clk_freq, "1:2")
+        #ddrmodule = MT41K256M16(clk_freq, "1:2")
+        ddrmodule = MT41K64M16(clk_freq, "1:2")
 
         self.dramcore = DomainRenamer("dramsync")(gramCore(
             phy=self.ddrphy,

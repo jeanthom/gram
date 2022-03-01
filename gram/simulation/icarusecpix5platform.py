@@ -28,13 +28,15 @@ class IcarusECPIX5Platform(LatticeECP5Platform):
 
         Resource("ddr3", 0,
                  Subsignal("rst", Pins("fake", dir="o")), # for sim
-                 Subsignal("clk", Pins("H3", dir="o")),
-                 #Subsignal("clk", DiffPairs("H3", "J3", dir="o"), Attrs(IO_TYPE="SSTL135D_I")),
+                 #Subsignal("clk", Pins("H3", dir="o")),
+                 Subsignal("clk", DiffPairs("H3", "J3", dir="o"), Attrs(IO_TYPE="SSTL135D_I")),
                  Subsignal("clk_en", Pins("P1", dir="o")),
                  Subsignal("we", PinsN("R3", dir="o")),
+                 Subsignal("cs", PinsN("fake2", dir="o")), # for sim
                  Subsignal("ras", PinsN("T3", dir="o")),
                  Subsignal("cas", PinsN("P2", dir="o")),
-                 Subsignal("a", Pins("T5 M3 L3 V6 K2 W6 K3 L1 H2 L2 N1 J1 M1 K1", dir="o")),
+                 #Subsignal("a", Pins("T5 M3 L3 V6 K2 W6 K3 L1 H2 L2 N1 J1 M1 K1", dir="o")),
+                 Subsignal("a", Pins("T5 M3 L3 V6 K2 W6 K3 L1 H2 L2 N1 J1 M1", dir="o")),
                  Subsignal("ba", Pins("U6 N3 N4", dir="o")),
                  Subsignal("dqs", DiffPairs("V4 V1", "U5 U2", dir="io"), Attrs(IO_TYPE="SSTL135D_I")),
                  Subsignal("dq", Pins("T4 W4 R4 W5 R6 P6 P5 P4 R1 W3 T2 V3 U3 W1 T1 W2", dir="io")),
