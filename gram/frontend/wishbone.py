@@ -22,6 +22,7 @@ from lambdasoc.periph import Peripheral
 # WARNING - THIS CODE CANNOT COPE WITH WISHBONE 4.0 PIPELINE MODE
 # THE ADDRESS MAY CHANGE AFTER EACH STB AND THIS IS AN ASSUMPTION
 # FROM WISHBONE 3.0 CLASSIC.  USE THE COMPATIBILITY MODE stall=cyc&~ack
+# OR USE BURST-MODE ONLY
 # XXX
 class gramWishbone(Peripheral, Elaboratable):
     def __init__(self, core, data_width=32, granularity=8,
@@ -32,14 +33,18 @@ class gramWishbone(Peripheral, Elaboratable):
         self.native_port = core.crossbar.get_native_port()
 
         self.ratio = self.native_port.data_width//data_width
+        addr_width = log2_int(core.size//self.ratio)
+        addr_width_r = addr_width + log2_int(self.ratio)
+        self.dsize = log2_int(data_width//granularity)
+        self.bus = wishbone.Interface(addr_width=addr_width_r,
+                                      data_width=data_width,
+                                      granularity=granularity,
+                                      features=features)
 
-        addr_width = log2_int(core.size//(self.native_port.data_width//data_width))
-        self.bus = wishbone.Interface(addr_width=addr_width+log2_int(self.ratio),
-                                      data_width=data_width, granularity=granularity)
+        mmap = MemoryMap(addr_width=addr_width_r+self.dsize,
+                        data_width=granularity)
 
-        map = MemoryMap(addr_width=addr_width+log2_int(self.ratio)+log2_int(data_width//granularity),
-            data_width=granularity)
-        self.bus.memory_map = map
+        self.bus.memory_map = mmap
 
     def elaborate(self, platform):
         m = Module()
