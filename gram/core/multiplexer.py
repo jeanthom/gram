@@ -173,9 +173,9 @@ class _Steerer(Elaboratable):
                     with m.If(sel == STEER_REFRESH):
                         m.d.sync += phase.cs_n.eq(0)
                     with m.Else():
-                        m.d.sync += phase.cs_n.eq(rank_decoder.o)
+                        m.d.sync += phase.cs_n.eq(~rank_decoder.o)
                 else:
-                    m.d.sync += phase.cs_n.eq(rank_decoder.o)
+                    m.d.sync += phase.cs_n.eq(~rank_decoder.o)
                 m.d.sync += phase.bank.eq(Array(cmd.ba[:-rankbits] for cmd in self.commands)[sel])
             else:
                 m.d.sync += [

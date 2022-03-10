@@ -48,61 +48,71 @@ class gramWishbone(Peripheral, Elaboratable):
 
     def elaborate(self, platform):
         m = Module()
+        comb = m.d.comb
         cmd = self.native_port.cmd
         wdata = self.native_port.wdata
         rdata = self.native_port.rdata
+        bus = self.bus
 
         # Write datapath
-        m.d.comb += wdata.valid.eq(self.bus.cyc & self.bus.stb & self.bus.we)
+        comb += wdata.valid.eq(bus.cyc & bus.stb & bus.we)
 
         ratio_bitmask = Repl(1, log2_int(self.ratio))
 
-        sel = Signal.like(self.bus.sel)
-        with m.If(self.bus.sel == 0):
-            m.d.comb += sel.eq(Repl(1, sel.width))
+        # XXX? sel is zero being compensated-for as all 1s does not seem right
+        sel = Signal.like(bus.sel)
+        with m.If(bus.sel == 0):
+            comb += sel.eq(-1) # all 1s
         with m.Else():
-            m.d.comb += sel.eq(self.bus.sel)
+            comb += sel.eq(bus.sel)
 
-        with m.Switch(self.bus.adr & ratio_bitmask):
+        with m.Switch(bus.adr & ratio_bitmask): # XXX adr changes (WB4-pipe)
             for i in range(self.ratio):
                 with m.Case(i):
-                    m.d.comb += wdata.we.eq(Repl(sel, self.bus.granularity//8) << (self.ratio*i))
-
-        with m.Switch(self.bus.adr & ratio_bitmask):
-            for i in range(self.ratio):
-                with m.Case(i):
-                    m.d.comb += wdata.data.eq(self.bus.dat_w << (self.bus.data_width*i))
+                    # write-enable
+                    we = Repl(sel, bus.granularity//8) << (self.ratio*i)
+                    comb += wdata.we.eq(we)
+                    # write-data
+                    data = bus.dat_w << (bus.data_width*i)
+                    comb += wdata.data.eq(data)
 
         # Read datapath
-        m.d.comb += rdata.ready.eq(1)
+        comb += rdata.ready.eq(1)
 
-        with m.Switch(self.bus.adr & ratio_bitmask):
+        with m.Switch(bus.adr & ratio_bitmask): # XXX adr changes (WB4-pipe)
             for i in range(self.ratio):
                 with m.Case(i):
-                    m.d.comb += self.bus.dat_r.eq(rdata.data >> (self.bus.data_width*i))
+                    data = rdata.data >> (bus.data_width*i)
+                    comb += bus.dat_r.eq(data)
 
+        # Command FSM
         with m.FSM():
+            # raise a command when WB has a request
             with m.State("Send-Cmd"):
-                m.d.comb += [
-                    cmd.valid.eq(self.bus.cyc & self.bus.stb),
-                    cmd.we.eq(self.bus.we),
-                    cmd.addr.eq(self.bus.adr >> log2_int(self.bus.data_width//self.bus.granularity)),
+                # XXX this logic is only WB 3.0 classic compatible!
+                comb += [
+                    cmd.valid.eq(bus.cyc & bus.stb),
+                    cmd.we.eq(bus.we),
+                    cmd.addr.eq(bus.adr >> self.dsize),
                 ]
 
+                # when cmd is accepted, move to either read or write FSM
                 with m.If(cmd.valid & cmd.ready):
-                    with m.If(self.bus.we):
+                    with m.If(bus.we):
                         m.next = "Wait-Write"
                     with m.Else():
                         m.next = "Wait-Read"
 
+            # read-wait: when read valid, ack the WB bus, return idle
             with m.State("Wait-Read"):
                 with m.If(rdata.valid):
-                    m.d.comb += self.bus.ack.eq(1)
+                    comb += bus.ack.eq(1)
                     m.next = "Send-Cmd"
 
+            # write-wait: when write valid, ack the WB bus, return idle
             with m.State("Wait-Write"):
                 with m.If(wdata.ready):
-                    m.d.comb += self.bus.ack.eq(1)
+                    comb += bus.ack.eq(1)
                     m.next = "Send-Cmd"
 
         return m
