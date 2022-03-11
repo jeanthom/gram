@@ -19,7 +19,7 @@ class DDR3SoC(SoC, Elaboratable):
     def __init__(self, *, clk_freq,
                  ddrphy_addr, dramcore_addr,
                  ddr_addr):
-        self.crg = ECPIX5CRG()
+        self.crg = ECPIX5CRG(clk_freq, dram_clk_freq=clk_freq)
 
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})

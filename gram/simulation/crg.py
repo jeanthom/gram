@@ -168,8 +168,9 @@ class PLL(Elaboratable):
 
 
 class ECPIX5CRG(Elaboratable):
-    def __init__(self, sys_clk_freq=100e6):
+    def __init__(self, sys_clk_freq=100e6, dram_clk_freq=None):
         self.sys_clk_freq = sys_clk_freq
+        self.dram_clk_freq = dram_clk_freq
 
     def elaborate(self, platform):
         m = Module()
@@ -211,7 +212,12 @@ class ECPIX5CRG(Elaboratable):
                                       local=False, reset_less=True)
         cd_init = ClockDomain("init", local=False)
         cd_sync = ClockDomain("sync", local=False)
+        # generate dram (and 2xdram if requested)
         cd_dramsync = ClockDomain("dramsync", local=False)
+        if self.dram_clk_freq is not None:
+            cd_dramsync2x = ClockDomain("dramsync2x", local=False)
+            cd_dramsync2x_unbuf = ClockDomain("dramsync2x_unbuf",
+                                          local=False, reset_less=True)
         m.submodules.pll = pll = PLL(ClockSignal("rawclk"), reset=~reset)
         pll.set_clkin_freq(100e6)
         pll.create_clkout(ClockSignal("sync2x_unbuf"), 2*self.sys_clk_freq)
@@ -220,6 +226,18 @@ class ECPIX5CRG(Elaboratable):
                 i_ECLKI = ClockSignal("sync2x_unbuf"),
                 i_STOP  = 0,
                 o_ECLKO = ClockSignal("sync2x"))
+
+        # if dram is a separate frequency request it. set up a 2nd 2x unbuf
+        if self.dram_clk_freq is not None:
+            pll.create_clkout(ClockSignal("dramsync2x_unbuf"),
+                                          2*self.dram_clk_freq)
+            m.submodules += Instance("ECLKSYNCB",
+                    i_ECLKI = ClockSignal("dramsync2x_unbuf"),
+                    i_STOP  = 0,
+                    o_ECLKO = ClockSignal("dramsync2x"))
+            m.domains += cd_dramsync2x_unbuf
+            m.domains += cd_dramsync2x
+
         m.domains += cd_sync2x_unbuf
         m.domains += cd_sync2x
         m.domains += cd_init
@@ -240,7 +258,17 @@ class ECPIX5CRG(Elaboratable):
             i_RST=0,
             o_CDIVX=ClockSignal("sync"))
 
-        # temporarily set dram sync clock exactly equal to main sync
-        m.d.comb += ClockSignal("dramsync").eq(ClockSignal("sync"))
+        # Generating dramsync (100Mhz) from dramsync2x
+        if self.dram_clk_freq is not None:
+            m.submodules += Instance("CLKDIVF",
+                p_DIV="2.0",
+                i_ALIGNWD=0,
+                i_CLKI=ClockSignal("dramsync2x"),
+                i_RST=0,
+                o_CDIVX=ClockSignal("dramsync"))
+
+        # if no separate dram set dram sync clock exactly equal to main sync
+        if self.dram_clk_freq is None:
+            m.d.comb += ClockSignal("dramsync").eq(ClockSignal("sync"))
 
         return m
