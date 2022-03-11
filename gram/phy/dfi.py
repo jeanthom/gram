@@ -18,7 +18,7 @@ def phase_description(addressbits, bankbits, nranks, databits):
         ("we", 1, DIR_FANOUT),
         ("clk_en", nranks, DIR_FANOUT),
         ("odt", nranks, DIR_FANOUT),
-        ("reset_n", 1, DIR_FANOUT),
+        ("reset", 1, DIR_FANOUT),
         ("act", 1, DIR_FANOUT),
         # wrdata description
         ("wrdata", databits, DIR_FANOUT),
@@ -46,6 +46,7 @@ class Interface:
             # set all logic-inverted x_n signal resets to on at power-up
             p.cas.reset = 1
             p.ras.reset = 1
+            p.reset.reset = 1
             p.cs_n.reset = -1
             p.we.reset = 1
             p.act.reset = 1

@@ -74,11 +74,16 @@ class DFIInjector(Elaboratable):
                                    name="master")
 
         self._control = csr_bank.csr(4, "w")  # sel, clk_en, odt, reset
+        self._control.w_data.reset = 0b1000 # reset HI
+
 
         self._phases = []
         for n, phase in enumerate(self._inti.phases):
             self._phases += [PhaseInjector(CSRPrefixProxy(csr_bank,
-                                                          "p{}".format(n)), phase)]
+                                                          "p{}".format(n)),
+                                                          phase)]
+            if hasattr(phase, "reset"):
+                phase.reset.reset = 1
 
     def elaborate(self, platform):
         m = Module()
@@ -99,7 +104,7 @@ class DFIInjector(Elaboratable):
                          for phase in self._inti.phases]
             m.d.comb += [phase.odt[i].eq(self._control.w_data[2])
                          for phase in self._inti.phases if hasattr(phase, "odt")]
-        m.d.comb += [phase.reset_n.eq(self._control.w_data[3])
-                     for phase in self._inti.phases if hasattr(phase, "reset_n")]
+        m.d.comb += [phase.reset.eq(~self._control.w_data[3])
+                     for phase in self._inti.phases if hasattr(phase, "reset")]
 
         return m

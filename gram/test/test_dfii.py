@@ -162,10 +162,10 @@ class DFIInjectorTestCase(FHDLTestCase):
         def process():
             yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, (1 << 3), sel=0xF)
             yield
-            self.assertTrue((yield dut.master.phases[0].reset_n))
+            self.assertTrue((yield dut.master.phases[0].reset))
 
             yield from wb_write(csrhost.bus, DFII_CONTROL_ADDR >> 2, 0, sel=0xF)
             yield
-            self.assertFalse((yield dut.master.phases[0].reset_n))
+            self.assertFalse((yield dut.master.phases[0].reset))
 
         runSimulation(m, process, "test_dfiinjector.vcd")

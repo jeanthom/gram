@@ -48,7 +48,7 @@ module simsoctb;
   ddr3 #(
     .check_strict_timing(0)
   ) ram_chip (
-    .rst_n(~dram_rst),
+    .rst_n(dram_rst),
     .ck(dram_ck),
     .ck_n(~dram_ck),
     .cke(dram_cke),

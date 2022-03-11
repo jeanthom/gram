@@ -243,8 +243,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         controls = ["ras", "cas", "we", "clk_en", "odt"]
         if hasattr(self.pads, "rst"): # this gets renamed later to match dfi
             controls.append("rst")
-        if hasattr(self.pads, "reset_n"):
-            controls.append("reset_n")
         if hasattr(self.pads, "cs"):
             controls.append("cs")
         for name in controls:
@@ -252,7 +250,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             pad = getattr(self.pads, name)
             # sigh, convention in nmigen_boards is "rst" but in
             # dfi.Interface it is "reset"
-            dfi2pads = {'rst': 'reset_n', 'cs': 'cs_n'}
+            dfi2pads = {'rst': 'reset', 'cs': 'cs_n'}
             name = dfi2pads.get(name, name) # remap if exists
             m.d.comb += [
                 pad.o_clk.eq(ClockSignal("dramsync")),
