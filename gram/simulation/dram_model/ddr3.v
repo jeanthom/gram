@@ -109,7 +109,8 @@ module ddr3 (
     odt
 );
 
-`include "dram_model/2048Mb_ddr3_parameters.vh"
+// `include "dram_model/2048Mb_ddr3_parameters.vh"
+`include "dram_model/1024Mb_ddr3_parameters.vh"
 
     initial begin
         $display ("TCK_MIN = %d", TCK_MIN);
