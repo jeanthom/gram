@@ -71,7 +71,7 @@ class BitSlip(Elaboratable):
     def __init__(self, dw, rst=None, slp=None, cycles=1):
         self.i = Signal(dw)
         self.o = Signal(dw)
-        self.rst = Signal() if rst is None else rst
+        #self.rst = Signal() if rst is None else rst
         self.slp = Signal() if slp is None else slp
         self.dw = dw
         self.cycles = cycles
@@ -82,10 +82,11 @@ class BitSlip(Elaboratable):
         vcount = self.cycles * self.dw
         value = Signal(vcount.bit_length())
 
-        with m.If(self.rst):
-            sync += value.eq(0)
-        with m.Elif(self.slp):
-            sync += value.eq(value+1)
+        #with m.If(self.rst):
+        #    sync += value.eq(0)
+        #with m.Elif(self.slp):
+        #    sync += value.eq(value+1)
+        comb += value.eq(self.slp)
 
         # Shift Register using input i.
         r = Signal((self.cycles+1)*self.dw, reset_less=True)

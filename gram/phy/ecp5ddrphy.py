@@ -133,6 +133,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         self.rdly = []
         self.rdly += [bank.csr(3, "rw", name="rdly_p0")]
         self.rdly += [bank.csr(3, "rw", name="rdly_p1")]
+        self.bitslip = bank.csr(3, "rw") # phase-delay on read
 
         self._bridge = self.bridge(data_width=32, granularity=8, alignment=2)
         self.bus = self._bridge.bus
@@ -478,7 +479,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         io_B=self.pads.dq.io[j])
                 ]
                 # shift-register delay on the incoming read data
-                dq_i_bs = BitSlip(4, Const(0), Const(0), cycles=1)
+                dq_i_bs = BitSlip(4, Const(0), cycles=1)
                 m.submodules['dq_i_bitslip_%d' % j] = dq_i_bs
                 dq_i_bs_o = Signal(4, name="dq_i_bs_o_%d" % j)
                 dq_i_bs_o_d = Signal(4, name="dq_i_bs_o_d_%d" % j)
