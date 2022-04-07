@@ -175,7 +175,6 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
     def elaborate(self, platform):
         m = Module()
-        comb, sync = m.d.comb, m.d.sync
 
         m.submodules.bridge = self._bridge
 
@@ -425,12 +424,12 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             ]
 
             for j in range(8*i, 8*(i+1)):
-                dq_o = Signal(name="dq_o_%d" % j)
-                dq_i = Signal(name="dq_i_%d" % j)
-                dq_oe_n = Signal(name="dq_oe_n_%d" % j)
-                dq_i_delayed = Signal(name="dq_i_delayed_%d" % j)
-                dq_i_data = Signal(4, name="dq_i_data_%d" % j)
-                dq_o_data = Signal(8, name="dq_o_data_%d" % j)
+                dq_o = Signal()
+                dq_i = Signal()
+                dq_oe_n = Signal()
+                dq_i_delayed = Signal()
+                dq_i_data = Signal(4)
+                dq_o_data = Signal(8)
                 dq_o_data_d = Signal(8, reset_less=True)
                 dq_o_data_muxed = Signal(4, reset_less=True)
                 m.d.comb += dq_o_data.eq(Cat(
@@ -498,28 +497,20 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         o_O=dq_i,
                         io_B=self.pads.dq.io[j])
                 ]
-                # shift-register delay on the incoming read data
-                dq_i_bs = BitSlip(4, Const(0), cycles=1)
-                m.submodules['dq_i_bitslip_%d' % j] = dq_i_bs
-                dq_i_bs_o = Signal(4, name="dq_i_bs_o_%d" % j)
-                dq_i_bs_o_d = Signal(4, name="dq_i_bs_o_d_%d" % j)
-                comb += dq_i_bs.i.eq(dq_i_data)
-                comb += dq_i_bs_o.eq(dq_i_bs.o)
-                sync += dq_i_bs_o_d.eq(dq_i_bs_o) # delay by 1 clock
-                #with m.If(~datavalid_prev & datavalid):
-                comb += [
-                    dfi.phases[0].rddata[0*databits+j].eq(dq_i_bs_o_d[0]),
-                    dfi.phases[0].rddata[1*databits+j].eq(dq_i_bs_o_d[1]),
-                    dfi.phases[0].rddata[2*databits+j].eq(dq_i_bs_o_d[2]),
-                    dfi.phases[0].rddata[3*databits+j].eq(dq_i_bs_o_d[3]),
-                ]
-                #with m.Elif(datavalid):
-                comb += [
-                    dfi.phases[1].rddata[0*databits+j].eq(dq_i_bs_o[0]),
-                    dfi.phases[1].rddata[1*databits+j].eq(dq_i_bs_o[1]),
-                    dfi.phases[1].rddata[2*databits+j].eq(dq_i_bs_o[2]),
-                    dfi.phases[1].rddata[3*databits+j].eq(dq_i_bs_o[3]),
-                ]
+                with m.If(~datavalid_prev & datavalid):
+                    m.d.sync += [
+                        dfi.phases[0].rddata[0*databits+j].eq(dq_i_data[0]),
+                        dfi.phases[0].rddata[1*databits+j].eq(dq_i_data[1]),
+                        dfi.phases[0].rddata[2*databits+j].eq(dq_i_data[2]),
+                        dfi.phases[0].rddata[3*databits+j].eq(dq_i_data[3]),
+                    ]
+                with m.Elif(datavalid):
+                    m.d.sync += [
+                        dfi.phases[1].rddata[0*databits+j].eq(dq_i_data[0]),
+                        dfi.phases[1].rddata[1*databits+j].eq(dq_i_data[1]),
+                        dfi.phases[1].rddata[2*databits+j].eq(dq_i_data[2]),
+                        dfi.phases[1].rddata[3*databits+j].eq(dq_i_data[3]),
+                    ]
 
         # Read Control Path ------------------------------------------------------------------------
         # Creates a shift register of read commands coming from the DFI interface. This shift register
@@ -535,10 +526,12 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         rddata_en_last = Signal.like(rddata_en)
         m.d.comb += rddata_en.eq(Cat(dfi.phases[self.settings.rdphase].rddata_en, rddata_en_last))
         m.d.sync += rddata_en_last.eq(rddata_en)
-        for phase in dfi.phases:
-            m.d.sync += phase.rddata_valid.eq(rddata_en[-1])
         m.d.comb += dqs_re.eq(rddata_en[cl_sys_latency + 1] | rddata_en[cl_sys_latency + 2])
 
+        rddata_valid = Signal()
+        m.d.sync += rddata_valid.eq(datavalid_prev & ~datavalid)
+        for phase in dfi.phases:
+            m.d.comb += phase.rddata_valid.eq(rddata_valid)
 
         # Write Control Path -----------------------------------------------------------------------
         # Creates a shift register of write commands coming from the DFI interface. This shift register
