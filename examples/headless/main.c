@@ -31,6 +31,8 @@ uint32_t gram_read(struct gramCtx *ctx, void *addr) {
 		fprintf(stderr, "gram_read error (read bytes length mismatch: %d != %d)\n", received, sizeof(reply));
 	}
 
+	//printf("gram_read: 0x%08x: 0x%08x\n", addr, ntohl(reply));
+
 	return ntohl(reply);
 }
 
@@ -40,6 +42,8 @@ int gram_write(struct gramCtx *ctx, void *addr, uint32_t value) {
 
 	*(uint32_t*)(commands+2) = htonl((uint32_t)addr >> 2);
 	*(uint32_t*)(commands+6) = htonl(value);
+
+	//printf("gram_write: 0x%08x: 0x%08x\n", addr, value);
 
 	sent = write(*(int*)(ctx->user_data), commands, sizeof(commands));
 	if (sent != sizeof(commands)) {
@@ -100,8 +104,22 @@ int main(int argc, char *argv[]) {
 	uint32_t pattern[kPatternSize];
 	const int kDumpWidth = 8;
 	size_t i;
+	int res;
+	uint32_t tmp;
 	int delay, miss = 0;
 
+	uint32_t ddr_base = 0x10000000;
+
+#if 1
+	struct gramProfile profile = {
+		.mode_registers = {
+			0x2708, 0x2054, 0x0512, 0x0000
+		},
+		.rdly_p0 = 2,
+		.rdly_p1 = 2,
+	};
+#endif
+#if 0
 	struct gramProfile profile = {
 		.mode_registers = {
 			0x320, 0x6, 0x200, 0x0
@@ -109,6 +127,8 @@ int main(int argc, char *argv[]) {
 		.rdly_p0 = 2,
 		.rdly_p1 = 2,
 	};
+#endif
+	struct gramProfile profile2;
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s port baudrate\n", argv[0]);
@@ -126,8 +146,56 @@ int main(int argc, char *argv[]) {
 	ctx.user_data = &serial_port;
 
 	printf("gram init... ");
-	gram_init(&ctx, &profile, (void*)0x10000000, (void*)0x00009000, (void*)0x00008000);
+	gram_init(&ctx, &profile, (void*)ddr_base, (void*)0x00009000, (void*)0x00008000);
 	printf("done\n");
+
+	printf("Rdly\np0: ");
+	for (size_t i = 0; i < 8; i++) {
+		profile2.rdly_p0 = i;
+		gram_load_calibration(&ctx, &profile2);
+		gram_reset_burstdet(&ctx);
+		for (size_t j = 0; j < 128; j++) {
+			tmp = gram_read(&ctx, ddr_base+4*j);
+		}
+		if (gram_read_burstdet(&ctx, 0)) {
+			printf("1");
+		} else {
+			printf("0");
+		}
+		fflush(stdout);
+	}
+	printf("\n");
+
+	printf("Rdly\np1: ");
+	for (size_t i = 0; i < 8; i++) {
+		profile2.rdly_p1 = i;
+		gram_load_calibration(&ctx, &profile2);
+		gram_reset_burstdet(&ctx);
+		for (size_t j = 0; j < 128; j++) {
+			tmp = gram_read(&ctx, ddr_base+4*j);
+		}
+		if (gram_read_burstdet(&ctx, 1)) {
+			printf("1");
+		} else {
+			printf("0");
+		}
+		fflush(stdout);
+	}
+	printf("\n");
+
+        printf("Auto calibrating... ");
+        res = gram_generate_calibration(&ctx, &profile2);
+        if (res != GRAM_ERR_NONE) {
+                printf("failed\n");
+                gram_load_calibration(&ctx, &profile);
+        } else {
+                gram_load_calibration(&ctx, &profile2);
+        }
+        printf("done\n");
+
+        printf("Auto calibration profile:\n");
+        printf("\tp0 rdly: %d\n", profile2.rdly_p0);
+        printf("\tp1 rdly: %d\n", profile2.rdly_p1);
 
 	gram_reset_burstdet(&ctx);
 
@@ -137,7 +205,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	printf("memtest... \n");
-	uint32_t ddr_base = 0x10000000;
 
 	printf("Writing data sequence...");
 	for (i = 0; i < kPatternSize; i++) {
