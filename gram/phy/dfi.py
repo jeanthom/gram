@@ -47,7 +47,7 @@ class Interface:
             p.cas.reset = 1
             p.ras.reset = 1
             p.reset.reset = 1
-            p.cs_n.reset = -1
+            p.cs_n.reset = 1
             p.we.reset = 1
             p.act.reset = 1
 

@@ -253,17 +253,37 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             # dfi.Interface it is "reset"
             dfi2pads = {'rst': 'reset', 'cs': 'cs_n'}
             name = dfi2pads.get(name, name) # remap if exists
-            m.d.comb += [
-                pad.o_clk.eq(ClockSignal("dramsync")),
-                pad.o_fclk.eq(ClockSignal("sync2x")),
-            ]
-            for i in range(len(pad.o0)):
+            if name == "reset":
                 m.d.comb += [
-                    pad.o0[i].eq(getattr(dfi.phases[0], name)[i]),
-                    pad.o1[i].eq(getattr(dfi.phases[0], name)[i]),
-                    pad.o2[i].eq(getattr(dfi.phases[1], name)[i]),
-                    pad.o3[i].eq(getattr(dfi.phases[1], name)[i]),
+                    pad.o_clk.eq(ClockSignal("sync")),
                 ]
+            else:
+                m.d.comb += [
+                    pad.o_clk.eq(ClockSignal("dramsync")),
+                    pad.o_fclk.eq(ClockSignal("sync2x")),
+                ]
+            if name == "reset":
+                for i in range(len(pad.o)):
+                    m.d.comb += [
+                        pad.o[i].eq(getattr(dfi.phases[0], name)[i]),
+                    ]
+            elif name == "cs_n":
+                # cs_n can't be directly connected to cs without being inverted first...
+                for i in range(len(pad.o0)):
+                    m.d.comb += [
+                        pad.o0[i].eq(~getattr(dfi.phases[0], name)[i]),
+                        pad.o1[i].eq(~getattr(dfi.phases[0], name)[i]),
+                        pad.o2[i].eq(~getattr(dfi.phases[1], name)[i]),
+                        pad.o3[i].eq(~getattr(dfi.phases[1], name)[i]),
+                    ]
+            else:
+                for i in range(len(pad.o0)):
+                    m.d.comb += [
+                        pad.o0[i].eq(getattr(dfi.phases[0], name)[i]),
+                        pad.o1[i].eq(getattr(dfi.phases[0], name)[i]),
+                        pad.o2[i].eq(getattr(dfi.phases[1], name)[i]),
+                        pad.o3[i].eq(getattr(dfi.phases[1], name)[i]),
+                    ]
 
         # DQ ---------------------------------------------------------------------------------------
         dq_oe = Signal()

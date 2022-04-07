@@ -19,7 +19,8 @@ from gram.modules import MT41K64M16
 from gram.frontend.wishbone import gramWishbone
 
 from nmigen_boards.versa_ecp5 import VersaECP5Platform85
-from ecp5_crg import ECP5CRG
+#from ecp5_crg import ECP5CRG
+from crg import ECPIX5CRG
 from uartbridge import UARTBridge
 from crg import *
 
@@ -30,12 +31,13 @@ class DDR3SoC(SoC, Elaboratable):
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
 
-        self.crg = ECP5CRG()
+        self.crg = ECPIX5CRG()
+        #self.crg = ECP5CRG()
 
         self.ub = UARTBridge(divisor=868, pins=platform.request("uart", 0))
 
         ddr_pins = platform.request("ddr3", 0, dir={"dq":"-", "dqs":"-"},
-            xdr={"clk":4, "a":4, "ba":4, "clk_en":4, "odt":4, "ras":4, "cas":4, "we":4, "cs":4, "reset":4})
+            xdr={"clk":4, "a":4, "ba":4, "clk_en":4, "odt":4, "ras":4, "cas":4, "we":4, "cs":4, "rst":1})
         self.ddrphy = DomainRenamer("dramsync")(ECP5DDRPHY(ddr_pins))
         self._decoder.add(self.ddrphy.bus, addr=ddrphy_addr)
 
