@@ -122,13 +122,22 @@ int main(int argc, char *argv[]) {
 #if 0
 	struct gramProfile profile = {
 		.mode_registers = {
-			0xb20, 0x806, 0x200, 0x0
+			0xb30, 0x806, 0x200, 0x0
 		},
 		.rdly_p0 = 2,
 		.rdly_p1 = 2,
 	};
 #endif
 #if 1
+	struct gramProfile profile = {
+		.mode_registers = {
+			0xb20, 0x806, 0x200, 0x0
+		},
+		.rdly_p0 = 2,
+		.rdly_p1 = 2,
+	};
+#endif
+#if 0
 	struct gramProfile profile = {
 		.mode_registers = {
 			0x320, 0x6, 0x200, 0x0
