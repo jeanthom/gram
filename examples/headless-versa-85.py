@@ -19,8 +19,8 @@ from gram.modules import MT41K64M16
 from gram.frontend.wishbone import gramWishbone
 
 from nmigen_boards.versa_ecp5 import VersaECP5Platform85
-#from ecp5_crg import ECP5CRG
-from crg import ECPIX5CRG
+from ecp5_crg import ECP5CRG
+#from crg import ECPIX5CRG
 from uartbridge import UARTBridge
 from crg import *
 
@@ -31,8 +31,8 @@ class DDR3SoC(SoC, Elaboratable):
         self._decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8,
                                          features={"cti", "bte"})
 
-        self.crg = ECPIX5CRG()
-        #self.crg = ECP5CRG()
+        #self.crg = ECPIX5CRG()
+        self.crg = ECP5CRG()
 
         self.ub = UARTBridge(divisor=868, pins=platform.request("uart", 0))
 
