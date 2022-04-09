@@ -52,15 +52,15 @@ class ECP5DDRPHYInit(Elaboratable):
         # DDRDLLA/DDQBUFM/ECLK initialization sequence ---------------------------------------------
         t = 8  # in cycles
         tl = Timeline([
-            (1*t,  [freeze.eq(1)]),  # Freeze DDRDLLA
-            (2*t,  [self.stop.eq(1)]),   # Stop ECLK domain
+            (1*t,  [    freeze.eq(1)]),  # Freeze DDRDLLA
+            (2*t,  [ self.stop.eq(1)]),   # Stop ECLK domain
             (3*t,  [self.reset.eq(1)]),  # Reset ECLK domain
             (4*t,  [self.reset.eq(0)]),  # Release ECLK domain reset
-            (5*t,  [self.stop.eq(0)]),   # Release ECLK domain stop
-            (6*t,  [freeze.eq(0)]),  # Release DDRDLLA freeze
+            (5*t,  [ self.stop.eq(0)]),   # Release ECLK domain stop
+            (6*t,  [    freeze.eq(0)]),  # Release DDRDLLA freeze
             (7*t,  [self.pause.eq(1)]),  # Pause DQSBUFM
-            (8*t,  [update.eq(1)]),  # Update DDRDLLA
-            (9*t,  [update.eq(0)]),  # Release DDRDMMA update
+            (8*t,  [    update.eq(1)]),  # Update DDRDLLA
+            (9*t,  [    update.eq(0)]),  # Release DDRDMMA update
             (10*t, [self.pause.eq(0)]),  # Release DQSBUFM pause
         ])
         m.d.comb += tl.trigger.eq(lock & ~lock_d) # Trigger timeline on lock rising edge
@@ -120,6 +120,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
         self.pads = pads
         self._sys_clk_freq = sys_clk_freq
+        self.init = ECP5DDRPHYInit()
 
         databits = len(self.pads.dq.io)
         if databits % 8 != 0:
@@ -190,7 +191,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             m.d.sync += burstdet_reg.eq(0)
 
         # Init -------------------------------------------------------------------------------------
-        m.submodules.init = init = ECP5DDRPHYInit()
+        m.submodules.init = init = self.init
 
         # Parameters -------------------------------------------------------------------------------
         cl, cwl = get_cl_cw("DDR3", tck)
@@ -460,13 +461,10 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         i_D2=dq_o_data_muxed[2],
                         i_D3=dq_o_data_muxed[3],
                         o_Q=dq_o),
-                    Instance("DELAYF",
-                        p_DEL_MODE="DQS_ALIGNED_X2",
-                        i_LOADN=1,
-                        i_MOVE=0,
-                        i_DIRECTION=0,
-                        i_A=dq_i,
-                        o_Z=dq_i_delayed),
+                    Instance("DELAYG",
+                        p_DEL_MODE = "DQS_ALIGNED_X2",
+                        i_A        = dq_i,
+                        o_Z        = dq_i_delayed),
                     Instance("IDDRX2DQA",
                         i_RST=ResetSignal("dramsync"),
                         i_ECLK=ClockSignal("sync2x"),

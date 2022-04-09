@@ -169,9 +169,13 @@ class PLL(Elaboratable):
 
 
 class ECP5CRG(Elaboratable):
-    def __init__(self, sys_clk_freq=100e6, pod_bits=25):
+    def __init__(self, sys_clk_freq=100e6, pod_bits=16):
         self.sys_clk_freq = sys_clk_freq
         self.pod_bits = pod_bits
+
+        # DDR clock control signals
+        self.ddr_clk_stop = Signal()
+        self.ddr_clk_reset = Signal()
 
     def elaborate(self, platform):
         m = Module()
@@ -204,18 +208,18 @@ class ECP5CRG(Elaboratable):
                              i_GSR=gsr1),
         ]
 
-        # PLL
-        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), reset=~reset)
-
-        # Power-on delay (655us)
+        # Power-on delay
         podcnt = Signal(self.pod_bits, reset=-1)
         pod_done = Signal()
-        with m.If((podcnt != 0) & pll.locked):
+        with m.If(podcnt != 0):
             m.d.rawclk += podcnt.eq(podcnt-1)
         m.d.rawclk += pod_done.eq(podcnt == 0)
 
+        # PLL
+        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), reset=~pod_done|~reset)
+
         # Generating sync2x (200Mhz) and init (25Mhz) from extclk
-        cd_sync2x = ClockDomain("sync2x", local=False)
+        cd_sync2x = ClockDomain("sync2x", local=False, reset_less=True)
         cd_sync2x_unbuf = ClockDomain("sync2x_unbuf",
                                       local=False, reset_less=True)
         cd_init = ClockDomain("init", local=False)
@@ -228,7 +232,7 @@ class ECP5CRG(Elaboratable):
         pll.create_clkout(ClockSignal("init"), 25e6)
         m.submodules += Instance("ECLKSYNCB",
                 i_ECLKI = ClockSignal("sync2x_unbuf"),
-                i_STOP  = 0,
+                i_STOP  = self.ddr_clk_stop,
                 o_ECLKO = ClockSignal("sync2x"))
         m.domains += cd_sync2x_unbuf
         m.domains += cd_sync2x
@@ -238,8 +242,8 @@ class ECP5CRG(Elaboratable):
         reset_ok = Signal(reset_less=True)
         m.d.comb += reset_ok.eq(~pll.locked|~pod_done)
         m.d.comb += ResetSignal("init").eq(reset_ok)
-        m.d.comb += ResetSignal("sync").eq(reset_ok)
-        m.d.comb += ResetSignal("dramsync").eq(reset_ok)
+        m.d.comb += ResetSignal("sync").eq(reset_ok|self.ddr_clk_reset)
+        m.d.comb += ResetSignal("dramsync").eq(reset_ok|self.ddr_clk_reset)
 
         # # Generating sync (100Mhz) from sync2x
 
@@ -247,7 +251,7 @@ class ECP5CRG(Elaboratable):
             p_DIV="2.0",
             i_ALIGNWD=0,
             i_CLKI=ClockSignal("sync2x"),
-            i_RST=0,
+            i_RST=ResetSignal("dramsync"),
             o_CDIVX=ClockSignal("sync"))
 
         # temporarily set dram sync clock exactly equal to main sync
