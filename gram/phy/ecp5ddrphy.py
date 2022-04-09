@@ -101,10 +101,28 @@ class _DQSBUFMSettingManager(Elaboratable):
             with m.State("Idle"):
                 with m.If(self.rdly_csr.w_stb):
                     m.d.sync += self.pause.eq(1)
-                    m.next = "RdlyUpdateRequested"
+                    m.next = "RdlyUpdateRequestedDelay1"
+
+            with m.State("RdlyUpdateRequestedDelay1"):
+                m.next = "RdlyUpdateRequestedDelay2"
+
+            with m.State("RdlyUpdateRequestedDelay2"):
+                m.next = "RdlyUpdateRequestedDelay3"
+
+            with m.State("RdlyUpdateRequestedDelay3"):
+                m.next = "RdlyUpdateRequested"
 
             with m.State("RdlyUpdateRequested"):
                 m.d.sync += self.readclksel.eq(self.rdly_csr.w_data)
+                m.next = "ResetPauseDelay1"
+
+            with m.State("ResetPauseDelay1"):
+                m.next = "ResetPauseDelay2"
+
+            with m.State("ResetPauseDelay2"):
+                m.next = "ResetPauseDelay3"
+
+            with m.State("ResetPauseDelay3"):
                 m.next = "ResetPause"
 
             with m.State("ResetPause"):
