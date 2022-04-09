@@ -56,6 +56,12 @@ static void dfii_set_mr(const struct gramCtx *ctx, uint8_t mr, uint16_t val) {
 
 #define MR0_DLL_RESET (1 << 8)
 void dfii_initseq(const struct gramCtx *ctx, const struct gramProfile *profile) {
+	/* Assert reset */
+	dfii_set_p0_address(ctx, 0x0);
+	dfii_set_p0_baddress(ctx, 0);
+	dfii_setcontrol(ctx, 0);
+	cdelay(50000);
+
 	/* Release reset */
 	dfii_set_p0_address(ctx, 0x0);
 	dfii_set_p0_baddress(ctx, 0);
