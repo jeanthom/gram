@@ -242,7 +242,7 @@ class ECP5CRG(Elaboratable):
         reset_ok = Signal(reset_less=True)
         m.d.comb += reset_ok.eq(~pll.locked|~pod_done)
         m.d.comb += ResetSignal("init").eq(reset_ok)
-        m.d.comb += ResetSignal("sync").eq(reset_ok|self.ddr_clk_reset)
+        m.d.comb += ResetSignal("sync").eq(reset_ok)
         m.d.comb += ResetSignal("dramsync").eq(reset_ok|self.ddr_clk_reset)
 
         # # Generating sync (100Mhz) from sync2x
