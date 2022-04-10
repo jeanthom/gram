@@ -219,7 +219,7 @@ class ECP5CRG(Elaboratable):
         m.submodules.pll = pll = PLL(ClockSignal("rawclk"), reset=~pod_done|~reset)
 
         # Generating sync2x (200Mhz) and init (25Mhz) from extclk
-        cd_sync2x = ClockDomain("sync2x", local=False, reset_less=True)
+        cd_sync2x = ClockDomain("sync2x", local=False)
         cd_sync2x_unbuf = ClockDomain("sync2x_unbuf",
                                       local=False, reset_less=True)
         cd_init = ClockDomain("init", local=False)
