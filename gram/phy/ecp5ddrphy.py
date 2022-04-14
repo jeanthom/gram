@@ -40,7 +40,7 @@ class ECP5DDRPHYInit(Elaboratable):
         lock = Signal()
         lock_d = Signal()
         m.submodules += Instance("DDRDLLA",
-            i_CLK=ClockSignal("sync2x"),
+            i_CLK=ClockSignal("dramsync2x"),
             i_RST=ResetSignal("init"),
             i_UDDCNTLN=~update,
             i_FREEZE=freeze,
@@ -224,7 +224,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # Clock --------------------------------------------------------------------------------
         m.d.comb += [
             self.pads.clk.o_clk.eq(ClockSignal("dramsync")),
-            self.pads.clk.o_fclk.eq(ClockSignal("sync2x")),
+            self.pads.clk.o_fclk.eq(ClockSignal("dramsync2x")),
         ]
         for i in range(len(self.pads.clk.o0)):
             m.d.comb += [
@@ -237,9 +237,9 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # Addresses and Commands ---------------------------------------------------------------
         m.d.comb += [
             self.pads.a.o_clk.eq(ClockSignal("dramsync")),
-            self.pads.a.o_fclk.eq(ClockSignal("sync2x")),
+            self.pads.a.o_fclk.eq(ClockSignal("dramsync2x")),
             self.pads.ba.o_clk.eq(ClockSignal("dramsync")),
-            self.pads.ba.o_fclk.eq(ClockSignal("sync2x")),
+            self.pads.ba.o_fclk.eq(ClockSignal("dramsync2x")),
         ]
         for i in range(len(self.pads.a.o0)):
             m.d.comb += [
@@ -278,7 +278,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             else:
                 m.d.comb += [
                     pad.o_clk.eq(ClockSignal("dramsync")),
-                    pad.o_fclk.eq(ClockSignal("sync2x")),
+                    pad.o_fclk.eq(ClockSignal("dramsync2x")),
                 ]
             if name == "reset":
                 for i in range(len(pad.o)):
@@ -343,7 +343,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
                 # Clocks / Reset
                 i_SCLK=ClockSignal("sync"),
-                i_ECLK=ClockSignal("sync2x"),
+                i_ECLK=ClockSignal("dramsync2x"),
                 i_RST=ResetSignal("dramsync"),
                 i_DDRDEL=init.delay,
                 i_PAUSE=init.pause | dqsbufm_manager.pause,
@@ -405,7 +405,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
 
             m.submodules += Instance("ODDRX2DQA",
                 i_RST=ResetSignal("dramsync"),
-                i_ECLK=ClockSignal("sync2x"),
+                i_ECLK=ClockSignal("dramsync2x"),
                 i_SCLK=ClockSignal("dramsync"),
                 i_DQSW270=dqsw270,
                 i_D0=dm_o_data_muxed[0],
@@ -419,7 +419,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             m.submodules += [
                 Instance("ODDRX2DQSB",
                     i_RST=ResetSignal("dramsync"),
-                    i_ECLK=ClockSignal("sync2x"),
+                    i_ECLK=ClockSignal("dramsync2x"),
                     i_SCLK=ClockSignal(),
                     i_DQSW=dqsw,
                     i_D0=0,
@@ -429,7 +429,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                     o_Q=dqs),
                 Instance("TSHX2DQSA",
                     i_RST=ResetSignal("dramsync"),
-                    i_ECLK=ClockSignal("sync2x"),
+                    i_ECLK=ClockSignal("dramsync2x"),
                     i_SCLK=ClockSignal(),
                     i_DQSW=dqsw,
                     i_T0=~(dqs_oe | dqs_postamble),
@@ -471,7 +471,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 m.submodules += [
                     Instance("ODDRX2DQA",
                         i_RST=ResetSignal("dramsync"),
-                        i_ECLK=ClockSignal("sync2x"),
+                        i_ECLK=ClockSignal("dramsync2x"),
                         i_SCLK=ClockSignal(),
                         i_DQSW270=dqsw270,
                         i_D0=dq_o_data_muxed[0],
@@ -485,7 +485,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         o_Z        = dq_i_delayed),
                     Instance("IDDRX2DQA",
                         i_RST=ResetSignal("dramsync"),
-                        i_ECLK=ClockSignal("sync2x"),
+                        i_ECLK=ClockSignal("dramsync2x"),
                         i_SCLK=ClockSignal(),
                         i_DQSR90=dqsr90,
                         i_RDPNTR0=rdpntr[0],
@@ -501,7 +501,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                         o_Q3=dq_i_data[3]),
                     Instance("TSHX2DQA",
                         i_RST=ResetSignal("dramsync"),
-                        i_ECLK=ClockSignal("sync2x"),
+                        i_ECLK=ClockSignal("dramsync2x"),
                         i_SCLK=ClockSignal(),
                         i_DQSW270=dqsw270,
                         i_T0=~dq_oe,
