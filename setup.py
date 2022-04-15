@@ -26,7 +26,7 @@ setup(
     packages=find_packages(exclude=("test*", "doc*", "examples*", "contrib*", "libgram*")),
     include_package_data=True,
     python_requires="~=3.7",
-    install_requires=['nmigen', 'nmigen_boards', 'pyvcd'],
+    install_requires=['nmigen', 'nmigen_boards'],
     setup_requires=['setuptools', 'setuptools_scm'],
     entry_points={},
 
