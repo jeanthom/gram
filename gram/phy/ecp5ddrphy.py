@@ -224,6 +224,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # Clock --------------------------------------------------------------------------------
         m.d.comb += [
             self.pads.clk.o_clk.eq(ClockSignal("dramsync")),
+            self.pads.clk.o_prst.eq(ResetSignal("dramsync")),
             self.pads.clk.o_fclk.eq(ClockSignal("dramsync2x")),
         ]
         for i in range(len(self.pads.clk.o0)):
@@ -237,6 +238,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
         # Addresses and Commands ---------------------------------------------------------------
         m.d.comb += [
             self.pads.a.o_clk.eq(ClockSignal("dramsync")),
+            self.pads.a.o_prst.eq(ResetSignal("dramsync")),
             self.pads.a.o_fclk.eq(ClockSignal("dramsync2x")),
             self.pads.ba.o_clk.eq(ClockSignal("dramsync")),
             self.pads.ba.o_fclk.eq(ClockSignal("dramsync2x")),
@@ -278,6 +280,7 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             else:
                 m.d.comb += [
                     pad.o_clk.eq(ClockSignal("dramsync")),
+                    pad.o_prst.eq(ResetSignal("dramsync")),
                     pad.o_fclk.eq(ClockSignal("dramsync2x")),
                 ]
             if name == "reset":
