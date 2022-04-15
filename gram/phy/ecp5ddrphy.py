@@ -235,6 +235,14 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
                 self.pads.clk.o3[i].eq(1),
             ]
 
+        # Reset signal ------------------------
+
+        rst = Signal(reset_less=True)
+        drs = ResetSignal("dramsync")
+        m.d.comb += rst.eq(drs)
+        #if hasattr(self.pads, "rst"):
+            
+
         # Addresses and Commands ---------------------------------------------------------------
         m.d.comb += [
             self.pads.a.o_clk.eq(ClockSignal("dramsync")),
@@ -273,23 +281,14 @@ class ECP5DDRPHY(Peripheral, Elaboratable):
             # dfi.Interface it is "reset"
             dfi2pads = {'rst': 'reset', 'cs': 'cs_n'}
             name = dfi2pads.get(name, name) # remap if exists
-            if name == "reset":
-                m.d.comb += [
-                    pad.o_clk.eq(ClockSignal("sync")),
-                ]
-            else:
-                m.d.comb += [
+            m.d.comb += [
                     pad.o_clk.eq(ClockSignal("dramsync")),
                     pad.o_prst.eq(ResetSignal("dramsync")),
                     pad.o_fclk.eq(ClockSignal("dramsync2x")),
                 ]
-            if name == "reset":
-                for i in range(len(pad.o)):
-                    m.d.comb += [
-                        pad.o[i].eq(getattr(dfi.phases[0], name)[i]),
-                    ]
-            elif name == "cs_n":
-                # cs_n can't be directly connected to cs without being inverted first...
+            if name == "cs_n":
+                # cs_n can't be directly connected to cs without
+                # being inverted first...
                 for i in range(len(pad.o0)):
                     m.d.comb += [
                         pad.o0[i].eq(~getattr(dfi.phases[0], name)[i]),
