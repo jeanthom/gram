@@ -1,9 +1,20 @@
 #!/bin/bash
 set -e
 
-LIB_DIR=/usr/local/diamond/3.11_x64/ispfpga/verilog/data/ecp5u
+# Check for presence of the Diamond ECP5 verilog model files
+LIB_DIR=./ecp5u
+if [ ! -d "$LIB_DIR" ]; then
+    LIB_DIR=/usr/local/diamond/3.11_x64/ispfpga/verilog/data/ecp5u
+    if [ ! -d "$LIB_DIR" ]; then
+        echo "Error: Could not find the ECP5 verilog models." >&2
+        echo >&2
+        echo "Please either install Diamond (in /usr/local), " >&2
+        echo "or copy its ecp5u directory ($LIB_DIR) here." >&2
+        exit 1
+    fi
+fi
 
-python simsoc.py
+python3 simsoc.py
 yosys simsoc.ys
 cp ${LIB_DIR}/DDRDLLA.v DDRDLLA.v
 patch DDRDLLA.v < DDRDLLA.patch
