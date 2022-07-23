@@ -43,8 +43,6 @@ module simsoctb;
   wire [1:0] dram_tdqs_n;
   wire dram_rst;
 
-  // anything here with "_n" has to be inverted.  nmigen platforms
-  // sort that out by inverting (with PinsN)
   ddr3 #(
     .check_strict_timing(0)
   ) ram_chip (
@@ -52,7 +50,7 @@ module simsoctb;
     .ck(dram_ck),
     .ck_n(~dram_ck),
     .cke(dram_cke),
-    .cs_n(~dram_cs_n),
+    .cs_n(dram_cs_n),
     .ras_n(dram_ras_n),
     .cas_n(dram_cas_n),
     .we_n(dram_we_n),
