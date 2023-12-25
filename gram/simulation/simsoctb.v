@@ -30,6 +30,7 @@ module simsoctb;
   wire dram_ck;
   wire dram_cke;
   wire dram_we_n;
+  wire dram_cs_n;
   wire dram_ras_n;
   wire dram_cas_n;
   wire [15:0] dram_dq;
@@ -40,16 +41,16 @@ module simsoctb;
   wire [1:0] dram_dm;
   wire dram_odt;
   wire [1:0] dram_tdqs_n;
-  reg dram_rst = 0;
+  wire dram_rst;
 
   ddr3 #(
     .check_strict_timing(0)
   ) ram_chip (
-    .rst_n(~dram_rst),
+    .rst_n(dram_rst),
     .ck(dram_ck),
     .ck_n(~dram_ck),
     .cke(dram_cke),
-    .cs_n(1'b0),
+    .cs_n(dram_cs_n),
     .ras_n(dram_ras_n),
     .cas_n(dram_cas_n),
     .we_n(dram_we_n),
@@ -78,11 +79,13 @@ module simsoctb;
   //defparam ram_chip.
   
   top simsoctop (
+    .ddr3_0__rst__io(dram_rst),
     .ddr3_0__dq__io(dram_dq),
     .ddr3_0__dqs__p(dram_dqs),
-    .ddr3_0__clk__io(dram_ck),
+    .ddr3_0__clk__p(dram_ck),
     .ddr3_0__clk_en__io(dram_cke),
     .ddr3_0__we__io(dram_we_n),
+    .ddr3_0__cs__io(dram_cs_n),
     .ddr3_0__ras__io(dram_ras_n),
     .ddr3_0__cas__io(dram_cas_n),
     .ddr3_0__a__io(dram_a),
@@ -105,10 +108,12 @@ module simsoctb;
     begin
       $dumpfile("simsoc.fst");
       $dumpvars(0, clkin);
+      $dumpvars(0, dram_rst);
       $dumpvars(0, dram_dq);
       $dumpvars(0, dram_dqs);
       $dumpvars(0, dram_ck);
       $dumpvars(0, dram_cke);
+      $dumpvars(0, dram_cs_n);
       $dumpvars(0, dram_we_n);
       $dumpvars(0, dram_ras_n);
       $dumpvars(0, dram_cas_n);
@@ -132,18 +137,13 @@ module simsoctb;
   reg [31:0] tmp;
   initial
     begin
-      dram_rst = 1;
       #350; // Wait for RESET and POR
-
-      // Software control
-      dram_rst = 0;
-
-      #10;
 
       $display("Release RESET_N");
       wishbone_write(32'h0000900c >> 2, 32'h0); // p0 address
       wishbone_write(32'h00009010 >> 2, 32'h0); // p0 baddress
       wishbone_write(32'h00009000 >> 2, 8'h0C); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N
+
       $display("Enable CKE");
       wishbone_write(32'h00009000 >> 2, 8'h0E); // DFII_CONTROL_ODT|DFII_CONTROL_RESET_N|DFI_CONTROL_CKE
       if (dram_cke != 1)
@@ -196,6 +196,12 @@ module simsoctb;
       // Hardware control
       wishbone_write(32'h00009000 >> 2, 8'h01); // DFII_CONTROL_SEL
       #2000;
+
+      // reset burst detect
+      //wishbone_write(32'h00008000 >> 2, 0); // burst detect reset
+
+      // read on burst detect
+      //wishbone_read(32'h00008000 >> 2, tmp); // burst detect
 
       // Read test on provisioned data, row 0, col 0-7
       wishbone_read(32'h10000000 >> 2, tmp);

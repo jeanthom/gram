@@ -36,14 +36,15 @@ class PhaseInjector(Elaboratable):
 
         with m.If(self._command_issue.w_stb):
             m.d.comb += [
-                self._phase.cs.eq(Repl(value=self._command.w_data[0], count=len(self._phase.cs))),
+                self._phase.cs_n.eq(Repl(value=~self._command.w_data[0],
+                                       count=len(self._phase.cs_n))),
                 self._phase.we.eq(self._command.w_data[1]),
                 self._phase.cas.eq(self._command.w_data[2]),
                 self._phase.ras.eq(self._command.w_data[3]),
             ]
         with m.Else():
             m.d.comb += [
-                self._phase.cs.eq(Repl(value=0, count=len(self._phase.cs))),
+                self._phase.cs_n.eq(Repl(value=1, count=len(self._phase.cs_n))),
                 self._phase.we.eq(0),
                 self._phase.cas.eq(0),
                 self._phase.ras.eq(0),
@@ -59,23 +60,39 @@ class PhaseInjector(Elaboratable):
 
 class DFIInjector(Elaboratable):
     def __init__(self, csr_bank, addressbits, bankbits, nranks, databits, nphases=1):
+        print ("nranks", nranks, "nphases", nphases, "addressbits", addressbits)
         self._nranks = nranks
 
-        self._inti = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
-        self.slave = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
-        self.master = dfi.Interface(addressbits, bankbits, nranks, databits, nphases)
+        self._inti = dfi.Interface(addressbits, bankbits,
+                                   nranks, databits, nphases,
+                                   name="inti")
+        self.slave = dfi.Interface(addressbits, bankbits,
+                                   nranks, databits, nphases,
+                                   name="slave")
+        self.master = dfi.Interface(addressbits, bankbits,
+                                    nranks, databits, nphases,
+                                   name="master")
 
         self._control = csr_bank.csr(4, "w")  # sel, clk_en, odt, reset
+        self._control.w_data.reset = 0b1000 # reset HI
+
 
         self._phases = []
         for n, phase in enumerate(self._inti.phases):
             self._phases += [PhaseInjector(CSRPrefixProxy(csr_bank,
-                                                          "p{}".format(n)), phase)]
+                                                          "p{}".format(n)),
+                                                          phase)]
+            if hasattr(phase, "reset"):
+                phase.reset.reset = 1
 
     def elaborate(self, platform):
         m = Module()
 
-        m.submodules += self._phases
+        for n, phase in enumerate(self._phases):
+            m.submodules['phase_%d' % n] = phase
+
+        for phase in self._inti.phases:
+            print ("phase", phase)
 
         with m.If(self._control.w_data[0]):
             m.d.comb += self.slave.connect(self.master)
@@ -87,7 +104,7 @@ class DFIInjector(Elaboratable):
                          for phase in self._inti.phases]
             m.d.comb += [phase.odt[i].eq(self._control.w_data[2])
                          for phase in self._inti.phases if hasattr(phase, "odt")]
-        m.d.comb += [phase.reset.eq(self._control.w_data[3])
+        m.d.comb += [phase.reset.eq(~self._control.w_data[3])
                      for phase in self._inti.phases if hasattr(phase, "reset")]
 
         return m

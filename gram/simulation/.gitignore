@@ -13,3 +13,6 @@ build_simcrg/
 
 # Patched files
 DDRDLLA.v
+
+# ECP5 model files
+ecp5u

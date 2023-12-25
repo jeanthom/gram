@@ -11,9 +11,10 @@
 
 
 from nmigen import (Elaboratable, Module, Signal, ClockDomain, Instance,
-                    ClockSignal, ResetSignal)
+                    ClockSignal, ResetSignal, Const)
 
-__ALL__ = ["ECPIX5CRG"]
+__all__ = ["ECP5CRG"]
+
 
 class PLL(Elaboratable):
     nclkouts_max    = 3
@@ -167,29 +168,37 @@ class PLL(Elaboratable):
                        )
 
 
-class ECPIX5CRG(Elaboratable):
-    def __init__(self, sys_clk_freq=100e6, dram_clk_freq=None):
+class ECP5CRG(Elaboratable):
+    def __init__(self, sys_clk_freq=100e6, pod_bits=16):
         self.sys_clk_freq = sys_clk_freq
-        self.dram_clk_freq = dram_clk_freq
+        self.pod_bits = pod_bits
+
+        # DDR clock control signals
+        self.ddr_clk_stop = Signal()
+        self.ddr_clk_reset = Signal()
 
     def elaborate(self, platform):
         m = Module()
 
         # Get 100Mhz from oscillator
-        clk100 = platform.request("clk100")
+        extclk = platform.request(platform.default_clk)
         cd_rawclk = ClockDomain("rawclk", local=True, reset_less=True)
-        m.d.comb += cd_rawclk.clk.eq(clk100)
+        m.d.comb += cd_rawclk.clk.eq(extclk)
         m.domains += cd_rawclk
 
         # Reset
-        reset = platform.request(platform.default_rst).i
+        if platform.default_rst is not None:
+            reset = platform.request(platform.default_rst).i
+        else:
+            reset = Const(0) # whoops
+
         gsr0 = Signal()
         gsr1 = Signal()
 
         m.submodules += [
             Instance("FD1S3AX", p_GSR="DISABLED",
                                 i_CK=ClockSignal("rawclk"),
-                                i_D=reset,
+                                i_D=~reset,
                                 o_Q=gsr0),
             Instance("FD1S3AX", p_GSR="DISABLED",
                                 i_CK=ClockSignal("rawclk"),
@@ -199,45 +208,32 @@ class ECPIX5CRG(Elaboratable):
                              i_GSR=gsr1),
         ]
 
-        # Power-on delay (655us)
-        podcnt = Signal(3, reset=-1)
+        # Power-on delay
+        podcnt = Signal(self.pod_bits, reset=-1)
         pod_done = Signal()
         with m.If(podcnt != 0):
             m.d.rawclk += podcnt.eq(podcnt-1)
         m.d.rawclk += pod_done.eq(podcnt == 0)
 
-        # Generating sync2x (200Mhz) and init (25Mhz) from clk100
+        # PLL
+        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), reset=~pod_done|~reset)
+
+        # Generating sync2x (200Mhz) and init (25Mhz) from extclk
         cd_sync2x = ClockDomain("sync2x", local=False)
         cd_sync2x_unbuf = ClockDomain("sync2x_unbuf",
                                       local=False, reset_less=True)
         cd_init = ClockDomain("init", local=False)
         cd_sync = ClockDomain("sync", local=False)
-        # generate dram (and 2xdram if requested)
         cd_dramsync = ClockDomain("dramsync", local=False)
-        if self.dram_clk_freq is not None:
-            cd_dramsync2x = ClockDomain("dramsync2x", local=False)
-            cd_dramsync2x_unbuf = ClockDomain("dramsync2x_unbuf",
-                                          local=False, reset_less=True)
-        m.submodules.pll = pll = PLL(ClockSignal("rawclk"), reset=~reset)
-        pll.set_clkin_freq(100e6)
+
+        # create PLL clocks
+        pll.set_clkin_freq(platform.default_clk_frequency)
         pll.create_clkout(ClockSignal("sync2x_unbuf"), 2*self.sys_clk_freq)
         pll.create_clkout(ClockSignal("init"), 25e6)
         m.submodules += Instance("ECLKSYNCB",
                 i_ECLKI = ClockSignal("sync2x_unbuf"),
-                i_STOP  = 0,
+                i_STOP  = self.ddr_clk_stop,
                 o_ECLKO = ClockSignal("sync2x"))
-
-        # if dram is a separate frequency request it. set up a 2nd 2x unbuf
-        if self.dram_clk_freq is not None:
-            pll.create_clkout(ClockSignal("dramsync2x_unbuf"),
-                                          2*self.dram_clk_freq)
-            m.submodules += Instance("ECLKSYNCB",
-                    i_ECLKI = ClockSignal("dramsync2x_unbuf"),
-                    i_STOP  = 0,
-                    o_ECLKO = ClockSignal("dramsync2x"))
-            m.domains += cd_dramsync2x_unbuf
-            m.domains += cd_dramsync2x
-
         m.domains += cd_sync2x_unbuf
         m.domains += cd_sync2x
         m.domains += cd_init
@@ -247,7 +243,7 @@ class ECPIX5CRG(Elaboratable):
         m.d.comb += reset_ok.eq(~pll.locked|~pod_done)
         m.d.comb += ResetSignal("init").eq(reset_ok)
         m.d.comb += ResetSignal("sync").eq(reset_ok)
-        m.d.comb += ResetSignal("dramsync").eq(reset_ok)
+        m.d.comb += ResetSignal("dramsync").eq(reset_ok|self.ddr_clk_reset)
 
         # # Generating sync (100Mhz) from sync2x
 
@@ -255,20 +251,11 @@ class ECPIX5CRG(Elaboratable):
             p_DIV="2.0",
             i_ALIGNWD=0,
             i_CLKI=ClockSignal("sync2x"),
-            i_RST=0,
+            i_RST=ResetSignal("dramsync"),
             o_CDIVX=ClockSignal("sync"))
 
-        # Generating dramsync (100Mhz) from dramsync2x
-        if self.dram_clk_freq is not None:
-            m.submodules += Instance("CLKDIVF",
-                p_DIV="2.0",
-                i_ALIGNWD=0,
-                i_CLKI=ClockSignal("dramsync2x"),
-                i_RST=0,
-                o_CDIVX=ClockSignal("dramsync"))
-
-        # if no separate dram set dram sync clock exactly equal to main sync
-        if self.dram_clk_freq is None:
-            m.d.comb += ClockSignal("dramsync").eq(ClockSignal("sync"))
+        # temporarily set dram sync clock exactly equal to main sync
+        m.d.comb += ClockSignal("dramsync").eq(ClockSignal("sync"))
 
         return m
+

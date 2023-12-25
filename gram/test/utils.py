@@ -9,7 +9,7 @@ import warnings
 from contextlib import contextmanager
 
 from nmigen import *
-from nmigen.sim.pysim import *
+from nmigen.sim import *
 from nmigen.hdl.ir import Fragment
 from nmigen.back import rtlil
 from nmigen._toolchain import require_tool

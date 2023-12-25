@@ -57,7 +57,11 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		gram_reset_burstdet(ctx);
 
 		for (i = 0; i < 128; i++) {
+#ifdef GRAM_RW_FUNC
+			gram_read(ctx, ctx->ddr_base);
+#else
 			tmp = ram[i];
+#endif
 		}
 
 		if (gram_read_burstdet(ctx, 0)) {
@@ -74,7 +78,11 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		gram_reset_burstdet(ctx);
 
 		for (i = 0; i < 128; i++) {
+#ifdef GRAM_RW_FUNC
+			gram_read(ctx, ctx->ddr_base);
+#else
 			tmp = ram[i];
+#endif
 		}
 
 		if (gram_read_burstdet(ctx, 1)) {
@@ -92,7 +100,11 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		gram_reset_burstdet(ctx);
 
 		for (i = 0; i < 128; i++) {
+#ifdef GRAM_RW_FUNC
+			gram_read(ctx, ctx->ddr_base);
+#else
 			tmp = ram[i];
+#endif
 		}
 
 		if (!gram_read_burstdet(ctx, 0)) {
@@ -109,7 +121,11 @@ int gram_generate_calibration(const struct gramCtx *ctx, struct gramProfile *pro
 		gram_reset_burstdet(ctx);
 
 		for (i = 0; i < 128; i++) {
+#ifdef GRAM_RW_FUNC
+			gram_read(ctx, ctx->ddr_base);
+#else
 			tmp = ram[i];
+#endif
 		}
 
 		if (!gram_read_burstdet(ctx, 1)) {

@@ -1,6 +1,6 @@
 OBJS := src/init.o src/dfii.o src/calibration.o
 
-TRIPLE := riscv64-unknown-elf-
+TRIPLE :=
 
 CC := $(TRIPLE)gcc
 AS := $(TRIPLE)as
@@ -8,7 +8,7 @@ OBJCOPY := $(TRIPLE)objcopy
 AR := $(TRIPLE)ar
 LD := $(TRIPLE)ld
 
-CFLAGS += -fvisibility=hidden -nostdlib -Os -Iinclude -std=c99 -Wall -Werror -pedantic
+CFLAGS += -fvisibility=hidden -nostdlib -O0 -g -Iinclude -std=c99 -Wall -Wno-error -pedantic -DGRAM_RW_FUNC
 LDFLAGS += -nostdlib
 
 ifeq ($(TRIPLE),riscv64-unknown-elf-)

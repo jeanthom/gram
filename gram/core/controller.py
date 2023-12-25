@@ -64,7 +64,8 @@ class gramController(Elaboratable):
             bankbits=geom_settings.bankbits,
             nranks=phy_settings.nranks,
             databits=phy_settings.dfi_databits,
-            nphases=phy_settings.nphases)
+            nphases=phy_settings.nphases,
+            name="mem_dfi")
 
         self._clk_freq = clk_freq
 

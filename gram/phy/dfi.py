@@ -13,7 +13,7 @@ def phase_description(addressbits, bankbits, nranks, databits):
         ("address", addressbits, DIR_FANOUT),
         ("bank", bankbits, DIR_FANOUT),
         ("cas", 1, DIR_FANOUT),
-        ("cs", nranks, DIR_FANOUT),
+        ("cs_n", nranks, DIR_FANOUT),
         ("ras", 1, DIR_FANOUT),
         ("we", 1, DIR_FANOUT),
         ("clk_en", nranks, DIR_FANOUT),
@@ -32,13 +32,24 @@ def phase_description(addressbits, bankbits, nranks, databits):
 
 
 class Interface:
-    def __init__(self, addressbits, bankbits, nranks, databits, nphases=1):
+    def __init__(self, addressbits, bankbits, nranks, databits, nphases=1,
+                       name=None):
+        print ("DFI Interface", name, "addr", addressbits,
+                "bankbits", bankbits, "nranks", nranks, "data", databits,
+                "phases", nphases)
         self.phases = []
         for p in range(nphases):
-            p = Record(phase_description(
-                addressbits, bankbits, nranks, databits))
+            p = Record(phase_description(addressbits, bankbits,
+                                         nranks, databits),
+                       name=name)
             self.phases += [p]
+            # set all logic-inverted x_n signal resets to on at power-up
+            p.cas.reset = 1
+            p.ras.reset = 1
             p.reset.reset = 1
+            p.cs_n.reset = 1
+            p.we.reset = 1
+            p.act.reset = 1
 
     def connect(self, target):
         if not isinstance(target, Interface):
